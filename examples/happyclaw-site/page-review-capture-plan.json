@@ -1,0 +1,640 @@
+{
+  "schemaVersion": "0.1",
+  "adapter": "web",
+  "configurations": [
+    {
+      "id": "desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      }
+    },
+    {
+      "id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ],
+  "states": [
+    {
+      "id": "whole-page",
+      "captureMode": "full-page",
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": []
+    },
+    {
+      "id": "hero",
+      "region": {
+        "selector": "#hero",
+        "source": {
+          "file": "src/components/Hero.astro",
+          "line": 5,
+          "anchor": "id=\"hero\"",
+          "component": "Hero"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#hero",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "mobile-menu-open",
+      "configurations": [
+        "mobile"
+      ],
+      "region": {
+        "selector": "#mobile-menu",
+        "source": {
+          "file": "src/components/Header.astro",
+          "line": 17,
+          "anchor": "id=\"mobile-menu\"",
+          "component": "Header"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "button",
+          "name": "菜单"
+        }
+      ]
+    },
+    {
+      "id": "advantages",
+      "region": {
+        "selector": "#features",
+        "source": {
+          "file": "src/components/FeatureHighlights.astro",
+          "line": 9,
+          "anchor": "id=\"features\"",
+          "component": "FeatureHighlights"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#features",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "screenshots",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#screenshots",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "feature-grid",
+      "region": {
+        "selector": "#capabilities",
+        "source": {
+          "file": "src/components/FeatureGrid.astro",
+          "line": 6,
+          "anchor": "id=\"capabilities\"",
+          "component": "FeatureGrid"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#capabilities",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "region": {
+        "selector": "#architecture",
+        "source": {
+          "file": "src/components/Architecture.astro",
+          "line": 5,
+          "anchor": "id=\"architecture\"",
+          "component": "Architecture"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#architecture",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "quickstart",
+      "region": {
+        "selector": "#quickstart",
+        "source": {
+          "file": "src/components/QuickStart.astro",
+          "line": 10,
+          "anchor": "id=\"quickstart\"",
+          "component": "QuickStart"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#quickstart",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "technology",
+      "region": {
+        "selector": "#technology",
+        "source": {
+          "file": "src/components/TechStack.astro",
+          "line": 5,
+          "anchor": "id=\"technology\"",
+          "component": "TechStack"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#technology",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "footer",
+      "region": {
+        "selector": "footer",
+        "source": {
+          "file": "src/components/Footer.astro",
+          "line": 33,
+          "anchor": "HappyClaw",
+          "component": "Footer"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "footer",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "mobile-menu-closed",
+      "configurations": [
+        "mobile"
+      ],
+      "region": {
+        "selector": "#menu-toggle",
+        "source": {
+          "file": "src/components/Header.astro",
+          "line": 12,
+          "anchor": "id=\"menu-toggle\"",
+          "component": "Header"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "button",
+          "name": "菜单"
+        },
+        {
+          "type": "click",
+          "role": "button",
+          "name": "关闭菜单"
+        }
+      ]
+    },
+    {
+      "id": "menu-to-features",
+      "region": {
+        "selector": "#features",
+        "source": {
+          "file": "src/components/FeatureHighlights.astro",
+          "line": 9,
+          "anchor": "id=\"features\"",
+          "component": "FeatureHighlights"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "button",
+          "name": "菜单"
+        },
+        {
+          "type": "click",
+          "role": "link",
+          "name": "特性",
+          "scope": "#mobile-menu"
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "menu-to-screenshots",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "button",
+          "name": "菜单"
+        },
+        {
+          "type": "click",
+          "role": "link",
+          "name": "截图",
+          "scope": "#mobile-menu"
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "menu-to-quickstart",
+      "region": {
+        "selector": "#quickstart",
+        "source": {
+          "file": "src/components/QuickStart.astro",
+          "line": 10,
+          "anchor": "id=\"quickstart\"",
+          "component": "QuickStart"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "button",
+          "name": "菜单"
+        },
+        {
+          "type": "click",
+          "role": "link",
+          "name": "快速开始",
+          "scope": "#mobile-menu"
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "screenshots-mobile",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "tab",
+          "name": "移动端"
+        },
+        {
+          "type": "scroll-to",
+          "selector": "#screenshots",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "screenshots-mobile-2",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "tab",
+          "name": "移动端"
+        },
+        {
+          "type": "scroll-to",
+          "selector": "[data-panel=\"mobile\"] .shot-grid > figure:nth-of-type(2)",
+          "offset": 80
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "screenshots-mobile-3",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "tab",
+          "name": "移动端"
+        },
+        {
+          "type": "scroll-to",
+          "selector": "[data-panel=\"mobile\"] .shot-grid > figure:nth-of-type(3)",
+          "offset": 80
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "screenshots-mobile-4",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "tab",
+          "name": "移动端"
+        },
+        {
+          "type": "scroll-to",
+          "selector": "[data-panel=\"mobile\"] .shot-grid > figure:nth-of-type(4)",
+          "offset": 80
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "screenshots-feishu",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "tab",
+          "name": "飞书集成"
+        },
+        {
+          "type": "scroll-to",
+          "selector": "#screenshots",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "screenshots-feishu-end",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "tab",
+          "name": "飞书集成"
+        },
+        {
+          "type": "scroll-to",
+          "selector": "[data-panel=\"feishu\"] .shot-grid > figure:last-child",
+          "offset": 80
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "screenshots-web-return",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "tab",
+          "name": "移动端"
+        },
+        {
+          "type": "click",
+          "role": "tab",
+          "name": "Web 界面"
+        },
+        {
+          "type": "scroll-to",
+          "selector": "#screenshots",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "screenshots-web-2",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "[data-panel=\"web\"] .shot-grid > figure:nth-of-type(2)",
+          "offset": 80
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "screenshots-web-3",
+      "region": {
+        "selector": "#screenshots",
+        "source": {
+          "file": "src/components/ScreenshotShowcase.astro",
+          "line": 11,
+          "anchor": "id=\"screenshots\"",
+          "component": "ScreenshotShowcase"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "[data-panel=\"web\"] .shot-grid > figure:nth-of-type(3)",
+          "offset": 80
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "quickstart-command-end",
+      "region": {
+        "selector": "#quickstart",
+        "source": {
+          "file": "src/components/QuickStart.astro",
+          "line": 10,
+          "anchor": "id=\"quickstart\"",
+          "component": "QuickStart"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#quickstart",
+          "offset": 80
+        },
+        {
+          "type": "scroll-horizontal",
+          "selector": "#quickstart [data-command-step=\"clone\"] pre",
+          "position": "end"
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    }
+  ]
+}

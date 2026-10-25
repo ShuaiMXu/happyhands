@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/capture-state.schema.json",
+  "title": "Capture Plan v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "adapter", "configurations", "states"],
+  "properties": {
+    "schemaVersion": { "const": "0.1" },
+    "adapter": { "const": "web" },
+    "configurations": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "viewport"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "viewport": {
+            "type": "object", "additionalProperties": false,
+            "required": ["width", "height"],
+            "properties": {
+              "width": { "type": "integer", "minimum": 240, "maximum": 7680 },
+              "height": { "type": "integer", "minimum": 240, "maximum": 7680 }
+            }
+          }
+        }
+      }
+    },
+    "states": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "start", "actions"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "sourceEntries": {"type":"array","minItems":1,"maxItems":32,"uniqueItems":true,"items":{"type":"string","minLength":1,"maxLength":500}},
+          "ready": {"type":"object","additionalProperties":false,"required":["selector"],"properties":{"selector":{"type":"string","minLength":1},"text":{"type":"string","minLength":1},"timeoutMs":{"type":"integer","minimum":1000,"maximum":120000}}},
+          "captureMode": { "type": "string", "enum": ["viewport", "full-page", "page-surfaces"] },
+          "start": {
+            "type": "object", "additionalProperties": false,
+            "required": ["url"],
+            "properties": { "url": { "type": "string", "format": "uri", "pattern": "^https?://" } }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                { "$ref": "#/$defs/click" },
+                { "$ref": "#/$defs/fill" },
+                { "$ref": "#/$defs/waitFor" },
+                { "$ref": "#/$defs/navigate" },
+                { "$ref": "#/$defs/scrollTo" },
+                { "$ref": "#/$defs/scrollHorizontal" },
+                { "$ref": "#/$defs/assertState" },
+                { "$ref": "#/$defs/pressKey" },
+                { "$ref": "#/$defs/fillSelector" },
+                { "$ref": "#/$defs/validateForm" },
+                { "$ref": "#/$defs/clickSelector" },
+                { "$ref": "#/$defs/hoverSelector" },
+                { "$ref": "#/$defs/focusSelector" }
+              ]
+            }
+          },
+          "configurations": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": { "$ref": "#/$defs/id" }
+          },
+          "scrollSurface": { "$ref": "#/$defs/scrollSurface" },
+          "region": { "$ref": "#/$defs/region" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "region": {
+      "type": "object", "additionalProperties": false,
+      "required": ["selector", "source"],
+      "properties": {
+        "selector": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "instance": { "$ref": "#/$defs/componentInstance" },
+        "source": {
+          "type": "object", "additionalProperties": false,
+          "required": ["file", "line", "anchor"],
+          "properties": {
+            "file": { "type": "string", "minLength": 1, "maxLength": 500 },
+            "line": { "type": "integer", "minimum": 1 },
+            "anchor": { "type": "string", "minLength": 1, "maxLength": 300 },
+            "component": { "type": "string", "minLength": 1, "maxLength": 200 }
+          }
+        }
+      }
+    },
+    "componentInstance": {
+      "type": "object", "additionalProperties": false, "required": ["id", "variants"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "variants": { "type": "array", "maxItems": 12, "items": {
+          "type": "object", "additionalProperties": false, "required": ["name", "attribute", "value"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "attribute": { "type": "string", "pattern": "^(data-[a-z][a-z0-9-]*|class)$", "maxLength": 80 },
+            "value": { "type": "string", "minLength": 1, "maxLength": 200 }
+          }
+        } }
+      }
+    },
+    "click": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "role", "name"],
+      "properties": { "type": { "const": "click" }, "role": { "enum": ["button", "link", "checkbox", "radio", "tab"] }, "name": { "type": "string", "minLength": 1 }, "scope": { "type": "string", "minLength": 1, "maxLength": 300 } }
+    },
+    "fill": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "label", "value"],
+      "properties": { "type": { "const": "fill" }, "label": { "type": "string", "minLength": 1 }, "value": { "type": "string" } }
+    },
+    "waitFor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": { "type": { "const": "wait-for" }, "text": { "type": "string", "minLength": 1 }, "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 30000 } }
+    },
+    "scrollHorizontal": {
+      "type": "object", "additionalProperties": false, "required": ["type", "selector", "position"],
+      "properties": { "type": { "const": "scroll-horizontal" }, "selector": { "type": "string", "minLength": 1, "maxLength": 300 }, "position": { "enum": ["start", "end"] } }
+    },
+    "scrollTo": {"type":"object","additionalProperties":false,"required":["type","selector"],"properties":{"type":{"const":"scroll-to"},"selector":{"type":"string","minLength":1,"maxLength":300},"offset":{"type":"integer","minimum":0,"maximum":500},"container":{"type":"string","minLength":1,"maxLength":300}}},
+    "assertState": {"type":"object","additionalProperties":false,"required":["type","selector"],"properties":{"type":{"const":"assert-state"},"selector":{"type":"string","minLength":1,"maxLength":300},"state":{"enum":["visible","hidden","focused","hovered","checked","unchecked","disabled","enabled"]},"attribute":{"enum":["aria-expanded","aria-invalid","aria-checked","data-state","aria-selected","aria-pressed"]},"value":{"type":"string","maxLength":200}},"oneOf":[{"required":["state"],"not":{"anyOf":[{"required":["attribute"]},{"required":["value"]}]}},{"required":["attribute","value"],"not":{"required":["state"]}}]},
+    "pressKey": {"type": "object", "additionalProperties": false, "required": ["type", "selector", "key"], "properties": {"type": {"const": "press-key"}, "selector": {"type": "string", "minLength": 1, "maxLength": 300}, "key": {"enum": ["Escape", "Tab", "Enter", "ArrowDown", "ArrowUp"]}}},
+    "fillSelector": {"type": "object", "additionalProperties": false, "required": ["type", "selector", "value"], "properties": {"type": {"const": "fill-selector"}, "selector": {"type": "string", "minLength": 1, "maxLength": 300}, "value": {"type": "string", "maxLength": 2000}}},
+    "validateForm": {"type": "object", "additionalProperties": false, "required": ["type", "selector", "valid"], "properties": {"type": {"const": "validate-form"}, "selector": {"type": "string", "minLength": 1, "maxLength": 300}, "valid": {"type": "boolean"}}},
+    "clickSelector": {"type": "object", "additionalProperties": false, "required": ["type", "selector"], "properties": {"type": {"const": "click-selector"}, "selector": {"type": "string", "minLength": 1, "maxLength": 300}}},
+    "scrollSurface": {"type":"object","additionalProperties":false,"required":["selector","top","scrollHeight","clientHeight","clientWidth"],"properties":{"selector":{"type":"string","minLength":1,"maxLength":300},"top":{"type":"integer","minimum":0,"maximum":100000},"scrollHeight":{"type":"integer","minimum":1,"maximum":100000},"clientHeight":{"type":"integer","minimum":1,"maximum":7680},"clientWidth":{"type":"integer","minimum":1,"maximum":7680}}},
+    "hoverSelector": {"type":"object","additionalProperties":false,"required":["type","selector"],"properties":{"type":{"const":"hover-selector"},"selector":{"type":"string","minLength":1,"maxLength":300}}},
+    "focusSelector": {"type":"object","additionalProperties":false,"required":["type","selector"],"properties":{"type":{"const":"focus-selector"},"selector":{"type":"string","minLength":1,"maxLength":300}}},
+    "navigate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "url"],
+      "properties": { "type": { "const": "navigate" }, "url": { "type": "string", "format": "uri", "pattern": "^https?://" } }
+    }
+  }
+}

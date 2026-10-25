@@ -1,0 +1,13 @@
+{
+  "id": "component-reuse-planner",
+  "version": "0.3.0",
+  "role": "plan",
+  "description": "Decide whether a proposed change should reuse, extend or introduce a component using the governed project inventory.",
+  "requiredInputs": [
+    "designFoundation",
+    "finding"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "componentReusePlanner",
+  "maturity": "bounded"
+}

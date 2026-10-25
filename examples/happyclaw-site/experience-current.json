@@ -1,0 +1,74 @@
+{
+  "version": "0.1",
+  "project": {
+    "name": "HappyClaw marketing site — responsive CTA review",
+    "goal": "Help enterprise teams understand the private deployment offer and choose the right next step",
+    "audience": "Enterprise teams evaluating a self-hosted AI agent platform",
+    "task": "Choose between trying the product, viewing the source and contacting the team",
+    "source": "https://github.com/ShuaiMXu/happyclaw-site (baseline 70a9980, reviewed 2026-09-21)."
+  },
+  "designFoundation": {
+    "status": "observed",
+    "brand": {
+      "principles": ["Enterprise-ready", "Self-hosted", "Open source"],
+      "voice": ["Direct", "Specific", "Professional"],
+      "assets": [
+        {
+          "name": "HappyClaw full logo",
+          "description": "Orange claw mark with the HappyClaw wordmark",
+          "source": "public/assets/logo-full.svg",
+          "status": "observed"
+        }
+      ]
+    },
+    "tokens": [],
+    "components": [
+      {
+        "name": "Hero CTA group",
+        "source": "src/components/Hero.astro",
+        "variants": ["desktop", "mobile"],
+        "states": ["default"],
+        "status": "observed"
+      }
+    ],
+    "patterns": []
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "state": "390×844 baseline capture / first screen",
+      "observation": "The three hero actions are forced into one equal-width row. The middle label is visibly truncated to ‘View on GitHu...’, so the destination is not fully communicated.",
+      "origin": "browser"
+    },
+    {
+      "id": "E2",
+      "state": "Repository / src/styles/global.css",
+      "observation": "At the mobile breakpoint, .hero-cta disables wrapping and each link uses min-width: 0, overflow: hidden and text-overflow: ellipsis.",
+      "origin": "source-code"
+    },
+    {
+      "id": "E3",
+      "state": "Repository / src/components/Hero.astro",
+      "observation": "The action group mixes Chinese labels with ‘View on GitHub’, increasing label length and weakening consistency for the Chinese page.",
+      "origin": "source-code"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "title": "The mobile hero truncates a primary decision label",
+      "evidenceIds": ["E1", "E2", "E3"],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 1,
+      "proposal": "Keep all three actions understandable at 390px. Use concise Chinese labels and a responsive layout that preserves complete text and clear primary, secondary and contact priority without ellipsis."
+    }
+  ],
+  "review": {
+    "status": "needs-evidence",
+    "before": "Current branch 70a9980 captured at 1280×800 and 390×844; the mobile GitHub action is truncated.",
+    "after": "Pending",
+    "judgment": "pending",
+    "reason": ""
+  }
+}

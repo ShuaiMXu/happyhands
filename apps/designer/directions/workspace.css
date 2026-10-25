@@ -1,0 +1,14 @@
+#fullscreen-shell.directions-mode :is(.pd-sidebar,.pd-inspector,.studio-canvas-toolbar,.studio-controls,.studio-board-footer,.studio-context){display:none!important}
+#fullscreen-shell.directions-mode .studio-center{overflow:auto;border:0}
+.workspace-directions{max-width:1120px;margin:0 auto;padding:32px;overflow-wrap:anywhere}
+.workspace-directions h1{font-size:24px;margin:0 0 12px}
+.workspace-directions p{line-height:1.7;color:var(--ff-muted,#686868)}
+.workspace-directions>section{margin:24px 0}
+.workspace-directions .direction-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.workspace-directions h3{font-size:18px;line-height:1.5;margin:12px 0}
+.workspace-directions small{color:var(--ff-muted,#686868)}
+.workspace-directions details{margin:16px 0}
+.workspace-directions summary{cursor:pointer}
+.workspace-directions pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+.workspace-directions button{cursor:pointer}
+@media(max-width:899px){.workspace-directions{padding:20px}.workspace-directions .direction-grid{grid-template-columns:1fr}}

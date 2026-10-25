@@ -1,0 +1,57 @@
+/* Report is a reading surface: result, one comparison, then supporting records. */
+#workbench-shell .review-shell{padding-top:24px;max-width:1280px}
+#workbench-shell .review-heading{padding:0;margin-bottom:16px}
+#workbench-shell .review-heading h1{margin:0 0 8px;font-size:26px;letter-spacing:-.02em}
+#workbench-shell .review-heading .eyebrow{display:none}
+#workbench-shell .review-heading p{margin-bottom:0}
+#workbench-shell .source-language-note{font-size:12px;margin:0 0 16px}
+#workbench-shell .panel{box-shadow:none;border:1px solid var(--ff-line);padding:24px}
+#workbench-shell .report-section-title{font-size:14px;margin:0 0 12px}
+#workbench-shell #report-primary-action{padding:0;border:0}
+#workbench-shell .report-process{margin-top:12px;border-top:1px solid var(--ff-line)}
+#workbench-shell :is(.report-process,.report-check-details,.report-context)>summary{min-height:44px;display:list-item;align-content:center;font-size:13px;cursor:pointer}
+#workbench-shell #run-panel>.panel-heading{margin-bottom:12px}
+#workbench-shell .run-heading{margin:16px 0}
+#workbench-shell .run-heading h2{font-size:16px}
+#workbench-shell .run-heading p{margin-bottom:0;max-width:65ch}
+#workbench-shell .run-reviews{margin:20px 0 28px}
+.report-verdict{padding:20px;background:var(--ff-soft);border-radius:var(--ff-radius-control)}
+.report-verdict-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.report-verdict h3{font:600 18px/1.5 var(--ff-font);letter-spacing:0;margin:0}
+.report-verdict-lead{margin:12px 0;font-size:14px}
+.report-verdict .visual-review-coverage{border:0;padding:0;background:none;margin:12px 0;font-size:12px}
+.report-verdict .visual-review-coverage>strong{font-weight:500}
+.report-verdict .visual-review-coverage p{margin:4px 0}
+.report-verdict :is(details,li){font-size:13px;line-height:1.8}
+.report-verdict details>p{max-width:75ch;white-space:pre-line}
+.report-verdict summary,.run-reviews>details>summary{min-height:44px;align-content:center;cursor:pointer}
+.report-verdict[data-verdict=fail] .page-review-verdict{background:var(--ff-warning-bg,#fff1e8)}
+.report-human-decision{font-size:13px;border-top:1px solid var(--ff-line);padding-top:12px;margin:12px 0 0}
+.report-review-finding{margin:16px 0;padding:12px;background:var(--ff-warning-bg,#fff1e8);border-radius:var(--ff-radius-control);font-size:13px}
+.report-review-finding p{margin:8px 0 0}
+#workbench-shell .report-comparison h3{font-size:18px;margin:0 0 16px;letter-spacing:0}
+#report-evidence-picker label{display:grid;gap:8px;font-size:13px;max-width:600px}
+#report-evidence-picker select{width:100%;min-width:0}
+#report-evidence-picker p{margin:8px 0}
+#workbench-shell .run-pair{gap:16px}
+#workbench-shell .run-pair figure{background:var(--ff-soft);border-radius:var(--ff-radius-control)}
+#workbench-shell .run-pair a{display:block;min-width:0}
+#workbench-shell .run-pair img{height:360px;object-fit:contain;object-position:top}
+#workbench-shell .run-pair figcaption{font-size:12px;letter-spacing:0;text-transform:none;padding:12px 16px;color:var(--ff-text)}
+.report-check-details{margin-top:20px;border-top:1px solid var(--ff-line)}
+.report-context{margin-top:20px}.report-context>.review-grid{margin-top:20px}
+#workbench-shell .report-context .panel{border:0;padding:16px;box-shadow:none}
+.run-reviews>details{border-top:1px solid var(--ff-line);font-size:13px}
+.run-reviews a{text-decoration:underline;text-underline-offset:3px;display:inline-block;min-height:44px;align-content:center;margin-right:16px;overflow-wrap:anywhere}
+.report-verification-row{padding:16px 0;border-top:1px solid var(--ff-line)}
+.report-verification-row>span{display:inline-block;font-size:12px;margin-left:12px;color:var(--ff-muted)}
+.report-verification-row p{margin:8px 0;max-width:75ch}
+@media(max-width:899px){#workbench-shell .review-shell{padding-top:20px}#workbench-shell .panel{padding:18px}#workbench-shell .review-heading h1{font-size:23px}.report-verdict{padding:16px}#workbench-shell .run-pair img{height:280px}#workbench-shell .run-heading{display:block}#workbench-shell .run-heading .foundation-count{display:inline-block;margin-top:8px}}
+#workbench-shell #notice:empty{display:none}
+#workbench-shell #report-result-panel{margin-bottom:20px;padding:0;border:0;background:transparent}
+#report-result-panel .run-reviews{margin:0}
+#workbench-shell #report-result-panel .report-verdict{background:var(--ff-surface);padding:24px;border:1px solid var(--ff-line);border-radius:var(--ff-radius-panel)}
+@media(max-width:899px){#workbench-shell .report-topbar{height:auto;min-height:0;flex-wrap:wrap;gap:8px;padding:12px 16px}#workbench-shell .report-topbar .workbench-current-review{width:100%;max-width:100%}#workbench-shell .report-topbar .workbench-topbar-actions{width:100%;flex-wrap:nowrap;justify-content:space-between}#workbench-shell .report-topbar .language-picker>span{display:none}#workbench-shell #report-result-panel .report-verdict{padding:18px}}
+#workbench-shell .run-pair figcaption a{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;text-decoration:underline;text-underline-offset:3px}
+#workbench-shell .run-pair figcaption{display:flex;flex-direction:column;align-items:flex-start}
+@media(min-width:900px){.report-verdict .visual-review-coverage{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px}.report-verdict .visual-review-coverage>strong,.report-verdict .visual-review-coverage>p:last-child{grid-column:1/-1}}

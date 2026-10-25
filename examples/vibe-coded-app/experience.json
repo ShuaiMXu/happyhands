@@ -1,0 +1,57 @@
+{
+  "version": "0.1",
+  "project": {
+    "name": "Northstar tasks — fictional sample",
+    "goal": "Help a new user create and finish their first task",
+    "audience": "Solo makers organizing a small project",
+    "task": "Create a first task from the empty project view",
+    "source": "Authored UI scenario; no live app or repository connected"
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "state": "Desktop / empty project",
+      "observation": "The primary Create task action is visually identical to low-priority settings links and sits below three empty metrics cards.",
+      "origin": "authored-sample"
+    },
+    {
+      "id": "E2",
+      "state": "Mobile / empty project",
+      "observation": "The first-task action falls below the initial viewport while empty metrics occupy the top of the page.",
+      "origin": "authored-sample"
+    },
+    {
+      "id": "E3",
+      "state": "Desktop / empty project",
+      "observation": "The empty-state copy says No data yet but gives no reason to create a task or explanation of what happens next.",
+      "origin": "authored-sample"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "title": "The first-task action is buried behind empty dashboard metrics",
+      "evidenceIds": ["E1", "E2"],
+      "impact": 5,
+      "confidence": 4,
+      "effort": 2,
+      "proposal": "Make task creation the visual primary action in the empty state. Move or suppress metrics until a task exists. Keep the action visible above the fold on mobile."
+    },
+    {
+      "id": "F2",
+      "title": "The empty state does not explain the first step",
+      "evidenceIds": ["E3"],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 1,
+      "proposal": "Replace generic empty copy with a short task-oriented explanation and one concrete example, while preserving a single primary action."
+    }
+  ],
+  "review": {
+    "status": "not-started",
+    "before": "Authored sample only; no baseline screenshot captured",
+    "after": "No code change or after screenshot yet",
+    "judgment": "pending",
+    "reason": ""
+  }
+}

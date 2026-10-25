@@ -1,0 +1,13 @@
+{
+  "id": "information-architecture-reviewer",
+  "version": "0.2.0",
+  "role": "diagnose",
+  "description": "Review navigation, grouping and content structure against a product critical task.",
+  "requiredInputs": [
+    "baselineCapture",
+    "criticalTask"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "informationArchitectureReviewer",
+  "maturity": "bounded"
+}

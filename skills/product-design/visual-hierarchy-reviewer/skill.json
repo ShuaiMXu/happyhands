@@ -1,0 +1,13 @@
+{
+  "id": "visual-hierarchy-reviewer",
+  "version": "0.4.0",
+  "role": "diagnose",
+  "description": "Review task hierarchy and product-specific design language using screenshot evidence and a contextual rubric.",
+  "requiredInputs": [
+    "baselineCapture",
+    "criticalTask"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "visualHierarchyReviewer",
+  "maturity": "bounded"
+}

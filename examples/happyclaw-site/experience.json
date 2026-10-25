@@ -1,0 +1,127 @@
+{
+  "version": "0.1",
+  "project": {
+    "name": "HappyClaw site — repository review",
+    "goal": "Help an interested team understand the offer and choose a path to try or deploy HappyClaw",
+    "audience": "Teams evaluating a self-hosted AI agent workspace",
+    "task": "Understand the value and start a trial from the homepage",
+    "source": "https://github.com/ShuaiMXu/happyclaw-site (baseline cf1da7b, reviewed 2026-10-10). The live happyclaw.cc page currently differs from this repository."
+  },
+  "designFoundation": {
+    "status": "observed",
+    "brand": {
+      "principles": ["Open-source", "Self-hosted", "Built for team collaboration"],
+      "voice": ["Direct", "Technical but outcome-led"],
+      "assets": [
+        {
+          "name": "HappyClaw logo",
+          "description": "Shrimp mark paired with the HappyClaw wordmark",
+          "source": "src/components/Header.astro",
+          "status": "observed"
+        }
+      ]
+    },
+    "tokens": [
+      {
+        "category": "color",
+        "name": "Primary teal",
+        "value": "Existing teal accent used by the homepage",
+        "source": "src/styles/global.css",
+        "status": "observed"
+      },
+      {
+        "category": "color",
+        "name": "Dark navy surface",
+        "value": "Existing dark background used by the homepage",
+        "source": "src/styles/global.css",
+        "status": "observed"
+      }
+    ],
+    "components": [
+      {
+        "name": "Header",
+        "source": "src/components/Header.astro",
+        "variants": ["desktop", "mobile"],
+        "states": ["default", "mobile-menu"],
+        "status": "observed"
+      },
+      {
+        "name": "Hero",
+        "source": "src/components/Hero.astro",
+        "variants": ["homepage"],
+        "states": ["default"],
+        "status": "observed"
+      }
+    ],
+    "patterns": [
+      {
+        "name": "Primary and secondary action pair",
+        "description": "A filled primary action paired with an outlined secondary action",
+        "source": "src/components/Hero.astro",
+        "status": "observed"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "state": "Repository / src/components/Hero.astro",
+      "observation": "The hero headline is only the product name, HappyClaw. The first descriptive line labels it a self-hosted multi-user AI Agent system; it does not state the team outcome.",
+      "origin": "source-code"
+    },
+    {
+      "id": "E2",
+      "state": "Repository / src/components/Hero.astro",
+      "observation": "The two hero actions are a jump to Quick start and an external GitHub link. The online trial shown on the current public site is absent from this repository version.",
+      "origin": "source-code"
+    },
+    {
+      "id": "E3",
+      "state": "Repository / src/pages/index.astro",
+      "observation": "The product screenshots come after the full-height hero and a feature-highlights section, so proof of the working interface is not in the first screen of this repository version.",
+      "origin": "source-code"
+    },
+    {
+      "id": "E4",
+      "state": "Mobile menu / src/components/Header.astro",
+      "observation": "The mobile menu button changes only the menu's hidden class. It does not identify the controlled menu or expose whether that menu is expanded, so assistive technology cannot read the interaction state.",
+      "origin": "source-code"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "title": "The first screen describes the category before the user outcome",
+      "evidenceIds": ["E1", "E2"],
+      "impact": 5,
+      "confidence": 4,
+      "effort": 2,
+      "proposal": "Lead with a concrete team outcome and explain self-hosting as the supporting mechanism. Make the online trial the primary action; keep GitHub and deployment instructions as clear alternatives."
+    },
+    {
+      "id": "F2",
+      "title": "The working product appears too late in the page sequence",
+      "evidenceIds": ["E3"],
+      "impact": 3,
+      "confidence": 3,
+      "effort": 3,
+      "proposal": "Bring a representative workspace screenshot or compact product preview into the first screen, with a caption explaining the user task it demonstrates."
+    },
+    {
+      "id": "F3",
+      "title": "The mobile menu does not expose its open state",
+      "evidenceIds": ["E4"],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 1,
+      "proposal": "Associate the menu button with the mobile menu, keep aria-expanded synchronized with the visible state, and use the same close path when a menu item is selected. Preserve the existing navigation content and visual styling."
+    }
+  ],
+  "review": {
+    "status": "needs-evidence",
+    "before": "Local baseline cf1da7b inspected on desktop: the first screen centered on the product name and technical category, with no product view visible",
+    "after": "Local branch preview inspected on desktop and 390px mobile: outcome-first copy, trial as primary action and workspace screenshot visible; Astro build passed. No deployment or user-task result claimed",
+    "judgment": "pending",
+    "reason": ""
+  }
+}

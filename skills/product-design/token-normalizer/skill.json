@@ -1,0 +1,13 @@
+{
+  "id": "token-normalizer",
+  "version": "0.1.0",
+  "role": "foundation",
+  "description": "Map raw visual values and aliases into candidate semantic design tokens without silently changing the product.",
+  "requiredInputs": [
+    "repository",
+    "designFoundation"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

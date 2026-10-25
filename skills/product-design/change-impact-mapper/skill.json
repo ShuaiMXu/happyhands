@@ -1,0 +1,13 @@
+{
+  "id": "change-impact-mapper",
+  "version": "0.1.0",
+  "role": "diagnose",
+  "description": "Map a code change to affected routes, components, design foundations and critical user tasks.",
+  "requiredInputs": [
+    "gitDiff",
+    "designFoundation"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

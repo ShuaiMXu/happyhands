@@ -1,0 +1,17 @@
+# Source impact evidence
+
+Continues [#10](https://github.com/ShuaiMXu/creative-os/issues/10) after PR #104. Route/state reduction and real incremental product acceptance remain incomplete.
+
+Design-system extraction 0.7.0 retains the parsed module graph for all scanned product modules, including ordinary utilities outside component directories. File hashes, import/re-export lines, resolved alias configuration provenance and unresolved references remain bound to the extraction and capture. The graph is capped at 10,000 edges and 1,000 issues; omissions make it explicitly partial. Old extractions are unchanged and may lack this graph.
+
+Current-source comparison now scans the current graph and rechecks the complete repository fingerprint afterwards. Impact traversal uses both the accepted graph and current graph. Removed imports and deleted consumers therefore retain their old potential impact instead of disappearing when only current code is examined. Traversal is bounded to 32 edges per chain, 256 consumers per changed file/revision and 4,096 references overall; limits are explicit. Cycles terminate.
+
+Known source paths are associated with capture-plan region sources (or historical source references when no plan exists). State IDs, start/navigation URLs, changed paths and provenance chains are retained. The bilingual report distinguishes potentially affected states from states whose impact is unknown. It never assigns `unaffected` from missing source evidence.
+
+This is positive reachability evidence, not proof of runtime rendering or complete routing. A region's source is not necessarily the entry module of its whole page. `capturePolicy` remains `all-configured-states`; excluded/reviewed state lists stay empty. Unknown aliases, dynamic dependencies, incomplete scans, legacy graphs and missing route entry bindings prevent claims of complete impact coverage. No configured states, QA checks, approvals or user decisions are removed.
+
+Validation includes a real temporary Git capture/onboarding flow with bound before/after graphs, removal of old consumers, utility-module chains, cyclic dependencies, multiple device references, navigation URLs, graph/traversal limits, bilingual display and literal untrusted state names. The full suite initially exposed the expected extraction-version change in a previous alias test; its pinned expectation was updated, and all 16 affected alias/impact tests pass. The other 446 tests passed in that full run. Fourteen regression cases, production build and both report languages pass.
+
+A read-only HappyClaw probe at clean commit `2bffa88425c7f0c77b11a7c6b168d1448650b51a` applies a hypothetical BrandMark change to the real source graph and existing `d0098f93` component plan. It identifies Header/Hero/Footer and the index consumer chain, and maps `brand-header`, `brand-hero`, `brand-footer`. The complete repository fingerprint is unchanged before/after. Artifact: `.harness/verification/happyclaw-components/source-impact.json`. This is not an actual source correction, new capture, independent model assessment or accepted incremental review; baseline-graph and unresolved-reference limitations remain recorded.
+
+Next: establish route entry/dependency contracts with complete exclusion evidence, then select matching route/task states without marking skipped pages reviewed; verify with a real HappyClaw change and independent review, and retain the existing user judgment gate. Intentional Foundation-update handling remains separate unfinished #10 work.

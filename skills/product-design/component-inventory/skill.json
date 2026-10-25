@@ -1,0 +1,12 @@
+{
+  "id": "component-inventory",
+  "version": "0.8.0",
+  "role": "foundation",
+  "description": "Build a component inventory with source paths, variants, composition and known consumers.",
+  "requiredInputs": [
+    "repository"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "componentInventory",
+  "maturity": "bounded"
+}

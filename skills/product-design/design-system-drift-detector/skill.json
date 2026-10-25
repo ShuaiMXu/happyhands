@@ -1,0 +1,13 @@
+{
+  "id": "design-system-drift-detector",
+  "version": "0.2.0",
+  "role": "foundation",
+  "description": "Detect implementation values that diverge from the design foundation as ungoverned values, semantic conflicts or off-scale steps.",
+  "requiredInputs": [
+    "repository",
+    "designFoundation"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "designSystemDrift",
+  "maturity": "bounded"
+}

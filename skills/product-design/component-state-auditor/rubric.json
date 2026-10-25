@@ -1,0 +1,52 @@
+{
+  "version": "0.2.0",
+  "note": "The required sets below are the judgement of this Skill version. A project can replace this file to declare its own component classes; the audit reports which rubric version produced a result.",
+  "classes": [
+    {
+      "id": "async-task-item",
+      "description": "A unit of work the product performs for the user over time: a generation, render, upload, export or job.",
+      "match": ["job", "task", "shot", "render", "generation", "generate", "upload", "export", "batch", "clip", "scene"],
+      "requiredStates": ["empty", "pending", "in-progress", "complete", "needs-review", "failed"],
+      "requiredAffordances": ["failure-reason", "retry"],
+      "optionalAffordances": ["batch-retry", "progress-copy", "skeleton", "status-pill"],
+      "rationale": "Work that takes time fails, partially succeeds, and produces output a person has to check before trusting it. A card that renders only its finished state leaves the user without a way back."
+    },
+    {
+      "id": "collection",
+      "description": "A list, table, grid or feed of items.",
+      "match": ["list", "table", "grid", "feed", "gallery", "inbox", "results", "timeline"],
+      "requiredStates": ["empty", "in-progress", "complete", "failed"],
+      "requiredAffordances": ["failure-reason"],
+      "optionalAffordances": ["partial", "skeleton"],
+      "rationale": "A collection is empty before it is full and can fail to load. The empty state is the first thing a new user sees."
+    },
+    {
+      "id": "interactive-control",
+      "description": "A control a person operates directly: button, input, select, toggle, field.",
+      "match": ["button", "input", "select", "toggle", "switch", "field", "checkbox", "radio", "slider", "form"],
+      "requiredStates": ["default", "disabled", "in-progress"],
+      "requiredAffordances": [],
+      "optionalAffordances": ["failed"],
+      "rationale": "A control that cannot express unavailable or working leaves a person clicking it twice."
+    }
+  ],
+  "vocabulary": {
+    "empty": ["empty", "none", "blank", "no data", "nodata", "no result", "placeholder"],
+    "pending": ["pending", "queued", "queue", "waiting", "todo", "not started", "idle", "unstarted"],
+    "in-progress": ["in progress", "progress", "loading", "generating", "running", "busy", "processing", "uploading", "submitting", "working"],
+    "complete": ["complete", "completed", "done", "generated", "success", "succeeded", "finished", "ready"],
+    "needs-review": ["needs review", "review", "needs check", "unchecked", "to confirm", "confirm", "verify", "approval", "unconfirmed"],
+    "failed": ["failed", "failure", "error", "fail", "rejected", "timeout", "invalid"],
+    "disabled": ["disabled", "readonly", "read only", "locked", "inactive", "unavailable"],
+    "partial": ["partial", "partially", "mixed", "incomplete", "some failed"],
+    "default": ["default", "normal", "rest", "enabled"]
+  },
+  "affordances": {
+    "failure-reason": ["reason", "error message", "errormessage", "cause", "detail", "why"],
+    "retry": ["retry", "try again", "tryagain", "again", "resend", "rerun", "regenerate"],
+    "batch-retry": ["retry all", "retryall", "retry failed", "retryfailed", "bulk retry", "batch retry"],
+    "progress-copy": ["generating", "processing", "uploading", "正在"],
+    "skeleton": ["skeleton", "shimmer", "pulse"],
+    "status-pill": ["pill", "badge", "chip", "tag"]
+  }
+}

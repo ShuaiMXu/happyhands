@@ -1,0 +1,13 @@
+{
+  "id": "component-state-auditor",
+  "version": "0.3.0",
+  "role": "foundation",
+  "description": "Audit documented components against a versioned rubric of the states their class has to be able to express.",
+  "requiredInputs": [
+    "repository",
+    "designFoundation"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "componentStateAudit",
+  "maturity": "bounded"
+}

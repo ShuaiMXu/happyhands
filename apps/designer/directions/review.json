@@ -1,0 +1,82 @@
+{
+  "id": "happyclaw-full-page-review-v2",
+  "project": "HappyClaw",
+  "projectSource": "https://github.com/ShuaiMXu/happyclaw-site",
+  "reviewedAt": "2026-09-30",
+  "evidenceDate": "2026-09-30",
+  "evidenceRunId": "afc0b1b2",
+  "sourceCommit": "fc4709b",
+  "evidenceScope": "Live full-page review: 6 anchored states across desktop and mobile, 11 section pairs, full-page captures, 14 skills and an independent visual review. Source findings were reconciled against local commit fc4709b.",
+  "items": [
+    {
+      "id": "foundation",
+      "title": "先补齐可访问性与可解析的设计基础",
+      "level": "P0 · 基础质量 · 建议优先",
+      "evidence": "最新源码已清除 global.css 尾部无效标签并重构移动 CTA；线上页面仍缺少唯一 main 地标，部分橙色文字/表面对比不足，Logo 名称、滚动区域键盘访问和视频语义仍需核实。",
+      "judgment": "这是后续设计系统治理的前置条件。已修问题不再重复执行，剩余问题需要逐项绑定 DOM 与同状态截图。",
+      "keep": "保留品牌橙色、海洋视频、现有内容和全部有效链接。",
+      "change": "补齐 main 与可访问名称；为滚动区域建立键盘路径；明确视频是内容还是装饰；在不改变品牌色相的前提下批准可达标的前景/背景组合。",
+      "scope": "语义结构、交互状态与色彩角色；小到中等范围，不重排页面。",
+      "risk": "只追求自动检查通过可能破坏视觉识别；每个色彩修改必须保留品牌角色并做前后视觉复核。",
+      "accept": "桌面与移动端关键状态无 critical/serious axe 阻断；普通文本达到 4.5:1，大文本和 UI 图形达到 3:1；键盘可到达所有操作与滚动内容。",
+      "source": "afc0b1b2 / global.css / Header.astro / page landmarks",
+      "suggested": "先执行，作为其他方向的质量门槛"
+    },
+    {
+      "id": "tokens",
+      "title": "批准 HappyClaw Foundation v1",
+      "level": "P1 · 品牌与设计系统 · 建议优先",
+      "evidence": "页面并存橙色品牌、青色玻璃操作、海面摄影、白色卡片、黑色信任区和终端表面；审阅发现 37 个未治理 literal colors、18 个重复颜色和 6 个圆角尺度。",
+      "judgment": "当前视觉资产各自可用，但缺少语义关系，Marketing 与 Product 难以稳定复用同一品牌。",
+      "keep": "保留 HappyClaw Logo、橙色识别、真实产品画面和海洋品牌资产。",
+      "change": "建立品牌色→语义色→组件的映射；批准字体、间距、容器、圆角、动效和媒体规则；记录允许例外及其原因。",
+      "scope": "Foundation 文件、token 与使用文档；中等范围，先不批量改写所有区块。",
+      "risk": "机械归一会抹掉内容差异；先在 Hero、证据区和 Quick Start 三种表面验证。",
+      "accept": "Foundation 快照可版本化并通过解析；三类表面共享语义变量；品牌角色、对比度、响应式和例外均有证据。",
+      "source": "afc0b1b2 skills / global.css / full-page captures",
+      "suggested": "基础质量通过后立即推进"
+    },
+    {
+      "id": "components",
+      "title": "用组件变体替代重复卡片栅格",
+      "level": "P1 · 组件体系 · 建议优先",
+      "evidence": "私有化原因、难处、能力、案例、开源优势和团队能力大量采用相似卡片栅格；按钮、章节标题、证据块、终端和案例卡尚无完整共享契约。",
+      "judgment": "组件分文件已经具备，但页面任务差异没有进入组件语义，导致全页节奏扁平。",
+      "keep": "保留现有区块、内容顺序、功能链接和真实产品截图。",
+      "change": "沉淀 Button、SectionHeading、DecisionBlock、EvidenceBlock、CapabilityGrid、CaseCard、DemoFrame 与 Terminal；用显式变体表达语义差异。",
+      "scope": "先按钮、章节标题和证据块，再处理卡片与演示容器；分批交付。",
+      "risk": "不同语义的卡片不能为了复用强行合并；组件 API 必须保留内容密度与媒体差异。",
+      "accept": "同类控件共享实现；Decision、Evidence、Capability、Action 四种页面模式可辨识；320–1280px 与键盘状态有配对证据。",
+      "source": "afc0b1b2 sections / Hero.astro / Projects.astro / CTA.astro",
+      "suggested": "与 Foundation v1 配套推进"
+    },
+    {
+      "id": "responsive",
+      "title": "完成移动端密度与浮动控件治理",
+      "level": "P1 · 响应式体验",
+      "evidence": "最新源码已将 CTA 改为主操作全宽、两个次操作分列；Three Layers、Capabilities、Projects 等说明型模块仍在 390px 使用过密双列，返回顶部控件会覆盖内容。",
+      "judgment": "CTA 的第一步已完成，但页面级移动策略仍由零散覆盖规则组成，尚未形成组件契约。",
+      "keep": "保留已完成的 CTA 网格、现有断点和移动端内容完整性。",
+      "change": "说明型卡片在窄屏改为单列；只为短项保留双列；为浮动控件建立出现阈值和内容安全区；把规则收回对应组件。",
+      "scope": "移动布局与浮动控件；中等范围，不改变桌面叙事。",
+      "risk": "全部单列会让长页面更长；根据任务类型而不是统一断点选择布局。",
+      "accept": "390px 无操作截断、内容遮挡或过短行宽；主要卡片正文可连续阅读；桌面布局无回归。",
+      "source": "afc0b1b2 mobile sections / fc4709b global.css",
+      "suggested": "在共享组件成形后执行"
+    },
+    {
+      "id": "proof",
+      "title": "把作品陈列升级为企业交付证据",
+      "level": "P1 · 内容与信任",
+      "evidence": "首页承诺企业内网部署、行业能力库与落地服务，但案例主要证明 Agent 能生成网站和工具；团队区缺少角色、责任范围与可验证背景。",
+      "judgment": "页面已经形成完整叙事链，主要缺口不在内容数量，而在主张与证据的对应关系。",
+      "keep": "保留现有案例目录、开源信息、FAQ 与部署步骤。",
+      "change": "为重点案例补充企业任务、用户角色、数据边界、Skill/Agent 流程、交付时间和可核验结果；增加部署、安全和持续服务责任矩阵。",
+      "scope": "案例与团队信任区；内容和信息设计范围，不虚构客户或指标。",
+      "risk": "缺少授权的客户资料不能公开；无法核验的内容必须标记 Demo 或删除强主张。",
+      "accept": "每项核心承诺至少对应一条可查看证据；案例能回答任务、边界、过程和结果；团队责任可被企业评估者理解。",
+      "source": "afc0b1b2 projects/team sections / live homepage copy",
+      "suggested": "并行收集真实资料，待证据齐备后发布"
+    }
+  ]
+}

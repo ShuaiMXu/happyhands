@@ -1,0 +1,13 @@
+{
+  "id": "responsive-reviewer",
+  "version": "0.2.0",
+  "role": "diagnose",
+  "description": "Review task continuity, layout and content priority across matched desktop and mobile states.",
+  "requiredInputs": [
+    "baselineCapture",
+    "criticalTask"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "responsiveReviewer",
+  "maturity": "bounded"
+}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f7f6f3">
+  <link rel="icon" type="image/png" href="/brand/happyhands-mark-ink.png">
+  <title>HappyHands · 设计方向</title>
+  <link rel="stylesheet" href="../workbench-system.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="workspace-page directions-page">
+  <aside class="workbench-navigation" aria-label="工作台导航">
+    <a class="workbench-logo" data-route="report" href="../?case=happyclaw&view=list"><img src="/brand/happyhands-logo-ink.png" alt="HappyHands"><span data-copy="workbench">设计审阅工作台</span></a>
+    <span class="workbench-nav-caption" data-copy="workspace">工作空间</span>
+    <nav class="workbench-view-nav" aria-label="工作台视图">
+      <a class="workbench-nav-link" data-route="canvas" href="../?case=happyclaw&view=canvas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M9 9v11"/></svg><span data-copy="canvas">画布</span></a>
+      <a class="workbench-nav-link" data-route="report" href="../?case=happyclaw&view=list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg><span data-copy="report">审阅报告</span></a>
+      <a class="workbench-nav-link" data-route="code" href="../?case=happyclaw&view=codediff"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 20"/></svg><span data-copy="code">代码改动</span></a>
+      <a class="workbench-nav-link" aria-current="page" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 8v8l8 5 8-5V8zM8 10l4 2 4-2M12 12v5"/></svg><span data-copy="directions">设计方向</span></a>
+    </nav>
+    <p class="workbench-nav-bottom"><i class="workbench-local-dot"></i><span data-copy="local">本地工作台</span></p>
+  </aside>
+
+  <main>
+    <header class="workbench-topbar">
+      <strong class="workbench-page-title" data-copy="pageTitle">设计方向</strong>
+      <div class="workbench-topbar-actions">
+        <label class="workbench-language"><span data-copy="language">语言</span><select id="language" aria-label="语言"><option value="zh">中文</option><option value="en">English</option></select></label>
+      </div>
+    </header>
+
+    <div class="content">
+      <ol class="workflow" aria-label="设计审阅流程">
+        <li class="complete"><span>1</span><strong data-copy="stepReview">审阅证据</strong></li>
+        <li class="current" data-workflow="direction"><span>2</span><strong data-copy="stepDirection">确认方向</strong></li>
+        <li data-workflow="execute"><span>3</span><strong data-copy="stepExecute">执行与复核</strong></li>
+      </ol>
+      <section class="hero">
+        <div>
+          <p class="wb-eyebrow">HAPPYCLAW / AI DIRECTION REVIEW</p>
+          <h1 data-copy="headline">AI 已经完成判断，你只需要决定是否采用。</h1>
+          <p data-copy="intro">工作台根据界面证据与源码整理出四个方向，并优先推荐设计基础与共享组件。先确认方向，再生成一次范围明确的源码修改。</p>
+          <div class="hero-actions"><button id="apply-ai" class="wb-button wb-button-primary" data-copy="applyAi">采用 AI 推荐</button><a href="#evidence" data-copy="viewEvidence">查看依据</a></div>
+        </div>
+        <aside class="recommendation wb-panel">
+          <span data-copy="recommendation">AI 建议</span>
+          <strong data-copy="recommendationTitle">先统一规则，再扩展表现。</strong>
+          <p data-copy="recommendationBody">优先处理设计变量与共享组件；品牌表达和内容顺序先保留，等待预览与真实任务证据。</p>
+          <small data-copy="boundary">这是基于当前截图和源码的设计判断，不是用户研究或转化结论。</small>
+        </aside>
+      </section>
+
+      <section id="evidence" class="evidence-bar wb-soft">
+        <div><span data-copy="source">证据范围</span><strong data-evidence-meta>2026-09-30 · afc0b1b2 / fc4709b</strong></div>
+        <p data-copy="sourceNote">原始证据保留原文；界面语言独立切换。每次只执行一个已接受方向。</p>
+        <a data-evidence href="#" target="_blank" rel="noopener" data-copy="openCapture">打开手机截图 ↗</a>
+      </section>
+
+      <section class="section-heading"><div><span class="wb-eyebrow" data-copy="decisionLabel">方向决策</span><h2 data-copy="decisionTitle">审阅 AI 建议</h2></div><p id="count" aria-live="polite"></p></section>
+      <section id="items" class="direction-grid" aria-label="可选择的设计建议"></section>
+
+      <section class="save-panel wb-panel">
+        <div><h2 data-copy="saveTitle">保存本轮方向</h2><p data-copy="saveBody">保存只会生成本地任务，不会修改源码。执行仍需单独确认。</p></div>
+        <div class="save-actions"><button id="submit" class="wb-button wb-button-primary" data-copy="save">保存选择</button><button id="export" class="wb-button" data-copy="export">导出 JSON</button></div>
+        <p id="status" role="status" data-copy="initialStatus">等待你的决定。</p>
+      </section>
+
+      <section class="execution-panel wb-panel" hidden>
+        <div class="section-heading"><div><span class="wb-eyebrow" data-copy="executionLabel">源码修改</span><h2 data-copy="executionTitle">执行一个已确认方向</h2></div><p data-copy="executionBody">工作台会采集基线、创建隔离修改、重新截图，并等待独立 AI 复核与人工接受。</p></div>
+        <div id="tasks" class="task-list" aria-label="已保存任务"></div>
+        <form id="exec">
+          <label><span data-copy="savedTask">已保存任务</span><select name="taskId" required></select></label>
+          <label><span data-copy="changeScope">本轮修改</span><select name="stepId" required></select></label>
+          <label class="confirm"><input type="checkbox" required><span data-copy="confirm">我确认只执行当前方向及其验收范围</span></label>
+          <button class="wb-button wb-button-primary" data-copy="start">开始修改源码</button>
+        </form>
+        <div id="jobs" class="job-list"></div>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

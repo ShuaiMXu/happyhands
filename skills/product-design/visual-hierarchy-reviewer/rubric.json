@@ -1,0 +1,56 @@
+{
+  "id": "design-language-review",
+  "version": "0.2.0",
+  "purpose": "Assess product-specific visual communication, not whether an AI authored the interface.",
+  "policy": [
+    "Use the critical task, audience and supplied design foundation as context. Distinguish observed foundation from explicitly approved direction; do not invent approval.",
+    "A gradient, centered hero, card grid, common font, dense layout or playful motion is not itself a defect. Keep coherent brand choices that serve the task.",
+    "Do not compute an AI-likeness score or enforce novelty. Familiar utility patterns can be the right choice.",
+    "A finding needs an inspected screenshot, a visible element, a concrete task or brand conflict, and the smallest scoped remedy. Put these in observation and cite screenshotRefs.",
+    "Distinguish introduced regressions from existing out-of-scope opportunities. Do not fail a scoped fix merely because an unrelated redesign could improve taste.",
+    "Without imagery, brand context or interaction evidence needed for a claim, record uncertainty. Static screenshots do not prove motion, hidden states or testimonial authenticity.",
+    "Never invent customers, metrics, quotes or product screenshots to make a design feel specific. Request a source, label a demo, or propose removal within confirmed scope."
+  ],
+  "checks": [
+    {
+      "id": "task-composition",
+      "question": "Does grouping and emphasis expose the actual decision, or flatten unrelated information into identical blocks?",
+      "counterexample": "Equal cards are useful for comparable plans or peer items; a centered hero can support one clear action."
+    },
+    {
+      "id": "product-evidence",
+      "question": "Do imagery and data explain this product, or occupy space while leaving the offer and workflow unclear?",
+      "counterexample": "An expressive illustration is valid for brand communication; an unlabeled metric needs provenance, not an accusation of fabrication."
+    },
+    {
+      "id": "type-rhythm",
+      "question": "Do text scale, line length, spacing and density make the critical task readable in each captured viewport?",
+      "counterexample": "Inter, system fonts, strict grids and dense tables are valid when they support reading and comparison."
+    },
+    {
+      "id": "surface-semantics",
+      "question": "Do color, borders, shadows and decorative layers communicate grouping and priority consistently?",
+      "counterexample": "Approved gradients, glass or large radii can be coherent; report a specific conflict such as decoration obscuring the primary action."
+    },
+    {
+      "id": "interaction-purpose",
+      "question": "Where recorded interaction evidence exists, do feedback and state changes help the user complete the task?",
+      "counterexample": "Do not infer missing error states or distracting animation from a still image; request the relevant capture."
+    },
+    {
+      "id": "brand-continuity",
+      "question": "Do the changed layout, imagery, type and components preserve the supplied brand direction across desktop and mobile?",
+      "counterexample": "Do not replace a playful or maximalist identity with minimalism solely to reduce perceived AI style."
+    },
+    {
+      "id": "spacing-relationships",
+      "question": "Within the inspected viewport, do gaps distinguish label/value/action groups from separate tasks, keep collapsed sections compact yet operable, and preserve scan paths at the product's intended density? Compare repeated components and the project spacing scale; describe the specific element and task impact rather than imposing universal pixel values.",
+      "counterexample": "Dense data tables and generous editorial layouts can both be appropriate. A token mismatch or a large gap alone is not a defect; do not force short labels to wrap or hide content to make a numeric spacing rule pass."
+    },
+    {
+      "id": "contextual-information",
+      "question": "Does default content expose the current result, next action, blockers and decision-changing limits? Keep input requirements, consequences and recovery beside the relevant control. Put optional explanation, technical paths/hashes/logs and historical detail behind a clearly labeled accessible disclosure; avoid repeated generic tips. A collapsed detail must remain discoverable and usable on touch and keyboard. Cite the inspected state and any missing interaction evidence.",
+      "counterexample": "Never hide missing evidence, pending human decisions, destructive consequences, required input instructions or error recovery only in a tooltip. Exact technical evidence stays available in full; specialist tools may legitimately show it by default. Do not remove a disclaimer that materially changes the conclusion."
+    }
+  ]
+}

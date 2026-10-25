@@ -1,0 +1,13 @@
+{
+  "id": "error-recovery-reviewer",
+  "version": "0.1.0",
+  "role": "diagnose",
+  "description": "Review errors, recovery paths and prevention for a critical user task.",
+  "requiredInputs": [
+    "baselineCapture",
+    "criticalTask"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "trust-conversion-reviewer",
+  "version": "0.1.0",
+  "role": "diagnose",
+  "description": "Review whether proof, risk information and next actions support a credible user decision.",
+  "requiredInputs": [
+    "baselineCapture",
+    "criticalTask"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

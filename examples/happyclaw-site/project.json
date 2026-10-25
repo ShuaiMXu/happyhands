@@ -1,0 +1,118 @@
+{
+  "version": "0.1",
+  "spec": "experience.json",
+  "capturePlan": "page-review-capture-plan.json",
+  "repo": "../../../../work/happyclaw-site",
+  "url": "http://127.0.0.1:4321/",
+  "routes": [
+    "/"
+  ],
+  "browser": "chrome",
+  "timeoutMs": 60000,
+  "start": {
+    "command": "npm",
+    "args": [
+      "run",
+      "dev",
+      "--",
+      "--ignore-lock",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "4321"
+    ],
+    "cwd": "../../../../work/happyclaw-site",
+    "env": {
+      "ASTRO_TELEMETRY_DISABLED": "1"
+    }
+  },
+  "verificationChecks": [
+    {
+      "id": "menu",
+      "command": "node",
+      "args": [
+        "{harness}/examples/happyclaw-site/verify-specialist.mjs",
+        "--mode",
+        "menu",
+        "--url",
+        "{url}",
+        "--out",
+        "{out}"
+      ],
+      "stage": "normal-interaction",
+      "stateIds": [
+        "mobile-menu-open",
+        "mobile-menu-closed",
+        "menu-to-quickstart"
+      ],
+      "method": "Chrome native and programmatic activation; initial/forward/reverse focus, Escape, inert/scroll restoration, resize and short viewport assertions.",
+      "limitations": [
+        "Chrome automation with explicitly granted clipboard permissions; not physical-device or other-browser certification.",
+        "API rejection/timeout is simulated and does not certify OS permission UI."
+      ],
+      "screenshots": [
+        "menu-open-320.png",
+        "menu-open-390.png"
+      ],
+      "timeoutMs": 180000
+    },
+    {
+      "id": "ui",
+      "command": "node",
+      "args": [
+        "{harness}/examples/happyclaw-site/verify-specialist.mjs",
+        "--mode",
+        "ui",
+        "--url",
+        "{url}",
+        "--out",
+        "{out}"
+      ],
+      "stage": "normal-interaction",
+      "stateIds": [
+        "screenshots-mobile",
+        "screenshots-feishu",
+        "quickstart"
+      ],
+      "method": "Normal Chrome 320/390/768/1280: tabs, assets, source content, native clipboard read-back, simulated rejection/timeout and axe checks; exact executed script included.",
+      "limitations": [
+        "Chrome automation with explicitly granted clipboard permissions; not physical-device or other-browser certification.",
+        "API rejection/timeout is simulated and does not certify OS permission UI."
+      ],
+      "screenshots": [
+        "quickstart-390.png",
+        "quickstart-1280.png"
+      ],
+      "timeoutMs": 180000
+    },
+    {
+      "id": "commands",
+      "command": "node",
+      "args": [
+        "{harness}/examples/happyclaw-site/verify-specialist.mjs",
+        "--mode",
+        "commands",
+        "--url",
+        "{url}",
+        "--out",
+        "{out}"
+      ],
+      "stage": "normal-interaction",
+      "stateIds": [
+        "quickstart-command-end"
+      ],
+      "method": "Normal Chrome 320/390/768/1280 native ArrowRight scroll and exact clipboard read-back of all commands; simulated API denial at 390.",
+      "limitations": [
+        "Chrome automation with explicitly granted clipboard permissions; not physical-device or other-browser certification.",
+        "API rejection/timeout is simulated and does not certify OS permission UI."
+      ],
+      "screenshots": [
+        "command-end-390.png",
+        "command-end-1280.png",
+        "copied-390.png",
+        "copy-denied-390.png"
+      ],
+      "timeoutMs": 180000
+    }
+  ]
+}

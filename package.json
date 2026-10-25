@@ -1,0 +1,40 @@
+{
+  "name": "happyhands",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "node scripts/verify-design-contract.mjs && vite build",
+    "design:check": "node scripts/verify-design-contract.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "harness": "node scripts/harness.mjs",
+    "test": "node --test --test-concurrency=4 tests/*.test.mjs",
+    "regression": "node scripts/regression.mjs",
+    "expertise": "node scripts/expertise-release.mjs",
+    "workbench": "vite --host 127.0.0.1 --port 4190 --open /apps/designer/",
+    "test:whole-page:browser": "node tests/whole-page-browser.mjs",
+    "test:review-actions:browser": "node tests/review-actions-browser.mjs",
+    "test:tools:browser": "node tests/tools-browser.mjs"
+  },
+  "dependencies": {
+    "@tiptap/pm": "3.31.3",
+    "@tldraw/assets": "5.1.1",
+    "ajv": "8.20.0",
+    "axe-core": "4.13.0",
+    "playwright-core": "1.63.0",
+    "postcss": "8.5.29",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "tldraw": "5.1.1",
+    "typescript": "6.0.3"
+  },
+  "devDependencies": {
+    "vite": "8.3.5"
+  },
+  "license": "MIT"
+}

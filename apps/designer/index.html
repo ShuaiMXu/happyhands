@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F6F3">
+  <link rel="icon" type="image/png" href="/brand/happyhands-mark-ink.png">
+  <title>HappyHands · 设计审阅工作台</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./studio.css">
+  <link rel="stylesheet" href="./workbench-base.css">
+  <link rel="stylesheet" href="./workbench-system.css">
+</head>
+<body class="workspace-page">
+  <aside class="workbench-navigation" aria-label="工作台导航">
+    <a class="workbench-logo" href="/apps/designer/" aria-label="HappyHands 工作台"><img src="/brand/happyhands-logo-ink.png" alt="HappyHands" width="1400" height="301"><span>设计审阅工作台</span></a>
+    <div class="workbench-nav-caption">工作空间</div>
+    <nav class="workbench-view-nav" aria-label="工作台视图">
+      <button type="button" data-studio-view="canvas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M9 9v11"/></svg><span>页面审阅</span></button>
+      <button type="button" data-studio-view="list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg><span>审阅报告</span></button>
+      <button type="button" data-studio-view="codediff"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 20"/></svg><span>代码改动</span></button>
+
+    </nav>
+    <details id="review-history" class="workbench-history" open><summary>审阅记录</summary><nav id="review-history-list" aria-label="审阅记录"></nav></details>
+    <details class="workbench-experiments"><summary>实验工具</summary>
+      <a id="direction-link" class="workbench-nav-link" href="./directions/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 8v8l8 5 8-5V8zM8 10l4 2 4-2M12 12v5"/></svg><span>设计方向</span></a>
+      <a id="legacy-tools-link" href="?view=canvas&tools=legacy">旧版截图批注与创作</a>
+    </details>
+    <div class="workbench-nav-bottom"><span class="workbench-local-dot"></span><span>本地工作台</span><a href="https://github.com/ShuaiMXu/happyhands/issues/1">产品路线 ↗</a></div>
+  </aside>
+  <div id="workbench-shell">
+  <header class="nav wrap report-topbar workbench-topbar">
+    <span class="workbench-page-title">审阅报告</span><span class="workbench-current-review" data-current-review></span>
+    <div class="workbench-topbar-actions">
+      <button type="button" class="studio-button" data-workbench-operations>项目与任务</button>
+      <button type="button" class="workbench-language-toggle" data-language-toggle aria-label="English"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a18 18 0 0 1 0 18 18 18 0 0 1 0-18Z"/></svg><span data-language-option>English</span></button>
+    </div>
+  </header>
+  <main class="wrap review-shell">
+    <div class="review-heading"><div><p class="eyebrow">HAPPYHANDS / 本地设计审阅</p><h1>本轮审阅结果</h1><p>先看复核结论，再查看前后变化与证据。</p></div><div class="case-switch"><label for="case-select">审阅记录</label><select id="case-select"><option value="happyclaw">HappyClaw site / repository review</option><option value="sample">Northstar / fictional walkthrough</option></select></div></div>
+    <section id="report-index-problem" class="report-index-problem" role="status" hidden>
+      <strong>审阅记录列表未能加载</strong>
+      <p>可继续查看当前案例，或重新读取记录。</p>
+      <div class="report-index-actions"><button id="report-index-retry" class="studio-button" type="button">重新读取记录</button>
+      <details><summary>查看加载详情</summary><p id="report-index-problem-detail"></p></details></div>
+    </section>
+    <div id="notice" class="notice" role="status"></div>
+    <section id="baseline-model" class="panel report-empty" hidden><h2>首次页面诊断</h2><p id="baseline-model-status"></p><details><summary>诊断范围与限制</summary><p id="baseline-model-limits"></p></details><button id="baseline-model-retry" class="studio-button" type="button">重新运行页面诊断</button></section>
+    <section id="report-empty" class="panel report-empty" aria-labelledby="report-empty-title" hidden><h2 id="report-empty-title">尚无本轮运行报告</h2><p>当前是示例或仓库问题记录。连接项目并采集页面后，才能生成本轮证据与复核结果。</p><button id="report-empty-connect" class="studio-button" type="button">连接项目开始审阅</button></section>
+    <section id="report-result-panel" class="panel" aria-label="独立复核" hidden><div id="run-reviews" class="run-reviews"></div></section>
+    <section id="loop-panel" class="loop panel" aria-labelledby="loop-title" hidden>
+      <h2 id="loop-title" class="report-section-title">当前进度与下一步</h2><div id="report-primary-action"></div>
+      <details class="report-process"><summary>查看完整流程记录</summary><span id="loop-stage"></span><p id="loop-next" class="loop-next"></p><p id="loop-reason" class="loop-reason" hidden></p><ol id="loop-track" class="loop-track"></ol></details>
+    </section>
+    <section id="run-panel" class="run panel" aria-labelledby="run-title" hidden>
+      <div class="panel-heading"><span>运行证据</span><span id="run-id"></span></div>
+      <div class="pd-view-switch">
+        <button type="button" data-view="canvas" class="pd-view-btn pd-view-jump">打开页面审阅</button>
+        <button type="button" data-view="codediff" class="pd-view-btn pd-view-jump">查看代码改动</button>
+      </div>
+      <div id="run-list-view">
+        <div class="run-heading"><div><h2 id="run-title">已采集的界面与检查结果</h2><p>本次本地运行的截图、结构检查与判断记录。结构检查用于确认页面仍可用，不衡量视觉质量。</p></div><span id="run-stage" class="foundation-count"></span></div>
+        <section class="report-comparison" aria-labelledby="report-comparison-title"><h3 id="report-comparison-title">前后变化</h3><div id="report-evidence-picker"></div><div id="run-shots" class="run-shots"></div></section>
+        <details class="report-check-details"><summary>查看结构检查与执行记录</summary><div id="run-checks" class="run-checks"></div></details>
+        <p id="run-note" class="small-note"></p>
+      </div>
+    </section>
+    <details id="foundation-section" class="foundation panel report-disclosure"><summary>设计基础与版本治理</summary><section aria-labelledby="foundation-title">
+      <div class="panel-heading"><span>设计基础</span><span id="foundation-status"></span></div>
+      <div class="foundation-heading"><div><h2 id="foundation-title">让修改遵循已有的产品语言</h2><p>观察到的规范只是候选。请先批准，再让 agent 复用或扩展。</p></div><span id="foundation-summary" class="foundation-count"></span></div>
+      <details class="foundation-add-help"><summary>如何补充或更新设计系统</summary><p>先把规范保存到项目中的 DESIGN.md，并更新相关样式 token 或组件代码、提交源码。然后从当前项目发起新一轮审阅，重新采集和提取候选；在这里逐项检查、说明替换理由，再确认并冻结新版本。</p><p>旧版与历史证据会保留。外部设计稿链接或图片目前不会自动导入为设计规则，也不会自动批准。仅查看示例或导出记录时，需先连接原项目。</p><button id="foundation-new-review" class="studio-button" type="button">按更新后的规范开始新审阅</button></details>
+      <div id="foundation-toolbar" class="foundation-toolbar">
+        <div><label for="foundation-compare">版本对比</label><select id="foundation-compare" aria-label="选择要对比的设计基础版本"><option value="">当前候选</option></select></div>
+        <div class="foundation-toolbar-status"><p id="foundation-version-note" class="small-note"></p><button id="foundation-extract" class="text-button" type="button">重新提取设计基础</button></div>
+      </div>
+      <div id="foundation-diff" class="foundation-diff" aria-live="polite"></div>
+      <section id="foundation-evidence" class="foundation-evidence" aria-labelledby="foundation-evidence-title" hidden></section>
+      <div id="foundation-groups" class="foundation-groups"></div>
+      <form id="foundation-approval" class="foundation-approval">
+        <div class="foundation-form-heading"><div><h3>确认设计基础</h3><p id="foundation-approval-guidance">系统会根据逐项决定预填版本与审阅记录；你只需检查并确认。</p></div><span id="foundation-decision-summary"></span></div>
+        <details class="foundation-approval-details">
+          <summary>版本与审阅记录</summary>
+          <div class="foundation-form-grid">
+            <label>版本<input id="foundation-version" name="version" required inputmode="text" pattern="[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?" placeholder="1.0.0"></label>
+            <label>审阅人<input id="foundation-reviewer" name="reviewer" required autocomplete="name" placeholder="你的名字或团队"></label>
+            <label>身份<select id="foundation-reviewer-type" name="reviewerType"><option value="human">个人</option><option value="team">团队</option></select></label>
+          </div>
+          <label>批准理由<textarea id="foundation-reason" name="reason" required rows="3" placeholder="说明这个版本为什么足以约束后续页面生成。"></textarea></label>
+        </details>
+        <div class="foundation-form-actions"><p id="foundation-save-status" role="status"></p><button id="foundation-save" class="button secondary" type="submit">确认并冻结版本</button></div>
+      </form>
+    </section>
+    </details>
+    <details class="report-context panel report-disclosure"><summary>查看原始问题、项目背景与修改任务</summary><p class="source-language-note">原始证据保留原文；界面语言可独立切换。</p><div class="review-grid">
+      <aside class="context panel"><div class="panel-heading"><span>01 / 项目背景</span><span>输入</span></div><h2 id="project-name"></h2><p id="project-source" class="muted"></p><dl><dt>产品目标</dt><dd id="project-goal"></dd><dt>目标用户</dt><dd id="project-audience"></dd><dt>关键任务</dt><dd id="project-task"></dd></dl><h3>观察证据</h3><div id="evidence-list"></div><p class="small-note">这里保留已记录的来源与观察；不将人工编写的描述冒充自动分析。</p></aside>
+      <section class="diagnosis panel"><div class="panel-heading"><span>02 / 问题与优先级</span><span id="finding-count"></span></div><h2>先解决哪个问题？</h2><p id="findings-source">排序参考影响、置信度和工作量。执行前请结合真实任务确认。</p><div id="score" class="score" hidden></div><div id="findings"></div><div class="selected-detail"><span class="eyebrow">当前问题</span><h3 id="selected-title"></h3><p id="selected-proposal"></p><p id="selected-evidence" class="small-note"></p></div></section>
+      <aside class="action panel"><div class="panel-heading"><span>03 / 修改与验证</span><span>人工判断</span></div><h2>将判断转成可审阅的修改</h2><p>查看 AI 复核后决定是否接受，或回到画布继续调整。</p><button id="download-brief" class="button secondary full">下载修改任务 ↗</button><details><summary>查看完整任务</summary><pre id="brief"></pre></details><div class="review-state"><span class="eyebrow">评估</span><p id="review-before"></p><p id="review-after"></p><span id="review-status" class="status"></span></div><div id="manual-decision"><h3>你的判断</h3><label for="decision">决定</label><select id="decision"><option value="pending">尚未审阅</option><option value="accept">接受</option><option value="reject">拒绝</option></select><label for="reason">判断理由</label><textarea id="reason" rows="3" placeholder="什么得到了改善，什么仍有问题或不确定？"></textarea></div><button id="save-judgment" class="button secondary full">保存判断</button><button id="download-spec" class="text-button">导出体验规格 ↓</button></aside>
+    </div></details>
+
+  </main>
+  <footer class="wrap"><span>HAPPYHANDS / 本地工作台</span><span>先有证据，再作判断。</span></footer>
+  </div><!-- /workbench-shell -->
+
+  <div id="fullscreen-shell" hidden>
+    <header class="studio-topbar workbench-topbar">
+      <div class="workbench-topbar-primary">
+        <span id="workbench-view-title" class="workbench-page-title">画布</span>
+        <span class="workbench-current-review" data-current-review></span><label class="studio-run-picker" hidden><span>审阅记录</span><select id="studio-run-select" aria-label="切换审阅记录"></select></label>
+      </div>
+      <div class="workbench-topbar-actions">
+        <span class="studio-local"><i></i> 本地 · 只读审阅</span>
+        <button type="button" class="studio-button" data-workbench-operations>项目与任务</button>
+        <button type="button" id="studio-refresh" class="studio-button">重新读取</button>
+        <button type="button" class="workbench-language-toggle" data-language-toggle aria-label="English"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a18 18 0 0 1 0 18 18 18 0 0 1 0-18Z"/></svg><span data-language-option>English</span></button>
+      </div>
+    </header>
+    <section class="studio-context"><div><span class="studio-eyebrow">REVIEW SESSION</span><h1 id="pd-fs-run-name"></h1><p id="studio-task"></p><p class="studio-source-note">原始证据保留原文；界面语言可独立切换。</p></div><div class="studio-context-meta"><span id="pd-fs-count"></span><span id="pd-fs-eval-status"></span></div></section>
+    <div class="pd-fs-body">
+      <aside class="pd-sidebar"><div class="pd-sidebar-head">审阅目录 <span id="studio-state-count"></span></div><div class="pd-sidebar-body" id="pd-sidebar-tree"></div><div class="studio-sidebar-note"><p>原始证据保留原文；界面语言可独立切换。</p>先看界面，再看证据。<br>结构检查不代表视觉质量。</div></aside>
+      <main class="studio-center"><div class="studio-canvas-toolbar"><span id="studio-board-title">界面对照</span><div class="studio-panel-actions"><button type="button" id="studio-toggle-sidebar" aria-pressed="true">目录</button><button type="button" id="studio-toggle-inspector" aria-pressed="true">详情</button></div><div class="studio-controls"><button type="button" id="studio-select-tool" aria-label="选择工具 V" aria-pressed="true" title="选择截图（V）">↖ <span>选择</span></button><button type="button" id="studio-hand-tool" aria-label="抓手工具 H" aria-pressed="false" title="拖动画布（H）">✥ <span>抓手</span></button><span class="studio-divider"></span><button type="button" id="pd-fs-diff" title="按结构评估筛选（D）">结构变化</button><span class="studio-divider"></span><button type="button" id="pd-zoom-out" aria-label="缩小">−</button><output id="pd-zoom-label">100%</output><button type="button" id="pd-zoom-in" aria-label="放大">+</button><button type="button" id="pd-fs-fit" title="适应全部（Shift+F）">适应</button><button type="button" id="pd-fs-reset" title="恢复截图的自动布局">重置</button><span class="studio-divider"></span><button type="button" id="studio-grid-tool" aria-pressed="true" title="显示或隐藏画布点阵">网格</button></div></div><div id="pd-fs-canvas" class="pd-fs-canvas"></div><div id="pd-fs-codediff-container" hidden></div><div class="studio-board-footer"><span>空格拖动 / 中键平移 · Ctrl + 滚轮缩放 · 双击查看原图</span><span>F 聚焦 · Shift F 全览</span></div></main>
+      <aside class="pd-inspector"><div class="pd-inspector-head">审阅详情 <span class="studio-eyebrow">INSPECT</span></div><div class="pd-inspector-body" id="pd-inspector-body" aria-live="polite"></div><section class="pd-stage-card" id="pd-stage-card" tabindex="-1"><div class="pd-stage-card-head"><span class="studio-eyebrow">下一步</span><span id="pd-stage-badge"></span></div><h2 id="pd-stage-title"></h2><p id="pd-stage-desc"></p><details id="studio-command-details"><summary>查看操作命令</summary><div class="pd-stage-cmd"><code id="pd-stage-cmd-text"></code><button type="button" id="pd-stage-copy" class="studio-button">复制命令</button></div></details><div id="studio-followup"></div></section></aside>
+    </div>
+    <footer class="pd-fs-statusbar"><span id="studio-message" role="status">证据来自本地导出记录</span><span id="pd-fs-last-update"></span></footer>
+  </div>
+  <dialog id="studio-lightbox"><header><span id="studio-lightbox-title"></span><button type="button" id="studio-lightbox-close" class="studio-button">关闭 Esc</button></header><img id="studio-lightbox-image" alt=""><a id="studio-lightbox-original" target="_blank" rel="noopener">打开原始截图 ↗</a></dialog>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

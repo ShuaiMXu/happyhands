@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "0.1",
+  "repository": "https://github.com/nolly-studio/agent-skills",
+  "revision": "2008e7f671eb9f55989b73f9e33cbe06e74c428a",
+  "skill": "design-md",
+  "version": "1.0.0",
+  "license": "MIT",
+  "requestedUrl": "https://www.aisdkagents.com/skill/design-md",
+  "requestedUrlStatus": "HTTP 429; official package not obtained, public source version installed instead",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "6081e815704e2d3ddc7bf621340cf95411b4e190cc9f381a2ed3b7a86e129860"
+    },
+    {
+      "path": "references/design-md-template.md",
+      "sha256": "bf10be89c278864e2499087dc8f2c2371dcf7d4c4e88f7f9e026d6bdb75de69b"
+    },
+    {
+      "path": "references/skill-frontend-design.md",
+      "sha256": "702cb49ac5d5fdcb0606eee97ea93b2eed4b675befdbdc8f2a909ba3c54229c2"
+    },
+    {
+      "path": "LICENSE.md",
+      "sha256": "0ecab6310d96faf1f7bd65d00e4f3b8182713eeae483c197b9719f12db51f6e8"
+    }
+  ]
+}

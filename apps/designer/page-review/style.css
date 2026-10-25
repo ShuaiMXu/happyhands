@@ -1,0 +1,32 @@
+.page-review{height:100%;min-height:0;display:grid;grid-template-columns:var(--review-directory,210px) minmax(0,1fr) var(--review-inspector,300px);grid-template-rows:auto auto minmax(0,1fr);background:var(--ff-surface,#fff);color:var(--ff-text,#222);font-family:var(--ff-font,system-ui)}
+.page-review>.review-primary-action{grid-column:1/-1}
+.page-review-directory,.page-review-inspector{padding:20px;overflow:auto;min-width:0;min-height:0}.page-review-directory{border-right:1px solid var(--ff-line,#eee)}.page-review-inspector{border-left:1px solid var(--ff-line,#eee)}
+.page-review h2{font-size:15px;line-height:1.5;margin:0 0 12px}.page-review h3{font-size:13px;margin:0 0 10px;line-height:1.6}.page-review p{font-size:12px;line-height:1.8;overflow-wrap:anywhere;margin:10px 0}.page-review .review-muted{color:var(--ff-muted,#777)}
+.page-review button{text-align:left}
+.page-review-target{display:block;width:100%;margin:8px 0;overflow-wrap:anywhere}.review-target-status{display:block;color:var(--ff-muted,#777);font-size:11px;margin-top:5px}
+.page-review-picker{display:grid;gap:6px;margin:14px 0;font-size:12px}.page-review-directory details{font-size:12px;line-height:1.8;margin:16px 0}.page-review-directory summary,.page-review-inspector summary{cursor:pointer;min-height:44px;padding:10px 0;box-sizing:border-box}
+
+.page-review-main{display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--ff-soft,#f5f5f5)}.page-review-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 16px;background:var(--ff-surface,#fff);border-bottom:1px solid var(--ff-line,#eee)}.page-review-toolbar>span{font-size:11px;margin-left:auto}.page-review .page-review-preview-status{padding:0 16px;margin:12px 0;font-size:11px}
+.page-review-stage{flex:1;min-height:0;min-width:0;overflow:auto;padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.page-review-evidence{display:block;max-width:100%;height:auto;background:#fff}.page-review-stage>button{align-self:flex-start}.page-review-unavailable{padding:36px 16px}
+.page-review-frame-shell{position:relative;flex:none;background:#fff}.page-review-frame{display:block;border:0;transform-origin:top left;background:#fff}.review-preview-link{font-size:12px;color:inherit;min-height:44px;display:inline-flex;align-items:center}.page-review-stage>.review-muted{max-width:100%;align-self:flex-start}
+.page-review-finding{padding:14px 0;border-bottom:1px solid var(--ff-line,#eee);margin-bottom:20px}.page-review-finding button{width:100%;margin-top:8px}.page-review-inspector details{font-size:12px;line-height:1.8;margin:12px 0}.page-review-inspector details a{display:block;overflow-wrap:anywhere;color:inherit}.page-review-verdict{display:inline-block;padding:6px 12px;font-size:12px}.review-job span{display:block}
+.page-review-finding.is-current-region{border-left:3px solid currentColor;padding-left:10px}.page-review-association-badge{display:inline-block;font-size:11px;padding:3px 7px;background:var(--ff-soft,#f1f1f1);border-radius:999px;margin-bottom:8px}.page-review-source{display:grid;gap:2px}.page-review-source span{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;color:var(--ff-muted,#777)}.page-review-regions{margin:10px 0}.page-review-region{font-size:11px;text-align:left}.page-review-region.candidate{border-style:dashed}
+.page-review-source-location{display:grid;gap:2px}.page-review-source-location span{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;overflow-wrap:anywhere}
+#fullscreen-shell.page-review-mode :is(.pd-sidebar,.pd-inspector,.studio-canvas-toolbar,.studio-controls,.studio-board-footer,.studio-context){display:none!important}#fullscreen-shell.page-review-mode .pd-fs-canvas{padding:0;overflow:hidden}#fullscreen-shell.page-review-mode .studio-center{border:0}
+.workbench-experiments{margin-top:20px;color:var(--ff-muted,#777);font-size:12px}.workbench-experiments summary{cursor:pointer;min-height:44px;display:flex;align-items:center}.workbench-experiments a{display:block;line-height:1.5;padding:12px 4px;min-height:44px;box-sizing:border-box;color:inherit}
+@media(min-width:900px) and (max-width:1150px){.page-review{--review-directory:170px;--review-inspector:260px}.page-review-directory,.page-review-inspector{padding:14px}}
+@media(max-width:899px){.page-review{height:auto;display:flex;flex-direction:column}.page-review-directory{border-right:0;border-bottom:1px solid var(--ff-line,#eee);padding:16px}.page-review-target{display:inline-block;width:auto;max-width:100%;margin:4px}.page-review-main{min-height:480px}.page-review-stage{max-height:70dvh;min-height:300px}.page-review-inspector{border-left:0;border-top:1px solid var(--ff-line,#eee);padding:20px}.page-review p,.page-review button{font-size:13px}.page-review-toolbar>span{width:100%;margin:0}#fullscreen-shell.page-review-mode .pd-fs-canvas{overflow:visible}}
+
+/* Keep the rendered page central; supporting panels are explicit, reversible views. */
+.page-review[data-directory=false]{--review-directory:0px}
+.page-review[data-inspector=false]{--review-inspector:0px}
+.page-review-panels{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:10px 20px;border-bottom:1px solid var(--ff-line)}
+.page-review-panels>span{flex:1;font-size:12px}
+.page-review-panels button[aria-expanded=true]{background:var(--ff-selected);box-shadow:inset 0 0 0 1px var(--ff-ink)}
+.page-review-directory{grid-column:1;grid-row:3}.page-review-main{grid-column:2;grid-row:3}.page-review-inspector{grid-column:3;grid-row:3}
+.page-review :is(.page-review-directory,.page-review-inspector)[hidden]{display:none}
+.page-review-stage.actual-size{align-items:flex-start}
+.page-review-evidence.actual-size{max-width:none;flex:none}
+.page-review-toolbar .review-muted{flex-basis:100%;margin-left:0}
+@media(max-width:899px){.page-review-panels{padding:10px 16px;justify-content:space-between}.page-review-panels>span{display:none}.page-review-panels button{flex:1;text-align:center}.page-review-toolbar{padding:12px;gap:6px}.page-review-toolbar button,.page-review-toolbar a{padding:8px 10px}.page-review-main{min-height:360px}.page-review-stage{min-height:220px}}
+.page-review-capture-details{margin:0 16px 12px;font-size:12px;min-width:0;flex-shrink:0}.page-review-capture-details pre{max-height:240px;overflow:auto;white-space:pre;font-size:11px;line-height:1.6}

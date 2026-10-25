@@ -1,0 +1,14 @@
+{
+  "id": "visual-qa-evaluator",
+  "version": "0.3.0",
+  "role": "review",
+  "description": "Compare matched before and after renders for task clarity and visual regressions after a product change.",
+  "requiredInputs": [
+    "baselineCapture",
+    "afterCapture",
+    "criticalTask"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "visualQaEvaluator",
+  "maturity": "bounded"
+}

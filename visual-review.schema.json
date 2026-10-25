@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/visual-review.schema.json",
+  "title": "Visual Review Attestation v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "skillId",
+    "reviewer",
+    "reviewedAt",
+    "verdict",
+    "screenshotRefs",
+    "findings",
+    "rationale",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "0.1"
+    },
+    "skillId": {
+      "enum": [
+        "visual-hierarchy-reviewer",
+        "visual-qa-evaluator"
+      ]
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "name",
+        "version"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "human",
+            "model"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "reviewedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verdict": {
+      "enum": [
+        "pass",
+        "fail",
+        "needs-evidence"
+      ]
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "previousReviewPath",
+        "previousReviewHash",
+        "previousReferenceHash",
+        "fromProtocol",
+        "toProtocol",
+        "reason"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "protocol-retry",
+            "evidence-retry"
+          ]
+        },
+        "previousReviewPath": {
+          "type": "string",
+          "pattern": "^reviews/[a-z0-9-]+\\.json$"
+        },
+        "previousReviewHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "previousReferenceHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "fromProtocol": {
+          "type": "string",
+          "pattern": "^ai-visual-review@[1-9][0-9]*$"
+        },
+        "toProtocol": {
+          "type": "string",
+          "pattern": "^ai-visual-review@[1-9][0-9]*$"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "\\S"
+        },
+        "evidenceIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-f0-9-]{36}$"
+          }
+        },
+        "evidenceHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "evidence-retry"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "evidenceIds",
+              "evidenceHash"
+            ]
+          }
+        }
+      ]
+    },
+    "screenshotRefs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^((before|after)/[a-z0-9][a-z0-9_-]{0,63}(--[a-z0-9][a-z0-9_-]{0,63})?|verification/[a-f0-9-]{36}/image-[0-9]+)\\.png$"
+      }
+    },
+    "brandAssessments": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reference",
+          "verdict",
+          "observation",
+          "screenshotRefs"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "pattern": "^(before|after):[a-f0-9]{64}:[1-9][0-9]*:[a-z-]+$"
+          },
+          "verdict": {
+            "enum": [
+              "aligned",
+              "conflict",
+              "not-visible",
+              "needs-evidence",
+              "out-of-scope"
+            ]
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2500
+          },
+          "screenshotRefs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "regionalVerdicts",
+        "crossRegionVerdict",
+        "expectedContexts",
+        "coveredContexts",
+        "wholePageScreenshotRefs",
+        "missingContexts",
+        "missingStates",
+        "exceeded"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "regional-and-whole-page",
+            "external-page-surfaces"
+          ]
+        },
+        "regionalVerdicts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "pass",
+              "fail",
+              "needs-evidence"
+            ]
+          }
+        },
+        "crossRegionVerdict": {
+          "enum": [
+            "pass",
+            "fail",
+            "needs-evidence",
+            "not-run"
+          ]
+        },
+        "expectedContexts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "coveredContexts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "wholePageScreenshotRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "missingContexts": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "missingStates": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "exceeded": {
+          "type": "boolean"
+        }
+      }
+    },
+    "verificationDigest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "verificationRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{0,47}$"
+      }
+    },
+    "attachmentRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9-]{36}$"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "observation",
+          "impact",
+          "confidence",
+          "screenshotRefs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_-]+$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "impact": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "screenshotRefs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "findingResolutions": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "findingId",
+          "verdict",
+          "rationale",
+          "attachmentRefs"
+        ],
+        "properties": {
+          "findingId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "verdict": {
+            "enum": [
+              "supported",
+              "refuted",
+              "needs-evidence"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2500
+          },
+          "attachmentRefs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-f0-9-]{36}$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "skill-regression-evaluator",
+  "version": "0.1.0",
+  "role": "review",
+  "description": "Evaluate a skill version against its regression cases and report first divergences.",
+  "requiredInputs": [
+    "regressionCases"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

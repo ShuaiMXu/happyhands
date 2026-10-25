@@ -1,0 +1,12 @@
+{
+  "id": "foundation-extractor",
+  "version": "0.9.0",
+  "role": "foundation",
+  "description": "Inventory design tokens with their declared values, inferred categories and observed theme variants, plus component source files, before proposing a governed Design Foundation.",
+  "requiredInputs": [
+    "repository"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "foundationExtractor",
+  "maturity": "bounded"
+}

@@ -1,0 +1,8 @@
+{
+  "version": "0.1",
+  "spec": "experience-current.json",
+  "repo": "../../../../work/happyclaw-site",
+  "url": "http://127.0.0.1:4321/",
+  "browser": "chrome",
+  "timeoutMs": 60000
+}

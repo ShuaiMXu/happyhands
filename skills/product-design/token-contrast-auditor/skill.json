@@ -1,0 +1,12 @@
+{
+  "id": "token-contrast-auditor",
+  "version": "0.1.0",
+  "role": "foundation",
+  "description": "Compute WCAG contrast for colour pairs the token names or the source state, and report which fail.",
+  "requiredInputs": [
+    "designFoundation"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "tokenContrast",
+  "maturity": "bounded"
+}

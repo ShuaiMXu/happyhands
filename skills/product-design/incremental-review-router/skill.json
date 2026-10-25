@@ -1,0 +1,13 @@
+{
+  "id": "incremental-review-router",
+  "version": "0.1.0",
+  "role": "review",
+  "description": "Select the smallest sufficient set of review skills and product states for a project change.",
+  "requiredInputs": [
+    "gitDiff",
+    "projectHistory"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

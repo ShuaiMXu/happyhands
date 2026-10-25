@@ -1,0 +1,13 @@
+{
+  "id": "pattern-library-curator",
+  "version": "0.3.0",
+  "role": "foundation",
+  "description": "Curate accepted interface patterns into a governed project library with usage guidance and exceptions.",
+  "requiredInputs": [
+    "repository",
+    "projectHistory"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "patternLibraryCurator",
+  "maturity": "bounded"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "consistency-auditor",
+  "version": "0.1.0",
+  "role": "diagnose",
+  "description": "Find review targets caused by repeated ungoverned visual values and compare them with approved project tokens.",
+  "requiredInputs": [
+    "repository",
+    "designFoundation"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "consistencyAuditor",
+  "maturity": "bounded"
+}

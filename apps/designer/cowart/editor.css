@@ -1,0 +1,40 @@
+.cowart-workspace{height:100%;min-height:0;display:flex;flex-direction:column;color:var(--ff-text);font-family:var(--ff-font)}
+.cowart-edit-bar{display:flex;align-items:center;gap:16px;min-height:72px;padding:16px 24px;background:var(--ff-surface)}
+.cowart-edit-bar>div{margin-right:auto;min-width:0}.cowart-edit-bar strong{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36vw}
+.cowart-session-label{display:block;font-size:10px;color:var(--ff-muted);margin-bottom:5px}
+.cowart-edit-bar label{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--ff-muted)}
+.cowart-edit-bar select{margin:0;width:auto;max-width:180px;border:0;background:var(--ff-soft);border-radius:10px;padding:10px 12px;color:var(--ff-text);font-size:12px}
+.cowart-edit-body{display:flex;flex:1;min-height:0;background:var(--ff-canvas)}
+.cowart-editor{position:relative;flex:1;min-width:0;min-height:0}.cowart-editor .tl-background{background:var(--ff-soft)}
+.cowart-tools{pointer-events:all;display:flex;gap:4px;padding:6px;margin:0 12px 16px;background:var(--ff-surface);border-radius:12px;box-shadow:var(--ff-shadow);max-width:calc(100vw - 48px);overflow-x:auto}
+.cowart-tools button{border:0;background:transparent;min-height:40px;padding:10px 12px;font-size:12px;border-radius:8px;white-space:nowrap;cursor:pointer}
+.cowart-tools button[aria-pressed=true]{background:var(--ff-selected);color:var(--ff-ink)}.cowart-tools span{width:1px;background:var(--ff-line);margin:10px 4px}
+.cowart-tools .cowart-comment-tool{font-weight:600}.cowart-tools .cowart-comment-tool:not([aria-pressed=true]){box-shadow:inset 0 0 0 1px var(--ff-line)}
+.cowart-brief{width:320px;flex:none;padding:0 24px 20px;background:var(--ff-surface);display:flex;flex-direction:column;overflow:auto;gap:0}
+.cowart-panel-tabs{display:flex;gap:4px;padding:4px;background:var(--ff-soft);border-radius:10px;margin:8px 0 28px;position:sticky;top:0;z-index:2}
+.cowart-brief button{border:0;border-radius:10px;background:var(--ff-hover);min-height:42px;padding:10px 14px;font-size:12px;line-height:1.5;cursor:pointer;width:100%;margin-top:8px}
+.cowart-panel-tabs button{margin:0;min-height:36px;flex:1;background:transparent;display:flex;align-items:center;justify-content:center;gap:6px}
+.cowart-panel-tabs button[aria-pressed=true]{background:var(--ff-surface);box-shadow:var(--ff-shadow);font-weight:600}
+.cowart-status-dot{width:5px;height:5px;border-radius:50%;background:var(--ff-ink)}
+.cowart-powered{font-size:10px;color:var(--ff-muted);letter-spacing:.06em}
+.cowart-brief h2{font-size:20px;font-weight:600;letter-spacing:-.5px;line-height:1.4;margin:10px 0}
+.cowart-brief p{font-size:12px;line-height:1.8;color:var(--ff-muted);margin:8px 0 20px}
+.cowart-brief label{display:block;font-size:12px;margin:20px 0 8px;color:var(--ff-text)}
+.cowart-brief :is(textarea,select){width:100%;box-sizing:border-box;border:0;border-radius:10px;background:var(--ff-soft);padding:12px;font-size:13px;color:var(--ff-text);margin:0}
+.cowart-brief textarea{min-height:160px;line-height:1.8;resize:vertical}.cowart-brief select{min-height:42px}
+.cowart-brief .cowart-primary{background:var(--ff-ink);color:white;margin-top:16px;font-weight:500;min-height:44px}
+.cowart-brief .cowart-primary:hover:not(:disabled){background:#333}.cowart-brief button:not(.cowart-primary):hover:not(:disabled),.cowart-tools button:hover:not(:disabled){background:var(--ff-selected)}
+.cowart-brief details{font-size:12px;line-height:1.7;margin:20px 0;color:var(--ff-muted)}.cowart-brief summary{cursor:pointer;padding:8px 0}.cowart-brief details a{display:block;margin:8px 0}
+.cowart-brief .cowart-boundary{font-size:11px;margin-top:16px;line-height:1.7}
+.cowart-confirm{display:flex!important;gap:8px;align-items:flex-start}.cowart-confirm input{margin-top:4px}
+.cowart-save-status{margin-top:auto;padding-top:24px;font-size:11px;color:var(--ff-muted);line-height:1.7;overflow-wrap:anywhere}
+.cowart-jobs article{background:var(--ff-soft);border-radius:12px;padding:16px;margin-top:16px;font-size:12px;overflow-wrap:anywhere}.cowart-jobs strong{font-size:12px;font-weight:500}.cowart-jobs a{display:inline-block;margin:12px 12px 0 0;font-size:12px}
+.cowart-empty{display:grid;place-content:center;min-height:300px;padding:40px;color:var(--ff-muted);font-size:13px}.cowart-empty button{border:0;padding:12px 20px;border-radius:10px;background:var(--ff-selected)}
+.cowart-verdict{display:inline-block;background:var(--ff-selected);border-radius:999px;padding:6px 12px;font-size:11px;margin:12px 0}
+.cowart-verdict[data-verdict=pass]{background:#eaf6e4;color:#2f6b2a}.cowart-verdict[data-verdict=fail]{background:#fde7e7;color:#b3261e}.cowart-verdict[data-verdict=needs-evidence]{background:#fff7e8;color:#7a4b00}
+.cowart-brief .cowart-review-summary{color:var(--ff-text);font-size:13px;line-height:1.85}.cowart-review-finding{padding:16px;background:var(--ff-soft);border-radius:12px;margin:12px 0}.cowart-review-finding strong{font-size:13px}.cowart-review-finding p{margin-bottom:0}
+.cowart-review-empty{padding:28px 16px;background:var(--ff-soft);border-radius:16px;margin-top:24px;text-align:center}.cowart-review-empty>span{display:block;font-size:32px;color:var(--ff-muted);margin-bottom:16px}
+#fullscreen-shell.cowart-mode :is(.pd-sidebar,.pd-inspector,.studio-canvas-toolbar,.studio-controls,.studio-board-footer,.studio-context){display:none!important}
+#fullscreen-shell.cowart-mode .pd-fs-canvas{overflow:hidden;padding:0}#fullscreen-shell.cowart-mode .studio-center{border:0}
+@media(min-width:900px) and (max-width:1150px){.cowart-brief{width:280px;padding-inline:20px}}
+@media(max-width:899px){.cowart-workspace{height:auto}.cowart-edit-bar{padding:16px;flex-wrap:wrap;min-height:64px}.cowart-edit-bar strong{max-width:75vw}.cowart-edit-bar label{width:100%;justify-content:space-between}.cowart-edit-body{display:block}.cowart-editor{height:55dvh;min-height:340px}.cowart-brief{width:100%;padding:16px 24px 24px;overflow:visible}.cowart-panel-tabs{position:static;margin-bottom:24px}.cowart-brief button,.cowart-edit-bar select{min-height:44px}.cowart-brief p,.cowart-brief label{font-size:13px}.cowart-brief textarea{font-size:16px}#fullscreen-shell.cowart-mode .pd-fs-canvas{overflow:visible}.cowart-tools button{min-height:44px;padding:10px}.cowart-save-status{padding-top:16px}}

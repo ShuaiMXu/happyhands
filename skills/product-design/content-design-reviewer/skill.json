@@ -1,0 +1,13 @@
+{
+  "id": "content-design-reviewer",
+  "version": "0.2.0",
+  "role": "diagnose",
+  "description": "Review interface language, labels and guidance for clarity, consistency and task completion.",
+  "requiredInputs": [
+    "baselineCapture",
+    "criticalTask"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "contentDesignReviewer",
+  "maturity": "bounded"
+}

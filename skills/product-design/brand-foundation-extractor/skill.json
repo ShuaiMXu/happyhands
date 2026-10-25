@@ -1,0 +1,13 @@
+{
+  "id": "brand-foundation-extractor",
+  "version": "0.7.0",
+  "role": "foundation",
+  "description": "Extract candidate brand principles, voice and visual assets from product source and rendered evidence.",
+  "requiredInputs": [
+    "repository",
+    "baselineCapture"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "brandFoundationExtractor",
+  "maturity": "bounded"
+}

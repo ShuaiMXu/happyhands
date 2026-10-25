@@ -1,0 +1,13 @@
+{
+  "id": "experience-score-calibrator",
+  "version": "0.1.0",
+  "role": "learn",
+  "description": "Calibrate explainable experience dimensions against reviewed evidence before exposing an aggregate score.",
+  "requiredInputs": [
+    "projectHistory",
+    "judgment"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

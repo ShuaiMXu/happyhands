@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "0.1",
+  "adapter": "web",
+  "configurations": [
+    { "id": "desktop", "viewport": { "width": 1280, "height": 800 } },
+    { "id": "phone", "viewport": { "width": 390, "height": 844 } }
+  ],
+  "states": [
+    {
+      "id": "empty",
+      "start": { "url": "http://127.0.0.1:4321/jobs" },
+      "actions": []
+    },
+    {
+      "id": "failed",
+      "start": { "url": "http://127.0.0.1:4321/jobs" },
+      "actions": [
+        { "type": "click", "role": "button", "name": "Start job" },
+        { "type": "wait-for", "text": "Job failed", "timeoutMs": 10000 }
+      ]
+    }
+  ]
+}

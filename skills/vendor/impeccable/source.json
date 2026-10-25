@@ -1,0 +1,332 @@
+{
+  "repository": "https://github.com/pbakaus/impeccable",
+  "revision": "2f98774f86bc05563876643db37e6c37c322850f",
+  "license": "Apache-2.0",
+  "files": [
+    {
+      "path": ".agents/skills/impeccable/SKILL.md",
+      "sha256": "58c0252bca04521de87007aeb495f7ec99dc4c7341bc890fe82b6d577573af91",
+      "gitBlobSha": "b9d82965dd59a45596c5b63a1cf4207168a272a7"
+    },
+    {
+      "path": ".agents/skills/impeccable/agents/impeccable_asset_producer.toml",
+      "sha256": "4dbdb0cfdc2466961da6b22d200f3ec7bf8bb47c27448a2e6e3c03cdbf589831",
+      "gitBlobSha": "91eeca4cce0e62881149b094e758f814510649c3"
+    },
+    {
+      "path": ".agents/skills/impeccable/agents/impeccable_documenter.toml",
+      "sha256": "2feb3768125ba6469c92a50d516727e6d42f44579165ddfd33409948e2a3803d",
+      "gitBlobSha": "45203ec73dc5d2509d0bd4f13e0eccbe51b4366e"
+    },
+    {
+      "path": ".agents/skills/impeccable/agents/impeccable_finish_reviewer.toml",
+      "sha256": "5385afb120a988c9d821c1e57a75d7ace80d36fbb1a38e93f35d667611ba0864",
+      "gitBlobSha": "0ea04ad52f0142e8428e483e86e0acb9367949dd"
+    },
+    {
+      "path": ".agents/skills/impeccable/agents/impeccable_manual_edit_applier.toml",
+      "sha256": "6c9ce3e27ec4520ead001da3aad2a2ebba481c4e5cd22873db8890259ee579fe",
+      "gitBlobSha": "469dd2da6512966a110b94e20abd18283d3689e7"
+    },
+    {
+      "path": ".agents/skills/impeccable/agents/openai.yaml",
+      "sha256": "cbd8bd68fa00935dd0f179adb169252629cf7ee443ea9dc7db77e7ef2cf77446",
+      "gitBlobSha": "ee6cae7726ef85d3744c1b978608668a07aefeef"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/adapt.md",
+      "sha256": "871a8e4d749b807c693ebabd83defbd6c76e1bd2a0f53a28a460cb1308ba8634",
+      "gitBlobSha": "85f7c022f5c65baebdd8df16b996898a4f520e3a"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/adapt.native.md",
+      "sha256": "6acc0bf221a4ddc6e5c6438348920b2ca2393b29c4314dbde2cdc23f2b1a9639",
+      "gitBlobSha": "88975b36f38bc6b709eec052d398ce8996d55d19"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/android.md",
+      "sha256": "058f81f256134841875fd3183e06b37a023de0c877fd2b9eecd97011640791fe",
+      "gitBlobSha": "1f67a6bb574960cccb1692f460cc5432baebad65"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/animate.md",
+      "sha256": "d658c48ffbe0031e8e3b318996cad6ceafe29e40aa50d5bb25e4bf1d6839dc7c",
+      "gitBlobSha": "c8fb9e038bb74a125646b64c49bc39711f63e8f4"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/audit.md",
+      "sha256": "41764be7bf974b95ee469f11c496714b4b3cf2ba594c0b8f838a0742680229a9",
+      "gitBlobSha": "fc9c3112427e0162d1eaa3fa0b9dd776e83f5a3d"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/audit.native.md",
+      "sha256": "960cb922bc934adbf9192e9428ff6bec1f382038166f02a785939c93b7391067",
+      "gitBlobSha": "321847a79680fd61908fced1ddab0ac20581aeb7"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/bolder.md",
+      "sha256": "f964506c0fae87b3c2c1db7016ddc9be9ef970bbcf5548d684b997b5d5991586",
+      "gitBlobSha": "0ea9bcc0eb5f94d06bb3c3b52c5079eb1d0ca22a"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/clarify.md",
+      "sha256": "173dd66abe65633910dcb04a51f40d6ff2a793f87088f022a02fc4cad24dd133",
+      "gitBlobSha": "4506a31c95e02b2ad918367a0ef4461643d51532"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/colorize.md",
+      "sha256": "bc5f71f1129d0f2c310d913d07c8dc609a1d25644121bd78c308f42d52a0b9e9",
+      "gitBlobSha": "02fa661efac9229d6e869a20ef8ee928d4b986a0"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/component-review.md",
+      "sha256": "10489e5265e49a4ef2737cd0e674c149ed41e1f703efe922e53ea3c91e833427",
+      "gitBlobSha": "a3c35c92999ecde66f53c96fb287d8adaa0e17f3"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/craft-floor.md",
+      "sha256": "e802e4f7bdc89050a9c0f2ca506e1d493a2316e6e810c0336c57aa073717ef3e",
+      "gitBlobSha": "ae213ce801ebb2085033b309b4144e8d7e9996ba"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/craft.md",
+      "sha256": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+      "gitBlobSha": "dbbc9402c07cdab21f2b6eb69279b8435fecfd7f"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/critique.md",
+      "sha256": "cb8caddbb3919e5bf7f252143b519fb16db28a244642d937b186cb89962d9201",
+      "gitBlobSha": "c1285ca137d9aa1280e538601a0e84140246fe56"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/degraded/asset-producer.md",
+      "sha256": "877d274f41500c780bad25b2bca7fa95eff1a32a7b95397dd388c72848e86a6c",
+      "gitBlobSha": "76f2357b8aaec59fcb77dbc87582e235c3fcb365"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/degraded/documenter.md",
+      "sha256": "bcc05ea92faebb5c74037a9d4263a5ce9a56f5ab07c8ab3c59ee704d8cade745",
+      "gitBlobSha": "e9dfb799bcece32233386bf9702bc3141d56d196"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/degraded/finish-reviewer.md",
+      "sha256": "c40865450b53e0947bb4318e5e4a413d13e2ca0e8e26a8bea92aa043382d5910",
+      "gitBlobSha": "1b0311080e7d6ada595ae119cba5ff327617c5bb"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/degraded/manual-edit-applier.md",
+      "sha256": "5fae7f8a2fc3ddd49ad0a413446dc44daedef5b6b7de5eb935bd2fbfad646d58",
+      "gitBlobSha": "ef5095b924623ce04e02188a6790ebd98a273bcd"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/delight.md",
+      "sha256": "098a891028ce59c212b747d3c70468dd750aff7053a703d1336045ed31e0da7c",
+      "gitBlobSha": "60a8e83ee48d50901acfa886d3ec4bc72b40ec6f"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/distill.md",
+      "sha256": "ea8432c90c30ecb0426662a681ead5c0941113079704e1a766cda09e85b15b4f",
+      "gitBlobSha": "13f6cd5840c2030406c8fa59b70cb5fa86c239ab"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/doctor.md",
+      "sha256": "3dbef3fe606de4de0f1b5cab5f19902799e05cf566eb8223e9aa1632eeb04698",
+      "gitBlobSha": "99211927a5a045f24521c92cb26815e8f664eef9"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/document.md",
+      "sha256": "3673248740bcdd1122ccc610093ba2fe52f3943a61ce0b7170b74dc49e5b6098",
+      "gitBlobSha": "83abb54b8ea773577a464f08ab78beaa411f4c70"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/extract.md",
+      "sha256": "31b90048c0b540daec46762a10c2b6b6434737a89af005054d8b848d829d003b",
+      "gitBlobSha": "7e98bd04605aaa8e6e7200deff5fe5cd5cc28841"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/generate.md",
+      "sha256": "53628d05b7eff0d4f48b95e48fad40266452fe1b42f398bd88dd9328353e0dd8",
+      "gitBlobSha": "b28b3f96e97327fbc96901934ff517a058633904"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/harden.md",
+      "sha256": "16ba7fca1973c5faf53dd2ca523559129c0fe9e5f8d50b645f527afa78186cd2",
+      "gitBlobSha": "124742e1cca3caff2c495009a8f408382e73e7d1"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/hooks.md",
+      "sha256": "3e3209e6b45497c7aee8234f5be880399ed6d99db442dcf3e024f061cd2027ba",
+      "gitBlobSha": "190437cf90afc712bebdb10049adf02263b2cddf"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/init.md",
+      "sha256": "da813ff325f84cefa1d01698caa093c78bca804d7e9746af14db925351266110",
+      "gitBlobSha": "550ba484802c4bbaf50e46edef2bb90de0915ef3"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/ios.md",
+      "sha256": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+      "gitBlobSha": "c6244dfe32176e5718d86211b7d1eb5601eb0860"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/layout.md",
+      "sha256": "0bc7d7971b3edf2acd0580e847458dc6d84129d90715b452799ace3bed815c7c",
+      "gitBlobSha": "aa547c742fc373bc459bdbb7977683441aa48ec0"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/live-setup.md",
+      "sha256": "2b5b2fbf5f658f34ea1997fb1aeebe01604d05187f75c6a4f1f55a5bc78520a4",
+      "gitBlobSha": "6e10f00f7f2a789da582f38cdaef89de39ead266"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/live.md",
+      "sha256": "68c5636a7858dd0b5137a9229c15e25fdc2ee40a0f8a4e9d809f78e809256262",
+      "gitBlobSha": "fb85b3fdd99f94c78752da4c4d2d2c06bdaa1439"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/mode-operate.md",
+      "sha256": "7a52dd7a94ee75f6ae89542c86a1b6e1d306812b16e0d9dbf12d4acad44d148b",
+      "gitBlobSha": "833775ba85f03bf65a4c1b23e39192f7653414e6"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/mode-persuade.md",
+      "sha256": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+      "gitBlobSha": "9c152d67064fb8453a7eaa89de20c35fc115b085"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/mode-read.md",
+      "sha256": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+      "gitBlobSha": "b30c4c9139e3094bd35c60738decb6109326153f"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/new-work.md",
+      "sha256": "9f51c0e9c693e549dfbb4634b89e2ce946998cfd67a3f9bda054dd9301f059be",
+      "gitBlobSha": "f0bf69d0962adb577716286acfda85359958027e"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/onboard.md",
+      "sha256": "ef2dde00030580ed2765cbf7be9b2ea4a6f64cb915b804fd6f6abcf38051c7b9",
+      "gitBlobSha": "90e33916ef348f050681d400a67e5745bfdb6d41"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/operate.md",
+      "sha256": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+      "gitBlobSha": "524f2c3ae9fa497284e9699f3ca5320cce5d05cf"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/optimize.md",
+      "sha256": "f672ef8251a3ed4051a053d30819664951b17540b2899acd27d20e500c234abc",
+      "gitBlobSha": "fc56c22376854d77e8099b925232bba25001e5e6"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/overdrive.md",
+      "sha256": "fce6688138d2ceb1e3d2cde5231f54b1d8dc8748b4c95a7919aa83b6f924cf96",
+      "gitBlobSha": "34dface28cb99425f4153ee08447220ea1839b79"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/polish.md",
+      "sha256": "81666fc7f783b4e3514db6554e713dc0479bd9cdedb06e93d15f8b579aae869a",
+      "gitBlobSha": "f93170f773cac058f51e289603aed7575d62a6a2"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/quieter.md",
+      "sha256": "190a4e642ca362d7499f3c3ab123e21f18f75457d11f072b545a183f296e6495",
+      "gitBlobSha": "870ea86599bebf65509291df22533e4b5c3d4ceb"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/region-map.md",
+      "sha256": "778cedc9199b407d3e23fa1041e38d548b00b1101a33517aa2a2eb299f9d0edc",
+      "gitBlobSha": "7b7685cf59a7ee8fa9361d4f0b986ec0ba5b48ad"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/routing.md",
+      "sha256": "77ae09542fbc10aa4e8b119d6fd19359908a47c13c30068d6a150bfdb50e3e10",
+      "gitBlobSha": "21c12a626e7ef084fa6ed5d03b93b91e3eb122ce"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/shape.md",
+      "sha256": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+      "gitBlobSha": "90a74ae813331cbce8fff6beb498ced77970fadf"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/typeset.md",
+      "sha256": "442749aed338f51c1a3ccfb182c6ade9b74b90590b67984062ac94a5b100e914",
+      "gitBlobSha": "6f117f429cdefe60c0a07cbd5f02f72a40eb8a7d"
+    },
+    {
+      "path": ".agents/skills/impeccable/reference/visualize.md",
+      "sha256": "1c81a831f9dd28b908306fa06e2f2944ca4595ff3df6570750c10bf806465f00",
+      "gitBlobSha": "11ba6d7cd67a344ebc24c0a7870a4aa7c0b412cc"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/VERSION",
+      "sha256": "9940d4b5219de8404015bc18af844c88d7e9e9105682a5d47b1d369d027dbd25",
+      "gitBlobSha": "71d6a66eda4c751cd57798e19de8b770703abdd6"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/command-metadata.json",
+      "sha256": "e8720f3aa41135211cc58cc299a39eeda86c75651f4279cc1ede8db10dcc0584",
+      "gitBlobSha": "89891ea4df179d5a07cf3aef42e84dafb1d05689"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/data/font-index-failures.json",
+      "sha256": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+      "gitBlobSha": "1aca67220413ef163570c75405b444d7a27a32be"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/data/font-index.json",
+      "sha256": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+      "gitBlobSha": "9d2029971df232a72ff6584d264c104490521742"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/impeccable",
+      "sha256": "39d9600489073e227e4f4d55c451ce4252a6632ed7ae37923efbbcbc91f16d07",
+      "gitBlobSha": "eb60f8667dd6924bc6271e9e1a0761ea5f945751"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/impeccable.cmd",
+      "sha256": "69cad1ae7355825ef320ac9638a1c9675ba9fda01c9a0fa12244cc4a1973e550",
+      "gitBlobSha": "dc0fd33e5ac02ec325cb21af7cef39b201959a35"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/live-browser-dom.js",
+      "sha256": "24f09f2597b9b55a1e2c4acd2ae5c95db5c8615cfc20aa07d1a3950538ad5c4a",
+      "gitBlobSha": "8646944982fcb5e36c111d134c5bf1e027bb27c6"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/live-browser-ignores.js",
+      "sha256": "c1cb6877ca99a0c1b38ba0c7d59f32702d3022f6821d8045f7133f7c40b6362f",
+      "gitBlobSha": "1c8514c7bcd8b8d889a1763965326fb6adec24a1"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/live-browser-session.js",
+      "sha256": "42831c3cd874346d8e7f120808d91e6ed3cda5c3eca6eefd76b126659536bc87",
+      "gitBlobSha": "ad9cdf008fdbeebd3da6a93d4ef408b5abff7420"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/live-browser.js",
+      "sha256": "d7f1ee3fdfc423e90268e9c666dce61b2180b62431dbb6ecfc48bca65398a1f8",
+      "gitBlobSha": "c7eed77fb06fa81ef9841f61b5ac28d3bfe5a4f1"
+    },
+    {
+      "path": ".agents/skills/impeccable/scripts/modern-screenshot.umd.js",
+      "sha256": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b",
+      "gitBlobSha": "a9c5208f6b141d3bafdb8eb843d6fcbdcf23e370"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
+      "gitBlobSha": "bb3f6d23b1f8025514a62a12b51b47d73e3c9aa9"
+    },
+    {
+      "path": "NOTICE.md",
+      "sha256": "c60a093c2845fd9fb82f9c6f742ece31f379f8190b535309d32d66c45ccffdcb",
+      "gitBlobSha": "0468271c904ae334cfaf27da6f8df3d5f419a1f0"
+    },
+    {
+      "path": "README.md",
+      "sha256": "256b85659e13ffd7f5aba978f83bc91677d7439967283744d71cb0b082bb81a3",
+      "gitBlobSha": "0d6c0ec686eaaafc3c1917ecbbd5bb5107771564"
+    }
+  ]
+}

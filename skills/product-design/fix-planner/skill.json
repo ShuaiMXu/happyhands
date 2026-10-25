@@ -1,0 +1,13 @@
+{
+  "id": "fix-planner",
+  "version": "0.1.1",
+  "role": "plan",
+  "description": "Turn a confirmed finding into a scoped, reversible change plan constrained by project evidence and approved design foundations.",
+  "requiredInputs": [
+    "finding",
+    "designFoundation"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "fixPlanner",
+  "maturity": "bounded"
+}

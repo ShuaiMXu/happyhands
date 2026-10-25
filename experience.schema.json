@@ -1,0 +1,705 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/experience.schema.json",
+  "title": "Experience Spec v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "project",
+    "evidence",
+    "findings",
+    "review"
+  ],
+  "properties": {
+    "version": {
+      "const": "0.1"
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "goal",
+        "audience",
+        "task",
+        "source"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "designFoundation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "brand",
+        "tokens",
+        "components",
+        "patterns"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not-started",
+            "observed",
+            "approved"
+          ]
+        },
+        "brand": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "principles",
+            "voice",
+            "assets"
+          ],
+          "properties": {
+            "principles": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "voice": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "assets": {
+              "$ref": "#/$defs/artifacts"
+            },
+            "voiceEvidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sample",
+                  "source"
+                ],
+                "properties": {
+                  "sample": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tokens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "category",
+              "name",
+              "value",
+              "source",
+              "status"
+            ],
+            "properties": {
+              "category": {
+                "enum": [
+                  "color",
+                  "type",
+                  "space",
+                  "radius",
+                  "shadow",
+                  "motion",
+                  "other"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "$ref": "#/$defs/foundationStatus"
+              },
+              "variants": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "themes": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "usage": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidence": {
+                "$ref": "#/$defs/foundationEvidence"
+              },
+              "decision": {
+                "$ref": "#/$defs/foundationDecision"
+              }
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "source",
+              "variants",
+              "states",
+              "status"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "variants": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "states": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "status": {
+                "$ref": "#/$defs/foundationStatus"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidence": {
+                "$ref": "#/$defs/foundationEvidence"
+              },
+              "decision": {
+                "$ref": "#/$defs/foundationDecision"
+              }
+            }
+          }
+        },
+        "patterns": {
+          "$ref": "#/$defs/patterns"
+        },
+        "guidelines": {
+          "$ref": "#/$defs/artifacts"
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "state",
+          "observation",
+          "origin"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "type": "string",
+            "minLength": 1
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "enum": [
+              "authored-sample",
+              "source-code",
+              "public-page",
+              "browser"
+            ]
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "evidenceIds",
+          "impact",
+          "confidence",
+          "effort",
+          "proposal"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidenceIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "impact": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "confidence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "effort": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "proposal": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "before",
+        "after",
+        "judgment",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not-started",
+            "needs-evidence",
+            "ready-for-human-review"
+          ]
+        },
+        "before": {
+          "type": "string"
+        },
+        "after": {
+          "type": "string"
+        },
+        "judgment": {
+          "enum": [
+            "pending",
+            "accept",
+            "reject"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "foundationStatus": {
+      "enum": [
+        "observed",
+        "approved",
+        "deprecated"
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "description",
+          "source",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "$ref": "#/$defs/foundationStatus"
+          },
+          "role": {
+            "enum": [
+              "logo",
+              "mark",
+              "favicon",
+              "icon",
+              "og-image",
+              "font",
+              "other"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "$ref": "#/$defs/foundationEvidence"
+          },
+          "decision": {
+            "$ref": "#/$defs/foundationDecision"
+          }
+        }
+      }
+    },
+    "foundationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "status",
+        "details"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "0.1"
+        },
+        "status": {
+          "const": "observed"
+        },
+        "details": {
+          "type": "object"
+        },
+        "provenance": {
+          "type": "object"
+        }
+      }
+    },
+    "foundationDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "reason"
+      ],
+      "properties": {
+        "action": {
+          "enum": [
+            "approved",
+            "replace",
+            "deferred",
+            "deprecated"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "previous": {
+          "type": "object"
+        }
+      }
+    },
+    "patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "description",
+          "source",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "$ref": "#/$defs/foundationStatus"
+          },
+          "role": {
+            "enum": [
+              "logo",
+              "mark",
+              "favicon",
+              "icon",
+              "og-image",
+              "font",
+              "other"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "$ref": "#/$defs/foundationEvidence"
+          },
+          "decision": {
+            "$ref": "#/$defs/foundationDecision"
+          },
+          "usage": {
+            "$ref": "#/$defs/patternUsage"
+          }
+        }
+      }
+    },
+    "patternUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "whenToUse",
+        "whenToAvoid",
+        "exceptions",
+        "limitations",
+        "dependencies",
+        "tokenReferences",
+        "examples"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "0.1"
+        },
+        "whenToUse": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2500,
+            "pattern": "\\S"
+          }
+        },
+        "whenToAvoid": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2500,
+            "pattern": "\\S"
+          }
+        },
+        "exceptions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2500,
+            "pattern": "\\S"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2500,
+            "pattern": "\\S"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2500,
+            "pattern": "\\S"
+          }
+        },
+        "tokenReferences": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2500,
+            "pattern": "\\S"
+          }
+        },
+        "examples": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "runId",
+              "stateId",
+              "configurationId",
+              "route",
+              "instanceId",
+              "domPath",
+              "selector",
+              "screenshot",
+              "imageHash",
+              "qaHash",
+              "judgmentHash"
+            ],
+            "properties": {
+              "runId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2500
+              },
+              "stateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2500
+              },
+              "configurationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2500
+              },
+              "route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2500
+              },
+              "instanceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2500
+              },
+              "domPath": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              "selector": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2500
+              },
+              "screenshot": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2500
+              },
+              "imageHash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "qaHash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "judgmentHash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

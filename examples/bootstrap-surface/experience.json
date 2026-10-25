@@ -1,0 +1,81 @@
+{
+  "version": "0.1",
+  "project": {
+    "name": "Bootstrap example — a surface that has not been built yet",
+    "goal": "Let an operator run one job from start to finish without leaving the workspace",
+    "audience": "Internal operators who currently do this work across a spreadsheet and a chat thread",
+    "task": "Start a job, watch it run, and recover when a step fails",
+    "source": "Fictional example. It exists to exercise the bootstrap gate; no repository, screenshot or user result is claimed."
+  },
+  "designFoundation": {
+    "status": "approved",
+    "brand": {
+      "principles": ["State what the system is doing", "Never hide a failure"],
+      "voice": ["Plain", "Specific about the next step"],
+      "assets": []
+    },
+    "tokens": [
+      {
+        "category": "color",
+        "name": "surface",
+        "value": "#FFFFFF",
+        "source": "tokens.css",
+        "status": "approved"
+      },
+      {
+        "category": "color",
+        "name": "error-surface",
+        "value": "#FDE7E7",
+        "source": "tokens.css",
+        "status": "approved"
+      },
+      {
+        "category": "color",
+        "name": "error-text",
+        "value": "#B3261E",
+        "source": "tokens.css",
+        "status": "approved"
+      },
+      {
+        "category": "radius",
+        "name": "card",
+        "value": "12px",
+        "source": "tokens.css",
+        "status": "approved"
+      }
+    ],
+    "components": [
+      {
+        "name": "JobCard",
+        "source": "src/components/JobCard",
+        "variants": ["compact", "expanded"],
+        "states": ["empty", "queued", "running", "done", "failed"],
+        "status": "approved"
+      },
+      {
+        "name": "RetryButton",
+        "source": "src/components/RetryButton",
+        "variants": ["single", "batch"],
+        "states": ["default", "disabled", "pending"],
+        "status": "approved"
+      }
+    ],
+    "patterns": [
+      {
+        "name": "Recoverable failure",
+        "description": "A failed step names the reason and offers a retry in place; a batch of failures offers one retry for all of them",
+        "source": "design-system/patterns.md",
+        "status": "approved"
+      }
+    ]
+  },
+  "evidence": [],
+  "findings": [],
+  "review": {
+    "status": "not-started",
+    "before": "",
+    "after": "",
+    "judgment": "pending",
+    "reason": ""
+  }
+}

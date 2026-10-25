@@ -1,0 +1,331 @@
+{
+  "kind": "real-model-review-of-reused-original-historical-captures",
+  "runId": "whole-quickstart-roles-20261013",
+  "parentRun": "whole-quickstart-20261013b",
+  "sourceCapturesReused": true,
+  "beforeCommit": "ebf972432c766a0eebfe5b1bfa156d9b337fe714",
+  "afterCommit": "55fe4195590b3c5e29ab3add1fcef75396aadfeb",
+  "plannedPerPhase": 36,
+  "capturedBefore": 35,
+  "capturedAfter": 36,
+  "model": "gpt-5.5",
+  "cliVersion": "0.141.0",
+  "regionalBatches": [
+    {
+      "screenshotRefs": [
+        "before/whole-page--desktop.png",
+        "before/whole-page--mobile.png",
+        "before/hero--desktop.png",
+        "before/hero--mobile.png",
+        "before/mobile-menu-open--mobile.png",
+        "before/advantages--desktop.png",
+        "after/whole-page--desktop.png",
+        "after/whole-page--mobile.png",
+        "after/hero--desktop.png",
+        "after/hero--mobile.png",
+        "after/mobile-menu-open--mobile.png",
+        "after/advantages--desktop.png"
+      ],
+      "verdict": "pass",
+      "rationale": "已检查本批次提供的桌面与移动整页、Hero、移动菜单展开、核心优势区域的前后状态。可见布局、品牌标识、深色海军背景、青绿色主行动、导航与卡片层级在 after 中保持一致，未发现文字遮挡、错位、横向溢出或响应式退化。QuickStart 区域在整页截图中仍保持原有视觉结构；本批次未显示新的局部视觉回退。",
+      "limitations": [
+        "本批次静态截图只能验证可见区域与整页外观，不能证明 QuickStart 长命令在移动端通过真实横向滚轮/触控滚动可达。",
+        "未提供动效、hover、focus、键盘操作或 reduced-motion 的录屏证据，因此不对这些隐藏状态作结论。",
+        "本结论仅覆盖本批次分配的截图区域；其他未附局部状态需由对应批次或最终汇总复核。"
+      ]
+    },
+    {
+      "screenshotRefs": [
+        "before/advantages--mobile.png",
+        "after/advantages--mobile.png",
+        "before/screenshots--desktop.png",
+        "after/screenshots--desktop.png",
+        "before/screenshots--mobile.png",
+        "after/screenshots--mobile.png",
+        "before/feature-grid--desktop.png",
+        "after/feature-grid--desktop.png",
+        "before/feature-grid--mobile.png",
+        "after/feature-grid--mobile.png",
+        "before/architecture--desktop.png",
+        "after/architecture--desktop.png"
+      ],
+      "verdict": "pass",
+      "rationale": "已逐一对比本批次附带的 before/after 区域截图。优势卡片、产品截图区、强大特性网格和技术架构区在桌面与移动端可见范围内保持品牌连续性：深色背景、青绿色强调色、卡片层级、标题层级和导航样式均未出现可见退化。移动端截图区与特性区的 after 状态未引入新的横向溢出、文字遮挡、按钮挤压或内容断裂；桌面端布局也保持原有对齐、间距和信息层级。确认变更的核心 QuickStart 横向滚动证明不在本区域截图中，本批只覆盖局部回归风险；就这些已检视区域而言，请求中的“preserve other planned routes, regions and interaction states”未发现可见回归。",
+      "limitations": [
+        "本批次未包含 QuickStart 区域或真实水平滚轮交互录制，因此不能直接证明长命令在 QuickStart 移动端已可达；该主证据应由包含 QuickStart 的批次或最终总审确认。",
+        "静态截图无法验证 hover、focus、active、移动端菜单展开、键盘导航、滚动条行为或 reduced-motion 状态。",
+        "本评审仅依据附带原始截图和 review-context.json；未运行页面、未检查源码、未推断未截图区域。"
+      ]
+    },
+    {
+      "screenshotRefs": [
+        "before/architecture--mobile.png",
+        "after/architecture--mobile.png",
+        "before/quickstart--desktop.png",
+        "after/quickstart--desktop.png",
+        "before/quickstart--mobile.png",
+        "after/quickstart--mobile.png",
+        "before/technology--desktop.png",
+        "after/technology--desktop.png",
+        "before/technology--mobile.png",
+        "after/technology--mobile.png",
+        "before/footer--desktop.png",
+        "after/footer--desktop.png"
+      ],
+      "verdict": "pass",
+      "rationale": "已检查本批次所有原始 before/after 区域截图。QuickStart 桌面前后保持一致，移动端终端区、标题、副文案和访问提示的层级未出现新的遮挡、错位或品牌断裂；长 git clone 命令在初始视口中仍以横向溢出的形式呈现，符合需要横向滚动查看的视觉状态。Architecture、Technology 与 Footer 区域在 after 中未见由该变更引入的布局、间距、可读性或响应式回归，整体仍延续 HappyClaw 的深色底、青绿色强调和技术型品牌表达。",
+      "limitations": [
+        "本批次只包含静态区域截图，未包含真实横向滚轮或触控拖动后的 QuickStart 命令末端可达性证据，因此只能确认可见布局无回归，不能单独证明滚动交互已成功。",
+        "未检查未分配到本批次的整页关系、隐藏菜单展开态、键盘焦点态、hover/active 状态或 reduced-motion 行为。"
+      ]
+    },
+    {
+      "screenshotRefs": [
+        "before/footer--mobile.png",
+        "before/mobile-menu-closed--mobile.png",
+        "before/menu-to-features--mobile.png",
+        "before/menu-to-screenshots--mobile.png",
+        "before/menu-to-quickstart--mobile.png",
+        "before/screenshots-mobile--desktop.png",
+        "after/footer--mobile.png",
+        "after/mobile-menu-closed--mobile.png",
+        "after/menu-to-features--mobile.png",
+        "after/menu-to-screenshots--mobile.png",
+        "after/menu-to-quickstart--mobile.png",
+        "after/screenshots-mobile--desktop.png"
+      ],
+      "verdict": "pass",
+      "rationale": "已对本批次分配的 12 张区域截图逐一比对。after 状态在页脚、移动端菜单关闭态、菜单跳转到特性/截图/快速开始，以及桌面端移动端截图展示区中，均保持了原有 HappyClaw 深色技术品牌、青绿色强调色、信息层级和响应式布局。QuickStart 区域的长命令在静态截图中仍以终端容器呈现，未看到新增的页面级横向溢出、导航错位、文字遮挡或相邻区域回归；移动菜单跳转后的锚点定位也与 before 可比状态一致。",
+      "limitations": [
+        "本批次截图只能证明可见区域的静态视觉状态；无法从静态图直接验证 QuickStart 终端代码块的真实横向滚轮/触控滚动行为。",
+        "本结论仅覆盖本区域批次所附截图；whole-page、未附交互展开态、焦点态、hover/active 状态和 reduced-motion 行为不在本地证据范围内。",
+        "designFoundation 为 observed 而非明确审批方向，因此评审只判断品牌连续性和可见回归，不将现有整体审美机会作为本次 scoped fix 的失败项。"
+      ]
+    },
+    {
+      "screenshotRefs": [
+        "before/screenshots-mobile--mobile.png",
+        "before/screenshots-mobile-2--mobile.png",
+        "before/screenshots-mobile-3--mobile.png",
+        "before/screenshots-mobile-4--mobile.png",
+        "before/screenshots-feishu--desktop.png",
+        "before/screenshots-feishu--mobile.png",
+        "after/screenshots-mobile--mobile.png",
+        "after/screenshots-mobile-2--mobile.png",
+        "after/screenshots-mobile-3--mobile.png",
+        "after/screenshots-mobile-4--mobile.png",
+        "after/screenshots-feishu--desktop.png",
+        "after/screenshots-feishu--mobile.png"
+      ],
+      "verdict": "pass",
+      "rationale": "已检查本批次分配的移动端截图展示区与飞书集成区的 before/after 原始截图。可见区域在修改后保持品牌连续性：深色海军背景、HappyClaw 标识、截图容器、手机外框、标签文字与飞书窗口布局均未出现错位、遮挡、溢出或响应式退化。桌面飞书区两列截图仍保持清晰分组；移动飞书区窗口宽度与内部截图未发生裁切或横向溢出。移动端截图长列表的局部 after 与 before 基本一致，未见新增视觉层级、可读性或布局回归。本区域没有发现与已确认 QuickStart 滚动修复相冲突的可见问题。",
+      "limitations": [
+        "本批次截图不包含 QuickStart 代码块区域，也没有真实横向滚轮交互录屏，因此不能直接证明长命令在 QuickStart 中已可达；这里只能确认本批次可见区域没有局部回归。",
+        "静态截图不能验证隐藏菜单、hover/focus/active 状态、动画或 reduced-motion 行为。",
+        "设计基础为观察到的品牌与组件状态，未提供单独的人类批准记录。"
+      ]
+    },
+    {
+      "screenshotRefs": [
+        "before/screenshots-feishu-end--mobile.png",
+        "before/screenshots-web-return--desktop.png",
+        "before/screenshots-web-return--mobile.png",
+        "before/screenshots-web-2--mobile.png",
+        "before/screenshots-web-3--mobile.png",
+        "after/screenshots-feishu-end--mobile.png",
+        "after/screenshots-web-return--desktop.png",
+        "after/screenshots-web-return--mobile.png",
+        "after/screenshots-web-2--mobile.png",
+        "after/screenshots-web-3--mobile.png",
+        "after/quickstart-command-end--mobile.png"
+      ],
+      "verdict": "pass",
+      "rationale": "本批次覆盖截图展示区域与 QuickStart 移动端横向滚动末端状态。截图展示区在 before/after 中保持品牌连续性：深色背景、HappyClaw 标识、青绿色激活态、浏览器截图容器和移动端纵向堆叠均未出现可见回退；飞书集成末端截图也保持一致。QuickStart 的 after 证据显示命令容器具备横向滚动能力，已滚动到末端后可见长命令后段与后续 localhost 指引，没有观察到该局部引入的遮挡、布局破裂或品牌冲突。",
+      "limitations": [
+        "本区域批次没有成功的 before/quickstart-command-end 截图；before 记录显示目标当时无可横向滚动溢出，因此 QuickStart 结论主要基于 after 原图与记录的滚动证据。",
+        "静态截图不能验证悬停、键盘焦点、减少动态效果或隐藏菜单状态；本结论仅覆盖已分配截图中的可见状态。",
+        "本批次为区域验收，不能单独证明全页面所有区域或主任务的跨区域关系均已通过。"
+      ]
+    }
+  ],
+  "crossRegion": {
+    "schemaVersion": "0.1",
+    "skillId": "visual-qa-evaluator",
+    "reviewer": {
+      "type": "model",
+      "name": "Codex independent visual review",
+      "version": "ai-visual-review@5; ojo=06e9152f00658f8263260760affab6d4f7a855af919c2729256d2dff20b744ee; rubric=0.1.0; sha256=1d09df562ae498ce102f8579618a04d0adb66bf504127c848cadb8f37c2094f1"
+    },
+    "reviewedAt": "2026-10-13T05:41:19.091Z",
+    "verdict": "pass",
+    "screenshotRefs": [
+      "before/whole-page--desktop.png",
+      "before/whole-page--mobile.png",
+      "before/quickstart--desktop.png",
+      "before/quickstart--mobile.png",
+      "before/menu-to-quickstart--mobile.png",
+      "after/whole-page--desktop.png",
+      "after/whole-page--mobile.png",
+      "after/quickstart--desktop.png",
+      "after/quickstart--mobile.png",
+      "after/menu-to-quickstart--mobile.png",
+      "after/quickstart-command-end--mobile.png"
+    ],
+    "findings": [],
+    "rationale": "已检查所有附加的 before/after 原始整页与确认范围状态截图，并结合 review-context.json 中 plannedCaptures 与区域评审记录复核。确认变更范围是 QuickStart 移动端长命令横向滚动可达，并保持其它计划区域与交互状态不回退。after/quickstart-command-end--mobile.png 显示终端代码块已横向滚动到末端，review-context 的动作证据记录 scrollLeft 115、scrollWidth 471、clientWidth 356、overflowX 为 auto，证明长 git clone 命令末端可达。桌面 QuickStart 前后保持一致；移动 QuickStart、菜单跳转到 QuickStart、整页桌面与移动视图均保持 HappyClaw 既有深色海军背景、青绿色强调、终端组件样式、导航层级和章节节奏，未发现新增页面级横向溢出、文字遮挡、锚点错位、品牌断裂或响应式回归。所有区域评审均为 pass，且其限制项已由本次跨区域 QuickStart 末端截图和动作证据补足到确认范围内。",
+    "limitations": [
+      "设计基础为 observed，未提供明确的人类批准方向；本评审只判断已观察品牌连续性和确认变更是否达成。",
+      "静态截图与动作证据可验证本次横向滚动末端状态，但不能证明 hover、focus、active、键盘操作、减少动态效果或未截图隐藏状态。",
+      "before 没有成功的 quickstart-command-end 对应截图；对修复有效性的判断依赖 after 末端截图、plannedCaptures 的 recovery 标记与滚动动作证据。"
+    ],
+    "attachmentRefs": []
+  },
+  "final": {
+    "schemaVersion": "0.1",
+    "skillId": "visual-qa-evaluator",
+    "coverage": {
+      "kind": "regional-and-whole-page",
+      "regionalVerdicts": [
+        "pass",
+        "pass",
+        "pass",
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "crossRegionVerdict": "pass",
+      "expectedContexts": 4,
+      "coveredContexts": 4,
+      "wholePageScreenshotRefs": [
+        "before/whole-page--desktop.png",
+        "before/whole-page--mobile.png",
+        "after/whole-page--desktop.png",
+        "after/whole-page--mobile.png"
+      ],
+      "missingContexts": [],
+      "missingStates": [],
+      "exceeded": false
+    },
+    "reviewer": {
+      "type": "model",
+      "name": "Codex independent regional and whole-page review",
+      "version": "ai-visual-review@5; ojo=06e9152f00658f8263260760affab6d4f7a855af919c2729256d2dff20b744ee; rubric=0.1.0; sha256=1d09df562ae498ce102f8579618a04d0adb66bf504127c848cadb8f37c2094f1; paired-batches@2; cross-region@1"
+    },
+    "reviewedAt": "2026-10-13T05:41:19.092Z",
+    "verdict": "pass",
+    "screenshotRefs": [
+      "before/whole-page--desktop.png",
+      "before/whole-page--mobile.png",
+      "before/hero--desktop.png",
+      "before/hero--mobile.png",
+      "before/mobile-menu-open--mobile.png",
+      "before/advantages--desktop.png",
+      "after/whole-page--desktop.png",
+      "after/whole-page--mobile.png",
+      "after/hero--desktop.png",
+      "after/hero--mobile.png",
+      "after/mobile-menu-open--mobile.png",
+      "after/advantages--desktop.png",
+      "before/advantages--mobile.png",
+      "after/advantages--mobile.png",
+      "before/screenshots--desktop.png",
+      "after/screenshots--desktop.png",
+      "before/screenshots--mobile.png",
+      "after/screenshots--mobile.png",
+      "before/feature-grid--desktop.png",
+      "after/feature-grid--desktop.png",
+      "before/feature-grid--mobile.png",
+      "after/feature-grid--mobile.png",
+      "before/architecture--desktop.png",
+      "after/architecture--desktop.png",
+      "before/architecture--mobile.png",
+      "after/architecture--mobile.png",
+      "before/quickstart--desktop.png",
+      "after/quickstart--desktop.png",
+      "before/quickstart--mobile.png",
+      "after/quickstart--mobile.png",
+      "before/technology--desktop.png",
+      "after/technology--desktop.png",
+      "before/technology--mobile.png",
+      "after/technology--mobile.png",
+      "before/footer--desktop.png",
+      "after/footer--desktop.png",
+      "before/footer--mobile.png",
+      "before/mobile-menu-closed--mobile.png",
+      "before/menu-to-features--mobile.png",
+      "before/menu-to-screenshots--mobile.png",
+      "before/menu-to-quickstart--mobile.png",
+      "before/screenshots-mobile--desktop.png",
+      "after/footer--mobile.png",
+      "after/mobile-menu-closed--mobile.png",
+      "after/menu-to-features--mobile.png",
+      "after/menu-to-screenshots--mobile.png",
+      "after/menu-to-quickstart--mobile.png",
+      "after/screenshots-mobile--desktop.png",
+      "before/screenshots-mobile--mobile.png",
+      "before/screenshots-mobile-2--mobile.png",
+      "before/screenshots-mobile-3--mobile.png",
+      "before/screenshots-mobile-4--mobile.png",
+      "before/screenshots-feishu--desktop.png",
+      "before/screenshots-feishu--mobile.png",
+      "after/screenshots-mobile--mobile.png",
+      "after/screenshots-mobile-2--mobile.png",
+      "after/screenshots-mobile-3--mobile.png",
+      "after/screenshots-mobile-4--mobile.png",
+      "after/screenshots-feishu--desktop.png",
+      "after/screenshots-feishu--mobile.png",
+      "before/screenshots-feishu-end--mobile.png",
+      "before/screenshots-web-return--desktop.png",
+      "before/screenshots-web-return--mobile.png",
+      "before/screenshots-web-2--mobile.png",
+      "before/screenshots-web-3--mobile.png",
+      "after/screenshots-feishu-end--mobile.png",
+      "after/screenshots-web-return--desktop.png",
+      "after/screenshots-web-return--mobile.png",
+      "after/screenshots-web-2--mobile.png",
+      "after/screenshots-web-3--mobile.png",
+      "after/quickstart-command-end--mobile.png"
+    ],
+    "attachmentRefs": [],
+    "findings": [],
+    "rationale": "Batch 1: 已检查本批次提供的桌面与移动整页、Hero、移动菜单展开、核心优势区域的前后状态。可见布局、品牌标识、深色海军背景、青绿色主行动、导航与卡片层级在 after 中保持一致，未发现文字遮挡、错位、横向溢出或响应式退化。QuickStart 区域在整页截图中仍保持原有视觉结构；本批次未显示新的局部视觉回退。\nBatch 2: 已逐一对比本批次附带的 before/after 区域截图。优势卡片、产品截图区、强大特性网格和技术架构区在桌面与移动端可见范围内保持品牌连续性：深色背景、青绿色强调色、卡片层级、标题层级和导航样式均未出现可见退化。移动端截图区与特性区的 after 状态未引入新的横向溢出、文字遮挡、按钮挤压或内容断裂；桌面端布局也保持原有对齐、间距和信息层级。确认变更的核心 QuickStart 横向滚动证明不在本区域截图中，本批只覆盖局部回归风险；就这些已检视区域而言，请求中的“preserve other planned routes, regions and interaction states”未发现可见回归。\nBatch 3: 已检查本批次所有原始 before/after 区域截图。QuickStart 桌面前后保持一致，移动端终端区、标题、副文案和访问提示的层级未出现新的遮挡、错位或品牌断裂；长 git clone 命令在初始视口中仍以横向溢出的形式呈现，符合需要横向滚动查看的视觉状态。Architecture、Technology 与 Footer 区域在 after 中未见由该变更引入的布局、间距、可读性或响应式回归，整体仍延续 HappyClaw 的深色底、青绿色强调和技术型品牌表达。\nBatch 4: 已对本批次分配的 12 张区域截图逐一比对。after 状态在页脚、移动端菜单关闭态、菜单跳转到特性/截图/快速开始，以及桌面端移动端截图展示区中，均保持了原有 HappyClaw 深色技术品牌、青绿色强调色、信息层级和响应式布局。QuickStart 区域的长命令在静态截图中仍以终端容器呈现，未看到新增的页面级横向溢出、导航错位、文字遮挡或相邻区域回归；移动菜单跳转后的锚点定位也与 before 可比状态一致。\nBatch 5: 已检查本批次分配的移动端截图展示区与飞书集成区的 before/after 原始截图。可见区域在修改后保持品牌连续性：深色海军背景、HappyClaw 标识、截图容器、手机外框、标签文字与飞书窗口布局均未出现错位、遮挡、溢出或响应式退化。桌面飞书区两列截图仍保持清晰分组；移动飞书区窗口宽度与内部截图未发生裁切或横向溢出。移动端截图长列表的局部 after 与 before 基本一致，未见新增视觉层级、可读性或布局回归。本区域没有发现与已确认 QuickStart 滚动修复相冲突的可见问题。\nBatch 6: 本批次覆盖截图展示区域与 QuickStart 移动端横向滚动末端状态。截图展示区在 before/after 中保持品牌连续性：深色背景、HappyClaw 标识、青绿色激活态、浏览器截图容器和移动端纵向堆叠均未出现可见回退；飞书集成末端截图也保持一致。QuickStart 的 after 证据显示命令容器具备横向滚动能力，已滚动到末端后可见长命令后段与后续 localhost 指引，没有观察到该局部引入的遮挡、布局破裂或品牌冲突。\nCross-region: 已检查所有附加的 before/after 原始整页与确认范围状态截图，并结合 review-context.json 中 plannedCaptures 与区域评审记录复核。确认变更范围是 QuickStart 移动端长命令横向滚动可达，并保持其它计划区域与交互状态不回退。after/quickstart-command-end--mobile.png 显示终端代码块已横向滚动到末端，review-context 的动作证据记录 scrollLeft 115、scrollWidth 471、clientWidth 356、overflowX 为 auto，证明长 git clone 命令末端可达。桌面 QuickStart 前后保持一致；移动 QuickStart、菜单跳转到 QuickStart、整页桌面与移动视图均保持 HappyClaw 既有深色海军背景、青绿色强调、终端组件样式、导航层级和章节节奏，未发现新增页面级横向溢出、文字遮挡、锚点错位、品牌断裂或响应式回归。所有区域评审均为 pass，且其限制项已由本次跨区域 QuickStart 末端截图和动作证据补足到确认范围内。",
+    "limitations": [
+      "本批次静态截图只能验证可见区域与整页外观，不能证明 QuickStart 长命令在移动端通过真实横向滚轮/触控滚动可达。",
+      "未提供动效、hover、focus、键盘操作或 reduced-motion 的录屏证据，因此不对这些隐藏状态作结论。",
+      "本结论仅覆盖本批次分配的截图区域；其他未附局部状态需由对应批次或最终汇总复核。",
+      "本批次未包含 QuickStart 区域或真实水平滚轮交互录制，因此不能直接证明长命令在 QuickStart 移动端已可达；该主证据应由包含 QuickStart 的批次或最终总审确认。",
+      "静态截图无法验证 hover、focus、active、移动端菜单展开、键盘导航、滚动条行为或 reduced-motion 状态。",
+      "本评审仅依据附带原始截图和 review-context.json；未运行页面、未检查源码、未推断未截图区域。",
+      "本批次只包含静态区域截图，未包含真实横向滚轮或触控拖动后的 QuickStart 命令末端可达性证据，因此只能确认可见布局无回归，不能单独证明滚动交互已成功。",
+      "未检查未分配到本批次的整页关系、隐藏菜单展开态、键盘焦点态、hover/active 状态或 reduced-motion 行为。",
+      "本批次截图只能证明可见区域的静态视觉状态；无法从静态图直接验证 QuickStart 终端代码块的真实横向滚轮/触控滚动行为。",
+      "本结论仅覆盖本区域批次所附截图；whole-page、未附交互展开态、焦点态、hover/active 状态和 reduced-motion 行为不在本地证据范围内。",
+      "designFoundation 为 observed 而非明确审批方向，因此评审只判断品牌连续性和可见回归，不将现有整体审美机会作为本次 scoped fix 的失败项。",
+      "本批次截图不包含 QuickStart 代码块区域，也没有真实横向滚轮交互录屏，因此不能直接证明长命令在 QuickStart 中已可达；这里只能确认本批次可见区域没有局部回归。",
+      "静态截图不能验证隐藏菜单、hover/focus/active 状态、动画或 reduced-motion 行为。",
+      "设计基础为观察到的品牌与组件状态，未提供单独的人类批准记录。",
+      "本区域批次没有成功的 before/quickstart-command-end 截图；before 记录显示目标当时无可横向滚动溢出，因此 QuickStart 结论主要基于 after 原图与记录的滚动证据。",
+      "静态截图不能验证悬停、键盘焦点、减少动态效果或隐藏菜单状态；本结论仅覆盖已分配截图中的可见状态。",
+      "本批次为区域验收，不能单独证明全页面所有区域或主任务的跨区域关系均已通过。",
+      "设计基础为 observed，未提供明确的人类批准方向；本评审只判断已观察品牌连续性和确认变更是否达成。",
+      "静态截图与动作证据可验证本次横向滚动末端状态，但不能证明 hover、focus、active、键盘操作、减少动态效果或未截图隐藏状态。",
+      "before 没有成功的 quickstart-command-end 对应截图；对修复有效性的判断依赖 after 末端截图、plannedCaptures 的 recovery 标记与滚动动作证据。",
+      "Whole-page and regional QA covers only the explicitly planned routes, devices and states; it is not whole-site or human acceptance."
+    ]
+  },
+  "screenshotHashes": {
+    "before/whole-page--desktop.png": "2b6629bacfa771d798e96ae94cf85b02d02df976a65a924e7942e6f899f5d582",
+    "before/whole-page--mobile.png": "8c4073f9a7bd8ee2e61361f758e7757525c707070e4d1521c334d18374f95bb0",
+    "before/quickstart--desktop.png": "f5dda764ceebc48305b203d8d4edfa34424e27a867b2bcf8a955132d6a21a21f",
+    "before/quickstart--mobile.png": "edee04b0aea507ae7bef1163129e46c188d0eec87aec5feded330fae269f69f2",
+    "before/menu-to-quickstart--mobile.png": "d6e2c90247f9a28faa8988d5b2d40f1500de3d4987b4e049255e78ed04e9877a",
+    "after/whole-page--desktop.png": "2b6629bacfa771d798e96ae94cf85b02d02df976a65a924e7942e6f899f5d582",
+    "after/whole-page--mobile.png": "bc18c6cae0d163fb8510737f2d46075967e883ebb421876f3dad245cc3c3f863",
+    "after/quickstart--desktop.png": "f5dda764ceebc48305b203d8d4edfa34424e27a867b2bcf8a955132d6a21a21f",
+    "after/quickstart--mobile.png": "720f984ddd1e5e90c429292586e524977e6c7f2cc2e248e507007165f45ec001",
+    "after/menu-to-quickstart--mobile.png": "f9f28c33e18d1ce36c3ee122e34aadb9554505ff47a77b9a99432c5adc3fe96a",
+    "after/quickstart-command-end--mobile.png": "675eec902be431372db0c25c7d048e3e32637d123478c6ed299f4d03bfbe95f0"
+  },
+  "execution": null,
+  "judgment": null
+}

@@ -1,0 +1,14 @@
+{
+  "id": "regression-case-author",
+  "version": "0.1.0",
+  "role": "learn",
+  "description": "Convert a reviewed product change into a portable regression case for a skill or evaluator.",
+  "requiredInputs": [
+    "judgment",
+    "baselineCapture",
+    "afterCapture"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

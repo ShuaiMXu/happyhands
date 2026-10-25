@@ -1,0 +1,13 @@
+{
+  "id": "judgment-distiller",
+  "version": "0.2.0",
+  "role": "learn",
+  "description": "Turn an accept or reject decision and its rationale into a scoped project-learning candidate.",
+  "requiredInputs": [
+    "judgment",
+    "finding"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "judgmentDistiller",
+  "maturity": "bounded"
+}

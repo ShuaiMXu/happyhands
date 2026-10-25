@@ -1,0 +1,160 @@
+{
+  "schemaVersion": "0.1",
+  "adapter": "web",
+  "configurations": [
+    {
+      "id": "desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      }
+    },
+    {
+      "id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ],
+  "states": [
+    {
+      "id": "whole-page",
+      "captureMode": "full-page",
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": []
+    },
+    {
+      "id": "hero",
+      "region": {
+        "selector": "#hero",
+        "source": {
+          "file": "src/components/Hero.astro",
+          "line": 5,
+          "anchor": "id=\"hero\"",
+          "component": "Hero"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#hero",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "mobile-menu-open",
+      "configurations": [
+        "mobile"
+      ],
+      "region": {
+        "selector": "#mobile-menu",
+        "source": {
+          "file": "src/components/Header.astro",
+          "line": 17,
+          "anchor": "id=\"mobile-menu\"",
+          "component": "Header"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "button",
+          "name": "菜单"
+        }
+      ]
+    },
+    {
+      "id": "quickstart",
+      "region": {
+        "selector": "#quickstart",
+        "source": {
+          "file": "src/components/QuickStart.astro",
+          "line": 10,
+          "anchor": "id=\"quickstart\"",
+          "component": "QuickStart"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#quickstart",
+          "offset": 80
+        }
+      ]
+    },
+    {
+      "id": "menu-to-quickstart",
+      "region": {
+        "selector": "#quickstart",
+        "source": {
+          "file": "src/components/QuickStart.astro",
+          "line": 10,
+          "anchor": "id=\"quickstart\"",
+          "component": "QuickStart"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "click",
+          "role": "button",
+          "name": "菜单"
+        },
+        {
+          "type": "click",
+          "role": "link",
+          "name": "快速开始",
+          "scope": "#mobile-menu"
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "quickstart-command-end",
+      "region": {
+        "selector": "#quickstart",
+        "source": {
+          "file": "src/components/QuickStart.astro",
+          "line": 10,
+          "anchor": "id=\"quickstart\"",
+          "component": "QuickStart"
+        }
+      },
+      "start": {
+        "url": "http://127.0.0.1:4321/"
+      },
+      "actions": [
+        {
+          "type": "scroll-to",
+          "selector": "#quickstart",
+          "offset": 80
+        },
+        {
+          "type": "scroll-horizontal",
+          "selector": "#quickstart [data-command-step=\"clone\"] pre",
+          "position": "end"
+        }
+      ],
+      "configurations": [
+        "mobile"
+      ]
+    }
+  ]
+}

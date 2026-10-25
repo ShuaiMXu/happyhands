@@ -1,0 +1,74 @@
+{
+  "repository": "https://github.com/touchine-ojo/OJO-Design-Skills",
+  "revision": "fbd2c2d158e5ebda8930f4bc63ed635a8500d31f",
+  "license": "MIT",
+  "importedAt": "2026-09-29",
+  "files": [
+    {
+      "path": "LICENSE",
+      "upstreamPath": "LICENSE",
+      "sha256": "03f9b33086f2196ca56a2ea388cebca2a5f617a0b0adf1d8c01ade9c9cb9bd02",
+      "gitBlobSha": "ead290b41bba60389077a6564a815d688b20ddda"
+    },
+    {
+      "path": "SKILL.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/SKILL.md",
+      "sha256": "d0722a59b6a1266cede69b4c5d948c63ca5ce250c5540fd4599c77e20bd7e34b",
+      "gitBlobSha": "e4966282cdc7b75f6ff0a982ee23632c274fef4b"
+    },
+    {
+      "path": "references/anti-patterns.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/anti-patterns.md",
+      "sha256": "60b08712bb9f1cdbc439d240d201859119e4273ace9e777eac0c92c77bd56916",
+      "gitBlobSha": "8e498e932d26cfb2a70349d1e49cdc671be9650e"
+    },
+    {
+      "path": "references/component-libraries.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/component-libraries.md",
+      "sha256": "9102e1b6b1aad783147d6912bd1dfa910522ab9532b532c9f6c2df7792b454a5",
+      "gitBlobSha": "0ab72dcfa9ad105158dd419f174f5d3dedb01eb0"
+    },
+    {
+      "path": "references/component-recipe.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/component-recipe.md",
+      "sha256": "9f35c59097212529665f01ef1ac745c44e1ffd173b02e107039b39e35a5637a7",
+      "gitBlobSha": "5dfc96189e28676c1405376e1cb1cade5d44d8e7"
+    },
+    {
+      "path": "references/design-audit.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/design-audit.md",
+      "sha256": "278cdff39c9ac6d0392604b211fdb6caddf2006e095edf90b8a771652c7e92fa",
+      "gitBlobSha": "fdbb4cb26284f1bffe579b649b2981e62b8ba70b"
+    },
+    {
+      "path": "references/hero-enrichment.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/hero-enrichment.md",
+      "sha256": "fbf0553b2e384bc3e6766a39ed08e6bb4c30daad752553f8570e3cfb285bf710",
+      "gitBlobSha": "4fa568c7d8482aab90273dd02bb030d7be62d4f9"
+    },
+    {
+      "path": "references/icon-guidelines.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/icon-guidelines.md",
+      "sha256": "6591f3487a0e4b389831040e772292f075dca65f937e1589518ac8a74ac6e3fc",
+      "gitBlobSha": "8f1816678b882a65f5f3409b72af3ce83c3b499d"
+    },
+    {
+      "path": "references/material-metaphor.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/material-metaphor.md",
+      "sha256": "9e9ca96da19ffaceaf3feffbda0d9e0ee6ec9106853d03926bed058bcb890e48",
+      "gitBlobSha": "2a4b83d5d621555e81a51c5e5953d6631209be64"
+    },
+    {
+      "path": "references/motion-system.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/motion-system.md",
+      "sha256": "d440db12ed6d8ffded199696907c086997818e0158df3cb765290802e2739193",
+      "gitBlobSha": "ccf6ec99be500b74067a20a743dbe9dd54b8611f"
+    },
+    {
+      "path": "references/visual-tokens.md",
+      "upstreamPath": "skills/app-ui-ux-best-practices/references/visual-tokens.md",
+      "sha256": "177dfcb50c36e7b34a8d6e2bded76e1f89d76f5f2b656c71c26ff4f7690900ee",
+      "gitBlobSha": "ccb8f41edca1af75445d52e78f292740915ac5d2"
+    }
+  ]
+}

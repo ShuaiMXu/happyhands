@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" role="img" aria-labelledby="title description">
+ <title id="title">Historical evidence is not bundled</title>
+ <desc id="description">This source distribution excludes historical screenshots. Capture your own project in the local workbench to inspect its evidence.</desc>
+ <rect width="390" height="844" rx="12" fill="#fafafa"/>
+ <rect x="28" y="338" width="334" height="168" rx="10" fill="#fff" stroke="#dad9d6" stroke-width=".5"/>
+ <g font-family="Arial, sans-serif" text-anchor="middle" fill="#202020">
+  <text x="195" y="390" font-size="18">Evidence not bundled</text>
+  <text x="195" y="426" font-size="14" fill="#6f6d66">Capture your own project</text>
+  <text x="195" y="450" font-size="14" fill="#6f6d66">in the local workbench.</text>
+ </g>
+</svg>

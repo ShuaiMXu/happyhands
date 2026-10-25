@@ -1,0 +1,9 @@
+{
+  "version": "0.1",
+  "spec": "experience.json",
+  "repo": "../../../your-app",
+  "url": "http://127.0.0.1:4321/",
+  "routes": ["/jobs"],
+  "browser": "chrome",
+  "timeoutMs": 30000
+}

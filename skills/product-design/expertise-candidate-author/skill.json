@@ -1,0 +1,13 @@
+{
+  "id": "expertise-candidate-author",
+  "version": "0.1.0",
+  "role": "learn",
+  "description": "Draft a general expertise candidate from repeated human judgments while preserving context and exceptions.",
+  "requiredInputs": [
+    "judgment",
+    "projectHistory"
+  ],
+  "outputSchema": "skill-result@0.1",
+  "handler": "evidenceGate",
+  "maturity": "contract-only"
+}

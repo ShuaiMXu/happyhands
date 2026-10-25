@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/diagnosis.schema.json",
+  "title": "Product Designer Diagnosis v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAt", "evaluatorVersion", "evidence", "findings", "priorityOverrides", "experienceScore"],
+  "properties": {
+    "modelDiagnosis": {"type": "object", "required": ["status", "summary", "limitations"], "properties": {"status": {"enum": ["complete", "needs-evidence", "failed"]}, "summary": {"type": "string"}, "limitations": {"type": "array", "items": {"type": "string"}}, "path": {"type": "string"}, "sha256": {"type": "string"}}},
+    "schemaVersion": { "const": "0.1" },
+    "generatedAt": { "type": "string", "minLength": 1 },
+    "evaluatorVersion": { "type": "string", "minLength": 1 },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "source"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "rootKey", "evidenceRefs", "sources", "verificationStatus", "impact", "confidence", "effort", "priority"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "rootKey": { "type": "string", "minLength": 1 },
+          "evidenceRefs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+          "sources": { "type": "array", "minItems": 1 },
+          "verificationStatus": { "enum": ["authored-candidate", "stale-candidate", "review-target", "supported"] },
+          "impact": { "type": "number", "minimum": 0 },
+          "confidence": { "type": "number", "minimum": 0 },
+          "effort": { "type": "number", "exclusiveMinimum": 0 },
+          "priority": { "type": "number", "minimum": 0 },
+          "authoredPriority": { "type": "number", "minimum": 0 },
+          "proposal": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "priorityOverrides": { "type": "array" },
+    "experienceScore": {
+      "type": "object",
+      "required": ["status", "score", "evaluator", "evidenceCoverage", "dimensions", "missing"],
+      "properties": {
+        "status": { "enum": ["insufficient-evidence", "scored"] },
+        "score": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "evaluator": { "type": ["string", "null"] },
+        "evidenceCoverage": { "type": "number", "minimum": 0, "maximum": 1 },
+        "dimensions": { "type": "array" },
+        "missing": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
