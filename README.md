@@ -21,6 +21,12 @@
 
 HappyHands helps you find interface problems, decide what to change, and check the result. It brings screenshots, your product's design rules, agent code changes, and review decisions into one local workbench.
 
+## Product demo
+
+37-second product demo.
+
+https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
+
 ## Get started
 
 You need Git, Node.js **22.15+**, pnpm **11.19**, and Chrome or Edge. Configure and sign in to **Codex CLI** for model diagnosis and visual review. This source distribution provides the local workbench and Harness.
