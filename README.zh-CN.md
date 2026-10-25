@@ -25,7 +25,7 @@ HappyHands 帮你发现界面问题、确定修改范围，再核对实际效果
 
 37 秒产品演示。
 
-<!-- demo-video -->
+https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## 开始使用
 

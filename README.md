@@ -25,7 +25,7 @@ HappyHands helps you find interface problems, decide what to change, and check t
 
 37-second product demo.
 
-<!-- demo-video -->
+https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## Get started
 
