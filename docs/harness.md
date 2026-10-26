@@ -166,20 +166,22 @@ New attestations have a durable binding to their exact review bytes, original sc
 
 ## Choosing a coding agent
 
-`execute` runs whichever agent the run selects. `pnpm harness agents` lists what is registered; `--agent ID` picks one and `--command PATH` relocates its binary without changing its flags.
+Any AI CLI can participate in the external coding-agent workflow when it has the required local access. Direct `execute` currently supports only the registered Codex and Claude Code adapters; this registry does not define the product’s overall CLI compatibility. Workbench model diagnosis and built-in visual review still use Codex. Changes made outside the Harness can be captured and evaluated, but have no Harness agent-execution record and must be identified separately.
+
+`execute` runs the registered agent selected for the invocation. `pnpm harness agents` lists what is registered; `--agent ID` picks one and `--command PATH` relocates its binary without changing its flags.
 
 ```bash
 pnpm harness execute --run .harness/runs/RUN_ID --repo ../your-app --agent claude-code
 ```
 
-The promise the Harness makes does not change with the agent: an isolated worktree, no push, no merge, no deploy, and a reviewed repository treated as data rather than instructions. The boundary is therefore declared once in `packages/harness-core/agents.js`, and an adapter that cannot state how it meets every clause is refused rather than run with a weaker guarantee.
+Registered adapters share a declared boundary: an isolated worktree, no push, no merge, no deploy, and a reviewed repository treated as data rather than instructions. These are workflow safeguards with the enforcement limits below, not a security sandbox. The boundary is therefore declared once in `packages/harness-core/agents.js`, and an adapter without a declaration for every clause is refused. A declaration does not prove isolation.
 
 | Clause | Requirement |
 |---|---|
 | `nonInteractive` | Runs without waiting for a human prompt or approval. |
 | `worktreeOnly` | Writes confined to the run worktree. |
-| `noRepoInstructions` | Instruction files inside the reviewed repository are not auto-loaded. |
-| `noPublish` | Cannot push, merge or deploy. |
+| `noRepoInstructions` | Declares how repository instructions are handled: Claude Code uses `--bare`; Codex has no equivalent flag here and relies on the prompt treating repository content as data. |
+| `noPublish` | Must declare safeguards against push, merge and deploy; see the best-effort limits below. |
 | `bounded` | Turns or wall-clock time are bounded. |
 
 Enforcement is two-layer, and the layers are not equally strong.

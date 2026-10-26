@@ -29,7 +29,7 @@ https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## Get started
 
-You need Git, Node.js **22.15+**, pnpm **11.19**, and Chrome or Edge. Configure and sign in to **Codex CLI** for model diagnosis and visual review. This source distribution provides the local workbench and Harness.
+You need Git, Node.js **22.15+**, pnpm **11.19**, and an installed Chrome or Edge for browser capture. This source distribution provides the local workbench and Harness. Configure and sign in to **Codex CLI** to use the workbench’s built-in model diagnosis and visual review; implementation CLI setup depends on the executor you choose. See [Use your coding agent](#use-your-coding-agent) for the distinction.
 
 ```sh
 git clone https://github.com/ShuaiMXu/happyhands.git
@@ -64,21 +64,23 @@ The Harness keeps the evidence and stage history together. A passing model revie
 - Ground proposed changes in the product's own tokens, components and brand sources. Keep observations separate from approved rules.
 - Retain the plan, code differences, failed checks and earlier review attempts so a later decision can be traced back to its evidence.
 
-See the [HappyClaw review record](docs/counter-evidence-review-2026-10-21.md) for a documented example where counter-evidence led to an independent re-review without erasing the original failure.
+See the [HappyClaw review record](docs/counter-evidence-review-2026-10-21.md) for a documented example where counter-evidence led to an independent re-review without erasing the original failure. That case demonstrates the recorded review path, not general design quality or real-user acceptance.
 
 ## Use your coding agent
 
+HappyHands supports working with any AI CLI as part of an open coding-agent workflow. An external agent can operate the Harness with the necessary local terminal, repository and browser access, and changes made outside the Harness can be captured and reviewed. Direct execution through `harness execute` requires a registered adapter; the current default is Codex. This does not mean every CLI has built-in integration or that every feature has been validated with every CLI.
+
 | Tool | Current role |
 | --- | --- |
-| Codex CLI | Model diagnosis and screenshot-aware review; also an implementation adapter. |
+| Codex CLI | Built-in model diagnosis and screenshot-aware review; also the default implementation adapter. Its execution path has shipped, but this is not full-loop validation of every feature. |
 | Claude Code | Implementation adapter for confirmed tasks. Configure it before execution; complete end-to-end validation remains open. |
 | Cursor, Kimi Code, WorkBuddy | Can guide and operate the Harness when the tool has local browser, terminal and repository access. They do not have dedicated implementation adapters here. |
 
-Run `pnpm harness agents` to inspect registered executors. Agent-specific behavior and limits are described in the [adapter documentation](docs/architecture.md#agent-adapters-and-the-permission-boundary).
+Run `pnpm harness agents` to inspect registered executors. Select one with `harness execute --agent ID`; `--command PATH` only changes that adapter’s binary location, not its CLI protocol. Other CLIs need an adapter for direct execution. External changes have no Harness agent-execution record and must be identified separately during review. Agent-specific behavior and limits are described in the [adapter documentation](docs/architecture.md#agent-adapters-and-the-permission-boundary).
 
 ## Current scope
 
-HappyHands is a **Local Web Alpha**. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, real-user acceptance and other gaps are tracked in the [backlog](docs/next-steps.md).
+HappyHands is a **free Local Web Alpha**. External model and CLI services may require their own accounts, subscriptions or usage fees. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, real-user acceptance and other gaps are tracked in the [backlog](docs/next-steps.md).
 
 Run records stay under `.harness/`. Model-assisted steps send selected source context and images to the configured model service through the CLI. Worktrees and repository checks are workflow safeguards, not a security sandbox. Review shared exports for sensitive material. See [data and execution details](docs/local-workbench.md).
 

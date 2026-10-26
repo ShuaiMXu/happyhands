@@ -29,7 +29,7 @@ https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## 开始使用
 
-准备 Git、Node.js **22.15+**、pnpm **11.19**，以及 Chrome 或 Edge。模型诊断和视觉复核需要已配置、已登录的 **Codex CLI**。本仓库提供本地工作台与 Harness 源码。
+准备 Git、Node.js **22.15+**、pnpm **11.19**，以及用于浏览器采集的已安装 Chrome 或 Edge。本仓库提供本地工作台与 Harness 源码。工作台内置模型诊断和视觉复核需要已配置、已登录的 **Codex CLI**；代码实现所需的 CLI 配置取决于所选执行器。区别见[配合你的编码工具](#配合你的编码工具)。
 
 ```sh
 git clone https://github.com/ShuaiMXu/happyhands.git
@@ -64,21 +64,23 @@ Harness 将证据和阶段记录关联起来，模型复核通过不会替你接
 - 从项目自己的 token、组件和品牌来源形成修改依据，区分观察结果与已批准的规则。
 - 保留计划、代码差异、失败检查和早期复核，方便追溯每次决定的依据。
 
-[HappyClaw 重审记录](docs/counter-evidence-review-2026-10-21.md) 记载了一个实际案例：补充反证后重新进行独立复核，同时保留原来的失败报告。
+[HappyClaw 重审记录](docs/counter-evidence-review-2026-10-21.md) 记载了一个实际案例：补充反证后重新进行独立复核，同时保留原来的失败报告。该案例证明的是记录中的审阅路径，不代表普遍设计质量或真实用户验收。
 
 ## 配合你的编码工具
 
+HappyHands 支持任意 AI CLI 参与开放的编码 Agent 工作流。外部 Agent 具备所需的本地终端、仓库和浏览器访问能力时，可以操作 Harness；在 Harness 外完成的修改也可采集和审阅。通过 `harness execute` 直接执行则需要已注册的适配器，当前默认使用 Codex。这不代表每个 CLI 都有内置接入，也不代表所有功能都已在每个 CLI 上验证。
+
 | 工具 | 当前用途 |
 | --- | --- |
-| Codex CLI | 模型诊断、截图视觉复核，也提供代码执行适配器。 |
+| Codex CLI | 内置模型诊断、截图视觉复核，也是默认代码执行适配器；执行路径已有使用记录，不等于所有功能均已完成全流程验证。 |
 | Claude Code | 对已确认任务提供代码执行适配器；需先完成配置，完整端到端验证仍待完成。 |
 | Cursor、Kimi Code、WorkBuddy | 工具具备本地浏览器、终端和仓库访问能力时，可以指导和操作 Harness；目前没有各自的代码执行适配器。 |
 
-运行 `pnpm harness agents` 查看已注册执行器。具体行为和限制见[适配器说明](docs/architecture.md#agent-adapters-and-the-permission-boundary)。
+运行 `pnpm harness agents` 查看已注册执行器，通过 `harness execute --agent ID` 选择；`--command PATH` 只更改该适配器的二进制路径，不改变 CLI 协议。其他 CLI 若要直接执行，需要添加适配器。外部修改没有 Harness Agent 执行记录，审阅时需单独说明。具体行为和限制见[适配器说明](docs/architecture.md#agent-adapters-and-the-permission-boundary)。
 
 ## 当前范围
 
-HappyHands 目前处于**本地 Web Alpha**。结论以采集计划和已完成检查为准，未查看的页面、未测试的交互仍属未审阅范围。专业校准、真实用户验收等缺口见[当前待办](docs/next-steps.md)。
+HappyHands 目前是**免费的本地 Web Alpha**。外部模型和 CLI 服务可能需要单独的账号、订阅或按量付费。结论以采集计划和已完成检查为准，未查看的页面、未测试的交互仍属未审阅范围。专业校准、真实用户验收等缺口见[当前待办](docs/next-steps.md)。
 
 运行记录存放在 `.harness/`。模型辅助步骤会通过 CLI 将所选源码上下文和图片发送给配置的模型服务。工作副本与仓库检查属于流程保护，不是安全沙箱。分享导出记录前应检查敏感内容，详见[数据与执行说明](docs/local-workbench.md)。
 
@@ -110,4 +112,4 @@ pnpm harness skills # 已注册方法及其成熟度
 [![官网 Forks](https://img.shields.io/github/forks/ShuaiMXu/happyhands-site?style=flat&label=Website%20forks)](https://github.com/ShuaiMXu/happyhands-site/forks)
 [Star history](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands-site&type=date)
 
-自有 HappyHands 源码采用 MIT。第三方代码和依赖保留各自许可，详见 [第三方声明](THIRD_PARTY_NOTICES.md)。
+自有 HappyHands 源码采用 MIT。第三方代码和依赖保留各自许可，包括 tldraw 独立的生产使用要求，详见 [第三方声明](THIRD_PARTY_NOTICES.md)。
