@@ -7,7 +7,7 @@
 
 <h3 align="center">Give every UI change a reason.</h3>
 
-<p align="center">A local design review workbench for products built with coding agents.</p>
+<p align="center">A local workbench to find UI problems, repair them with coding agents, and review the result.</p>
 
 <p align="center">
   <a href="https://happyhands.cc"><img alt="Website" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
@@ -19,7 +19,7 @@
   <a href="#get-started">Get started</a> / <a href="#how-it-works">How it works</a> / <a href="https://happyhands.cc">Website</a> / <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-HappyHands helps you find interface problems, decide what to change, and check the result. It brings screenshots, your product's design rules, agent code changes, and review decisions into one local workbench.
+HappyHands brings UI diagnosis, agent-assisted repairs and before/after review into one local workbench. Inspect pages and interaction states, start a scoped repair, then decide whether to accept the result and submit a draft pull request.
 
 ## Product demo
 
@@ -51,20 +51,23 @@ Check the proposed pages, devices and interaction states before capture. For con
 
 ## How it works
 
-1. Capture the selected pages and interaction states on desktop and phone.
-2. Inspect findings alongside their screenshots and source references. Review the product's existing design rules and approve constraints where required.
-3. Confirm one problem and a scoped plan. The coding agent implements it in an isolated Git worktree.
-4. Compare the result with the original evidence. Run the relevant checks and independent review, then record your own accept or reject decision.
+1. **Inspect the pages.** Connect your repository and preview, check the capture scope, then view desktop and phone screenshots with their issues. Switch devices, versions and interaction states without leaving the review. Click a screenshot to enlarge it in place.
+2. **Start a repair.** Select **Fix automatically**. The workbench checks the diagnosed issues against current source, prepares the scope and plan, and runs the coding agent in an isolated Git worktree. It then captures the result and runs applicable checks and independent visual review. Missing evidence and failed checks remain visible.
+3. **Review the result.** Compare before and after, then accept or reject the change. Acceptance reasons are optional; rejection and counter-evidence requests require a reason. An accepted, verified repair can be submitted as a **draft PR** through a separate action. The workbench does not merge or deploy it.
 
-The Harness keeps the evidence and stage history together. A passing model review does not accept the change for you. New pages follow a [Foundation-first workflow](docs/harness.md), with approved design rules before implementation.
+One repair action delegates the intermediate scope and planning steps; it does not accept the result for you. New interfaces without a baseline still require explicit [Foundation approval](docs/harness.md) before implementation.
 
-### Built for checking the work
+### What supports a finding
 
-- Switch between captured pages, devices, versions and interaction states. Open the original evidence when you need the detail.
-- Ground proposed changes in the product's own tokens, components and brand sources. Keep observations separate from approved rules.
-- Retain the plan, code differences, failed checks and earlier review attempts so a later decision can be traced back to its evidence.
+A reported defect needs a reproducible observation, an explanation of what is wrong, and a reference to the relevant skill snapshot. The Harness checks the cited section, line and quotation. General design advice and aesthetic preferences do not enter the automatic repair list on their own.
 
-See the [HappyClaw review record](docs/counter-evidence-review-2026-10-21.md) for a documented example where counter-evidence led to an independent re-review without erasing the original failure. That case demonstrates the recorded review path, not general design quality or real-user acceptance.
+Repairs follow the reviewed product's own design sources. The HappyHands UI profile applies to the workbench and to projects that have explicitly adopted it. Original screenshots, earlier failures and excluded suggestions remain in the record. See the [finding admission policy](docs/finding-admission-policy.md).
+
+The [HappyClaw review record](docs/counter-evidence-review-2026-10-21.md) shows how new counter-evidence led to an independent re-review while retaining the original failure. It documents that case's review path, not a whole-product acceptance or production deployment.
+
+### Design resources
+
+The [website](https://happyhands.cc) provides Design.md references, design systems, components and Theme Studio. Use them to choose a direction, preview a theme and prepare design files for your project. They are optional inputs to the review; browsing a reference does not approve it as your project's design system.
 
 ## Use your coding agent
 
@@ -106,10 +109,10 @@ Before contributing, read [AGENTS.md](AGENTS.md), [DESIGN.md](DESIGN.md) and the
 
 [Website](https://happyhands.cc) / [Harness guide](docs/harness.md) / [Roadmap](docs/next-steps.md) / [Issues](https://github.com/ShuaiMXu/happyhands/issues)
 
-The public website repository's activity:
+Follow the core project:
 
-[![Website stars](https://img.shields.io/github/stars/ShuaiMXu/happyhands-site?style=flat&label=Website%20stars)](https://github.com/ShuaiMXu/happyhands-site/stargazers)
-[![Website forks](https://img.shields.io/github/forks/ShuaiMXu/happyhands-site?style=flat&label=Website%20forks)](https://github.com/ShuaiMXu/happyhands-site/forks)
-[Star history](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands-site&type=date)
+[![Stars](https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&label=Stars)](https://github.com/ShuaiMXu/happyhands/stargazers)
+[![Forks](https://img.shields.io/github/forks/ShuaiMXu/happyhands?style=flat&label=Forks)](https://github.com/ShuaiMXu/happyhands/forks)
+[Star history](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands&type=date)
 
 Original HappyHands source is licensed under MIT. Bundled third-party code and dependencies retain their own licenses, including tldraw’s separate production-use requirements. See [third-party notices](THIRD_PARTY_NOTICES.md).
