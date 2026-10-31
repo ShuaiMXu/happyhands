@@ -89,7 +89,7 @@ export async function readVisualReviewBinding(run,reference,{requireBound=false,
     const versionMatches=(version,expected)=>version===expected||version.startsWith(expected+';');
     if(prior.record.reviewHash!==attempt.previousReviewHash||!versionMatches(prior.review.reviewer.version,attempt.fromProtocol)||!versionMatches(review.reviewer.version,attempt.toProtocol))throw Error('Review retry parent attestation changed.');
     if(attempt.kind==='evidence-retry'){
-      if(prior.review.verdict!=='fail'||prior.review.reviewer.type!=='model')throw Error('Counter-evidence parent is not a failed model review.');
+      if(!['fail','needs-evidence'].includes(prior.review.verdict)||prior.review.reviewer.type!=='model')throw Error('Counter-evidence parent is not a failed or missing-evidence model review.');
       const evidence=(attempt.evidenceIds||[]).map(id=>(run.manifest.reviewAttachments||[]).find(item=>item.id===id));
       if(evidence.some(item=>!item)||(verificationHash(evidence)!==attempt.evidenceHash))throw Error('Counter-evidence lineage changed.');
       const {assertFindingResolutions}=await import('./review-retry.js');assertFindingResolutions(review,prior.review);

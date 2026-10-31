@@ -29,8 +29,15 @@ test('Codex brief states the task, evidence, edit scope and review requirement',
   assert.match(brief, /propose a foundation update for human approval/);
 });
 
-test('accept and reject require a reason and do not mutate the source spec', () => {
-  assert.throws(() => recordJudgment(sample, 'accept', ' '), /reason/i);
+test('accept allows an optional reason; reject requires one without mutating the source', () => {
+  for (const reason of [undefined, '', ' ']) {
+    const accepted = recordJudgment(sample, 'accept', reason);
+    assert.equal(accepted.review.judgment, 'accept');
+    assert.equal(accepted.review.reason, '');
+    assertExperienceSpec(accepted);
+    assert.throws(() => recordJudgment(sample, 'reject', reason), /reason/i);
+  }
+  assert.throws(() => recordJudgment(sample, 'accept', 123), /text/i);
   const reviewed = recordJudgment(sample, 'reject', 'The change hides deployment information.');
   assert.equal(reviewed.review.judgment, 'reject');
   assert.equal(sample.review.judgment, 'pending');

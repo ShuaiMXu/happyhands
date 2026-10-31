@@ -1,0 +1,37 @@
+@import './happyhands.css';
+
+/* Shared native shadcn element compositions, with the site's Luma adaptation. */
+[data-hh-control]{box-sizing:border-box;font-family:var(--hh-font-sans);font-size:14px;color:var(--hh-ink);}
+body [data-hh-control][data-slot=button]{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 12px;border:.5px solid var(--hh-line);border-radius:var(--hh-radius-control);background:var(--hh-bg-raised);color:var(--hh-ink);font-weight:400;line-height:1.5;cursor:pointer;box-shadow:none;transform:none;}
+body [data-hh-control][data-slot=button]:hover:not(:disabled){background:var(--hh-bg-hover);}
+body [data-hh-control][data-slot=button][data-variant=default]{background:var(--hh-primary);border-color:transparent;color:var(--hh-on-primary);}
+body [data-hh-control][data-slot=button][data-variant=ghost]{justify-content:flex-start;border-color:transparent;background:transparent;}
+body [data-hh-control][data-slot=button][data-variant=ghost]:is([aria-current=page],[aria-current=true]){background:var(--hh-bg-sunken);}
+body [data-hh-control][data-slot=button][data-variant=media]{display:block;padding:12px;}
+body [data-hh-control]:disabled{opacity:.45;cursor:not-allowed;}
+body [data-hh-control]:focus-visible,.hh-checkbox:focus-visible{outline:2px solid var(--hh-ring);outline-offset:3px;}
+body [data-hh-control][hidden]{display:none!important;}
+[data-hh-model][hidden]{display:none!important;}
+body [data-hh-control]:is([data-slot=input],[data-slot=textarea]){min-width:0;max-width:100%;min-height:44px;padding:10px 12px;border:.5px solid var(--hh-line-strong);border-radius:var(--hh-radius-field);background:var(--hh-bg-raised);color:var(--hh-ink);font-size:14px;line-height:1.5;box-shadow:none;}
+body [data-hh-control][data-slot=textarea]{min-height:80px;resize:vertical;}
+body [data-hh-control][data-slot=label]{font-size:14px;line-height:1.5;}
+body [data-hh-control][data-slot=fieldset]{min-inline-size:0;border:0;padding:0;margin:16px 0;background:transparent;}
+body [data-hh-control][data-slot=legend]{padding:0;margin-bottom:12px;font-size:14px;font-weight:500;}
+.hh-checkbox-widget{display:inline-flex;flex:0 0 18px;vertical-align:middle;line-height:0;}
+body .hh-checkbox{display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;width:18px;height:18px;min-width:18px;min-height:18px;padding:0;margin:0;border:.5px solid var(--hh-line-strong);border-radius:5px;background:var(--hh-bg-raised);color:var(--hh-on-primary);cursor:pointer;box-shadow:none;}
+body .hh-checkbox:is([data-state=checked],[data-state=indeterminate]){background:var(--hh-primary);border-color:var(--hh-primary);}
+.hh-checkbox svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.hh-checkbox[aria-invalid=true]{outline:2px solid var(--hh-warning);outline-offset:2px;}
+.hh-checkbox:disabled{opacity:.45;cursor:not-allowed;}
+.hh-dialog-overlay{position:fixed;inset:0;z-index:100000;background:var(--hh-scrim);backdrop-filter:blur(3px);}
+.hh-dialog-content{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100001;width:max-content;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);box-sizing:border-box;outline:none;}
+.hh-dialog-dom{display:contents;}
+[data-ui-dialog]{box-sizing:border-box;width:min(640px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;margin:0;padding:24px;border:.5px solid var(--hh-line);border-radius:var(--hh-radius-card);background:var(--hh-bg-raised);color:var(--hh-ink);box-shadow:var(--hh-shadow-float);}
+[data-ui-dialog]:not([open]){display:none!important;}
+.hh-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;}
+/* Radix owns background isolation, not a visible jump in the fixed nav gutter. */
+body.workspace-page[data-scroll-locked]{padding-left:var(--workbench-navigation-width,240px);}
+@media(max-width:899px){body.workspace-page[data-scroll-locked]{padding-left:0;}}
+@media(prefers-reduced-motion:reduce){[data-hh-control],.hh-checkbox{transition:none!important;}}
+
+.workspace-page :is(.wb-dialog,.page-review,.cowart-confirm) .hh-checkbox[data-slot=checkbox]{width:18px;height:18px;min-width:18px;min-height:18px;margin:0;padding:0;border-radius:5px;}

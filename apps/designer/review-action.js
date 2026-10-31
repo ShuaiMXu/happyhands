@@ -1,3 +1,5 @@
+import {createControl} from '../../packages/ui/controls.js';
+import {isReportableFinding} from '../../packages/harness-core/finding-admission.js';
 import { t, getLanguage } from './i18n.js';
 import { stageLabel, workflowReason } from './workflow-copy.js';
 import { primaryActionForStage } from '../../packages/harness-core/primary-action.js';
@@ -6,11 +8,11 @@ import { workbenchApi, openOperations } from './cowart/operations.js';
 import { reviewSteps, reviewStep } from './review-journey.js';
 import {findingSummary} from './finding-summary.js';
 
-const node = (tag, text) => { const element=document.createElement(tag);if(text)element.textContent=t(text);return element; };
+const node = (tag, text) => { const element=createControl(tag);if(text)element.textContent=t(text);return element; };
 
 // The same controller is used by page review, report and code review.
-export function mountReviewAction(container, run, { onChanged = () => location.reload(), onFoundation, getFindingId, poll = true } = {}) {
-  let state=exportedReviewState(run), disposed=false, submitting=false, pendingId=null, timer=null, refreshing=false, dialog=null;
+export function mountReviewAction(container, run, { onChanged = () => location.reload(), onFoundation, getFindingId, getRepairFindingId, poll = true } = {}) {
+  let state=exportedReviewState(run), disposed=false, submitting=false, pendingId=null, timer=null, refreshing=false, dialog=null, reviewErrorMessage=null;
   container.className='review-primary-action';container.setAttribute('aria-label',t('本阶段下一步'));
   const copy=node('div'),journey=node('ol'),heading=node('strong'),description=node('p'),controls=node('div'),primary=node('button'),status=node('p');
   journey.className='review-journey';journey.setAttribute('aria-label',t('审阅进度'));
@@ -19,20 +21,22 @@ export function mountReviewAction(container, run, { onChanged = () => location.r
 
   function update(next) {
     state=next;
-    const action=primaryActionForStage(state.workflow?.stage);
+    const action=primaryActionForStage(state.workflow?.stage,{...run.manifest,judgment:state.judgment||run.manifest.judgment});
     const step=reviewStep(state.workflow?.stage,state.readOnly);
-    journey.replaceChildren(...reviewSteps.map((label,index)=>{const item=node('li');item.textContent=`${index+1}. ${t(label)}`;if(index===step)item.setAttribute('aria-current','step');return item;}));
-    const noFindings=action?.kind==='confirm'&&!(run.diagnosis?.findings||run.spec.findings).length;
+    journey.replaceChildren(...reviewSteps.map((label,index)=>{const item=node('li');item.textContent=t(label);if(index===step)item.setAttribute('aria-current','step');return item;}));
+    const noFindings=action?.kind==='repair'&&!(run.diagnosis?.findings||run.spec.findings).filter(isReportableFinding).length;
     const busy=Boolean(pendingId)||(state.jobs||[]).some(job=>['queued','running','cancelling'].includes(job.status));
     heading.textContent=state.readOnly?t('先连接原项目'):stageLabel(state.workflow?.stage||'needs-baseline');
     description.textContent=state.readOnly?t('这是历史导出证据。连接原项目后，才能继续当前审阅。'):t(action?.description||'重新读取当前证据后继续。');
     if(!state.readOnly&&state.workflow?.reason&&state.workflow.stage!=='awaiting-confirmation')description.textContent+=' '+workflowReason(state.workflow,run.manifest);
-    if(noFindings&&!state.readOnly)description.textContent=t('本轮尚未形成有来源的问题。补充想检查的任务或页面范围后，再开始审阅。');
+    if(noFindings&&!state.readOnly){heading.textContent=t('尚无已录入问题');description.textContent=t('本轮尚未形成有来源的问题。补充想检查的任务或页面范围后，再开始审阅。');}
     primary.textContent=t(submitting||busy?'任务正在进行':state.readOnly?'连接原项目':noFindings?'补充任务或检查范围':action?.label||'重新读取审阅');
     primary.disabled=submitting||busy||(!state.readOnly&&!action);
     const latest=(state.jobs||[])[0];
+    const reviewPending=['needs-visual-qa','visual-qa-needs-evidence','visual-qa-failed','needs-specialist-verification'].includes(state.workflow?.stage);
+    if(!reviewPending&&reviewErrorMessage&&status.textContent===reviewErrorMessage){status.textContent='';reviewErrorMessage=null;}
     if(!submitting&&!pendingId&&!status.textContent&&latest){
-      if(latest.result?.reviewError)status.textContent=t('AI 复核未完成，可重试')+': '+latest.result.reviewError;
+      if(latest.result?.reviewError&&reviewPending){reviewErrorMessage=t('AI 复核未完成，可重试')+': '+latest.result.reviewError;status.textContent=reviewErrorMessage;}
       else if(['failed','cancelled','interrupted'].includes(latest.status))status.textContent=t('操作失败')+': '+(latest.error||t(latest.status));
     }
   }
@@ -67,7 +71,7 @@ export function mountReviewAction(container, run, { onChanged = () => location.r
     try {
       const job=await workbenchApi('advance',{runId:run.manifest.id,expectedStage,language:getLanguage(),...input});
       pendingId=job.id;dialog?.close();status.textContent=t('任务已提交，可在下方查看进度。');
-    } catch(error) {status.textContent=t('操作失败')+': '+error.message;if(dialog)dialog.querySelector('[role=status]').textContent=status.textContent;}
+    } catch(error) {status.textContent=t('操作失败')+': '+t(error.message);if(dialog)dialog.querySelector('[role=status]').textContent=status.textContent;}
     finally {submitting=false;update(state);await refresh();}
   }
 
@@ -79,31 +83,15 @@ export function mountReviewAction(container, run, { onChanged = () => location.r
     sheet.append(title,close,node('p',action.description),form,error);
     const fields={};
     function field(label,element){element.setAttribute('aria-label',t(label));const wrap=node('label',label);wrap.append(element);form.append(wrap);return element;}
-    if(action.kind==='confirm') {
-      const select=node('select');fields.finding=field('本轮问题',select);
-      const candidates=run.diagnosis?.findings||run.spec.findings;
-      const blank=node('option','请选择问题');blank.value='';select.append(blank);
-      for(const finding of candidates){const option=node('option');option.value=finding.id;option.textContent=findingSummary(finding).title;select.append(option);}
-      select.value=findingId||'';select.required=true;
-      const evidence=node('p');evidence.className='review-action-evidence';form.append(evidence);
-      fields.note=field('修改建议与确认理由',node('textarea'));fields.note.required=true;fields.note.rows=4;
-      fields.confirmed=field('我已核对证据并确认本轮修改范围',node('input'));fields.confirmed.type='checkbox';fields.confirmed.required=true;
-      const selectFinding=()=>{fields.confirmed.checked=false;const finding=candidates.find(item=>item.id===select.value);const original=run.spec.findings.find(item=>item.id===select.value);fields.note.value=original?.proposal||(finding?findingSummary(finding).proposal:'');evidence.textContent=finding?t('请对照页面和原始诊断核对这条建议，可以编辑下面的修改说明。'):t('请选择问题');};
-      select.onchange=selectFinding;selectFinding();
-    }
-    if(action.kind==='execute') {
-      const details=node('details'),summary=node('summary','查看完整修改计划'),brief=node('pre');details.open=true;details.append(summary,brief);form.append(details);
-      brief.textContent=run.brief||t('正在读取修改计划…');
-      if(!run.brief)fetch(`${run.base}/codex-brief.md`,{cache:'no-store'}).then(async response=>{if(!response.ok||(response.headers.get('content-type')||'').includes('html'))throw Error('Plan unavailable');brief.textContent=await response.text();fields.confirmed.disabled=false;}).catch(()=>{brief.textContent=t('无法读取修改计划，请重新读取审阅。');fields.confirmed.disabled=true;});
-      fields.confirmed=field('我已阅读本轮修改计划，并同意在隔离工作区执行',node('input'));fields.confirmed.type='checkbox';fields.confirmed.required=true;fields.confirmed.disabled=!run.brief;
-    }
     if(action.kind==='judge') {
       const qa=state.reviews?.find(item=>item.skillId==='visual-qa-evaluator');
       form.append(node('p',qa?.rationale||''));
       if(qa){const details=node('details'),summary=node('summary','查看证据与限制');details.append(summary);for(const ref of qa.screenshotRefs||[]){const link=node('a');link.href=`${run.base}/${ref}`;link.textContent=ref;link.target='_blank';link.rel='noopener';details.append(link);}for(const limitation of qa.limitations||[])details.append(node('p',limitation));form.append(details);}
       const choice=node('select');fields.decision=field('决定',choice);choice.required=true;
       for(const [value,label] of [['','请选择决定'],...(action.stage==='visual-qa-failed'?[['reject','拒绝'],...(qa?.reviewer?.type==='model'?[['re-review','提交反证重新复核']]:[])]:[['accept','接受'],['reject','拒绝']])]){const option=node('option',label);option.value=value;choice.append(option);}
-      fields.reason=field('人工判断理由',node('textarea'));fields.reason.required=true;fields.reason.rows=3;
+      fields.reason=field('人工判断理由',node('textarea'));fields.reason.required=false;fields.reason.rows=3;
+      const syncReason=()=>{fields.reason.required=choice.value==='reject'||choice.value==='re-review';fields.reason.placeholder=t(fields.reason.required?'请说明原因':'选填');};
+      choice.addEventListener('change',syncReason);syncReason();
       if(action.stage==='visual-qa-failed'){
         const evidence=node('fieldset');evidence.hidden=true;evidence.append(node('legend','选择新的补充证据'));form.append(evidence);fields.evidence=[];
         const all=state.reviewAttachments||run.manifest.reviewAttachments||[],used=new Set(qa?.attachmentRefs||[]),hashes=new Set(all.filter(item=>used.has(item.id)).map(item=>item.imageHash));
@@ -140,13 +128,16 @@ export function mountReviewAction(container, run, { onChanged = () => location.r
 
   async function open(findingId) {
     await refresh();if(disposed||primary.disabled)return;
-    const action=primaryActionForStage(state.workflow.stage);
-    if(state.readOnly||action?.kind==='reconnect'||action?.kind==='confirm'&&!(run.diagnosis?.findings||run.spec.findings).length) {
+    const action=primaryActionForStage(state.workflow.stage,{...run.manifest,judgment:state.judgment||run.manifest.judgment});
+    if(state.readOnly||action?.kind==='reconnect'||action?.kind==='repair'&&!(run.diagnosis?.findings||run.spec.findings).filter(isReportableFinding).length) {
       const configPath=(state.jobs||[]).find(job=>job.configPath)?.configPath;
       openOperations(state.localAvailable?run:null,{project:run.spec.project,connectionOnly:true,configPath,restartAfterConnect:action?.kind==='reconnect'||Boolean(run.manifest.onboarding?.configDigest),onStarted:async job=>{pendingId=job.id;await refresh();},onConnected:()=>onChanged({runId:run.manifest.id})});return;
     }
     if(action.kind==='foundation'){onFoundation?.();return;}
-    if(['confirm','execute','judge','baseline','restart'].includes(action.kind)){showForm(action,findingId||getFindingId?.());return;}
+    if(action.kind==='open-pr'){const url=run.manifest.pullRequest?.url;if(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/.test(url||''))window.open(url,'_blank','noopener,noreferrer');return;}
+    if(action.kind==='pull-request'){await submit({publishRequested:true},action.stage);return;}
+    if(action.kind==='repair'){const selected=findingId||getRepairFindingId?.();await submit({repairRequested:true,...(selected?{findingId:selected}:{})},action.stage);return;}
+    if(['judge','baseline','restart'].includes(action.kind)){showForm(action,findingId||getFindingId?.());return;}
     await submit({},action.stage);
   }
   primary.onclick=()=>open().catch(error=>{status.textContent=error.message;});

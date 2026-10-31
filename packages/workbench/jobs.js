@@ -13,11 +13,11 @@ export async function writeJson(file, value) {
     }
   }
 }
-export function runLocal(command, args, { cwd, input = '', signal, timeoutMs = 600000, onOutput = () => {} } = {}) {
+export function runLocal(command, args, { cwd, input = '', signal, timeoutMs = 600000, onOutput = () => {}, stdoutOnly = false } = {}) {
   return new Promise((resolve, reject) => {
     signal?.throwIfAborted();
     const child = spawn(command, args, { cwd, shell: false, windowsHide: true, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
-    let tail = '', timedOut = false;
+    let tail = '', stdout = '', timedOut = false;
     const kill = () => {
       if (!child.pid) return;
       if (process.platform === 'win32') {
@@ -32,10 +32,10 @@ export function runLocal(command, args, { cwd, input = '', signal, timeoutMs = 6
     signal?.addEventListener('abort', kill, { once: true });
     const clean = () => { clearTimeout(timer); signal?.removeEventListener('abort', kill); };
     const output = data => { tail = (tail + data).slice(-16000); onOutput(String(data)); };
-    child.stdout.on('data', output); child.stderr.on('data', output);
+    child.stdout.on('data', data => { stdout=(stdout+data).slice(-16000);output(data); }); child.stderr.on('data', output);
     child.stdin.on('error', () => {});
     child.on('error', error => { clean(); reject(error); });
-    child.on('close', code => { clean(); if (signal?.aborted) reject(new Error('Cancelled')); else if (timedOut) reject(new Error('Execution timed out')); else if (code !== 0) reject(new Error(`Process exited ${code}: ${tail.slice(-2000)}`)); else resolve(tail); });
+    child.on('close', code => { clean(); if (signal?.aborted) reject(new Error('Cancelled')); else if (timedOut) reject(new Error('Execution timed out')); else if (code !== 0) reject(new Error(`Process exited ${code}: ${tail.slice(-2000)}`)); else resolve(stdoutOnly ? stdout : tail); });
     child.stdin.end(input);
   });
 }

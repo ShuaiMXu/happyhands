@@ -61,7 +61,7 @@ export function workflowState(manifest) {
   // human-decision gates instead of asking the user to edit the project again.
   if (manifest.captures.after && manifest.confirmation?.verdict === 'supported') return fromExecution(manifest, result);
   if (!manifest.diagnosis) return { ...result, stage: 'needs-diagnosis', next: 'diagnose' };
-  if (!manifest.confirmation) return { ...result, stage: 'awaiting-confirmation', blocked: true, reason: 'A person must confirm one current finding and the edit scope.', next: 'confirm' };
+  if (!manifest.confirmation) return { ...result, stage: 'awaiting-confirmation', blocked: true, reason: 'Diagnosis is ready. Request automatic repair; final acceptance remains with the user.', next: 'repair' };
   if (manifest.confirmation.verdict === 'stale') return { ...result, stage: 'finding-stale', blocked: true, reason: 'The selected finding no longer matches the baseline.', next: 'Start a new diagnosis or run.' };
   if (!manifest.plan) return { ...result, stage: 'needs-plan', next: 'plan' };
   return fromExecution(manifest, result);

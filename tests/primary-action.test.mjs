@@ -4,7 +4,7 @@ import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createWorkbench} from '../packages/workbench/service.js';
-import {createRun,saveCapture,saveDiagnosis,saveExecution,saveVisualReview,saveFoundationApproval} from '../packages/harness-core/store.js';
+import {createRun,saveCapture,saveDiagnosis,saveExecution,saveVisualReview,saveFoundationApproval,saveRepairScope,savePlan,loadRun,verifiedExecutionBrief,saveOnboarding} from '../packages/harness-core/store.js';
 import {primaryActionForStage} from '../packages/harness-core/primary-action.js';
 import {exportRun} from '../packages/harness-core/export.js';
 import {loadProjectConfig} from '../packages/harness-core/onboard.js';
@@ -12,13 +12,13 @@ import {messages} from '../apps/designer/messages.js';
 const spec=JSON.parse(await readFile(new URL('../examples/happyclaw-site/experience.json',import.meta.url),'utf8'));
 export const capture=phase=>({viewports:{desktop:{screenshot:`${phase}/desktop.png`,width:1280,height:800,status:200,dom:{h1:['Fixture'],actions:[],controls:[],horizontalOverflow:false}}}});
 export const visualQa=(verdict='pass')=>({schemaVersion:'0.1',skillId:'visual-qa-evaluator',reviewer:{type:'human',name:'Deterministic test fixture',version:'fixture@1'},reviewedAt:'2026-10-13T00:00:00Z',verdict,screenshotRefs:['before/desktop.png','after/desktop.png'],findings:verdict==='fail'?[{id:'UNRESOLVED',title:'Fixture issue',observation:'Test-only regression',impact:4,confidence:'high',screenshotRefs:['after/desktop.png']}]:[],rationale:'Test-only record to verify judgment gates.',limitations:['Fixture, not a model assessment.']});
-async function fixture(t,mode='review'){
+async function fixture(t,mode='review',dependencies={}){
  const root=await mkdtemp(join(tmpdir(),'primary-action-'));t.after(()=>rm(root,{recursive:true,force:true}));
  await mkdir(join(root,'.harness','runs'),{recursive:true});
  const run=await createRun({spec,url:'http://127.0.0.1:4321',mode,outputRoot:join(root,'.harness','runs'),id:'stage-test'});
  for(const phase of ['before','after']){await mkdir(join(run.directory,phase));await writeFile(join(run.directory,phase,'desktop.png'),'fixture');}
  const specPath=join(root,'experience.json'),configPath=join(root,'project.json');await writeFile(specPath,JSON.stringify(spec));await writeFile(configPath,JSON.stringify({version:'0.1',spec:specPath,repo:root,url:'http://127.0.0.1:4321',mode}));
- const service=createWorkbench(root,{inspectRepository:async()=>({root,commit:'a'.repeat(40),dirty:false}),previewReachable:async()=>false});t.after(()=>service.close());await service.bind(run.manifest.id,configPath);
+ const service=createWorkbench(root,{inspectRepository:async()=>({root,commit:'a'.repeat(40),dirty:false}),previewReachable:async()=>false,...dependencies});t.after(()=>service.close());await service.bind(run.manifest.id,configPath);
  if(mode==='review'){await saveCapture(run.directory,'before',capture('before'));await saveDiagnosis(run.directory,{schemaVersion:'0.1',evaluatorVersion:'fixture@1',experienceScore:{status:'insufficient-evidence'},findings:[{id:'TEST_FINDING',title:'Fixture action',evidenceRefs:['E'],impact:3,confidence:4,effort:1,priority:12,verificationStatus:'review-target',proposal:'Make the action name explicit'}],evidence:[{id:'E',source:'before/desktop.png',type:'browser-capture'}]});}
  return {service,run,root};
 }
@@ -34,12 +34,58 @@ test('every reachable workflow stage has exactly one translated primary action',
 test('scope confirmation prepares a durable plan without executing; action overrides cannot bypass approval',async t=>{
  const {service}=await fixture(t);
  await assert.rejects(service.advance({runId:'stage-test',expectedStage:'needs-execution',confirmed:true}),/stage changed/);
- await assert.rejects(service.advance({runId:'stage-test',expectedStage:'awaiting-confirmation',findingId:'TEST_FINDING',note:'fixture'}),/scope confirmation/);
+ await assert.rejects(service.advance({runId:'stage-test',expectedStage:'awaiting-confirmation',findingId:'TEST_FINDING',note:'fixture'}),/repair request/);
  await advance(service,'awaiting-confirmation',{confirmed:true,findingId:'TEST_FINDING',note:'Make action explicit',action:'execute'});
  assert.equal((await service.state('stage-test')).workflow.stage,'needs-execution');assert.equal((await service.localRun('stage-test')).manifest.execution,null);
  await assert.rejects(service.advance({runId:'stage-test',expectedStage:'needs-plan',findingId:'INVENTED',action:'execute'}),/stage changed/);
  const current=await service.localRun('stage-test');assert.equal(current.manifest.findingId,'TEST_FINDING');assert.equal(current.manifest.execution,null);
- await assert.rejects(service.advance({runId:'stage-test',expectedStage:'needs-execution',findingId:'TEST_FINDING'}),/Explicit plan/);
+ await assert.rejects(service.advance({runId:'stage-test',expectedStage:'needs-execution',findingId:'TEST_FINDING'}),/repair request/);
+});
+
+test('automatic repair binds every eligible candidate without inventing human verification or acceptance',async t=>{
+ const {run}=await fixture(t);
+ const diagnosis=JSON.parse(await readFile(join(run.directory,'diagnosis.json'),'utf8'));
+ diagnosis.findings.push({...diagnosis.findings[0],id:'SECOND',title:'Second repair'});
+ diagnosis.findings.push({...diagnosis.findings[0],id:'STALE',verificationStatus:'stale-candidate'});
+ await saveDiagnosis(run.directory,diagnosis);
+ await saveRepairScope(run.directory);
+ let current=await loadRun(run.directory);
+ assert.deepEqual(current.manifest.repair.findingIds,['TEST_FINDING','SECOND']);
+ assert.equal(current.manifest.confirmation.authority,'user-delegated');
+ assert.equal(current.manifest.judgment,null);
+ await savePlan(run.directory,current.manifest.findingId);current=await loadRun(run.directory);
+ const brief=await verifiedExecutionBrief(current);
+ assert.match(brief,/SECOND/);assert.match(brief,/Skip false positives/);assert.doesNotMatch(brief,/## Human-confirmed scope/);
+ const file=join(run.directory,'repair-request.json'),request=JSON.parse(await readFile(file,'utf8'));request.candidates[0].proposal='Tampered scope';await writeFile(file,JSON.stringify(request));
+ await assert.rejects(verifiedExecutionBrief(await loadRun(run.directory)),/Repair request changed/);
+});
+
+test('automatic repair rejects incomplete diagnosis and unknown individual issues',async t=>{
+ const {run}=await fixture(t);
+ await assert.rejects(saveRepairScope(run.directory,{findingId:'UNKNOWN'}),/No current evidence-backed/);
+ const diagnosis=JSON.parse(await readFile(join(run.directory,'diagnosis.json'),'utf8'));diagnosis.modelDiagnosis={status:'failed',summary:'Interrupted',limitations:['Test fixture']};await saveDiagnosis(run.directory,diagnosis);
+ await assert.rejects(saveRepairScope(run.directory),/diagnosis is incomplete/);
+ assert.equal((await loadRun(run.directory)).manifest.confirmation,null);
+});
+
+for(const resume of [false,true])test(`one click ${resume?'resumes a bound scope':'prepares scope and plan'} before isolated execution`,async t=>{
+ let calls=0;
+ const {service,run,root}=await fixture(t,'review',{execute:async()=>{calls++;throw Error('Fixture stopped before editing');}});
+ const configPath=join(root,'project.json'),config=JSON.parse(await readFile(configPath,'utf8'));config.start={command:'node',args:[]};await writeFile(configPath,JSON.stringify(config));
+ await saveOnboarding(run.directory,{repository:{root,commit:'a'.repeat(40),dirty:false}});
+ if(resume)await saveRepairScope(run.directory);
+ const stage=resume?'needs-plan':'awaiting-confirmation';
+ const job=await service.advance({runId:'stage-test',expectedStage:stage,repairRequested:true});
+ const result=await terminal(service,job);assert.equal(result.status,'failed');assert.match(result.error,/Fixture stopped before editing/);
+ const current=await loadRun(run.directory);
+ assert.equal(calls,1);assert.equal(current.manifest.confirmation.authority,'user-delegated');assert.ok(current.manifest.plan.briefHash);assert.equal(current.manifest.execution,null);assert.equal(current.manifest.judgment,null);
+});
+
+test('repair preflight rejects a read-only preview before editing or binding a scope',async t=>{
+ let calls=0;const {service,run,root}=await fixture(t,'review',{execute:async()=>{calls++;}});
+ await saveOnboarding(run.directory,{repository:{root,commit:'a'.repeat(40),dirty:false}});
+ await assert.rejects(service.advance({runId:'stage-test',expectedStage:'awaiting-confirmation',repairRequested:true}),/runnable project preview/);
+ assert.equal(calls,0);assert.equal((await loadRun(run.directory)).manifest.confirmation,null);
 });
 test('simultaneous submissions create one task and stale queued actions cannot mutate evidence',async t=>{
  const {service,run}=await fixture(t);let release;const blocker=await service.jobs.start({kind:'fixture-blocker'},()=>new Promise(r=>{release=r;}));
@@ -61,11 +107,13 @@ test('structural evaluation never invents QA or a human decision; failed QA allo
  await advance(service,'visual-qa-failed',{decision:'reject',reason:'Test-only rejected regression'});assert.equal((await service.state('stage-test')).workflow.stage,'complete');
  await assert.rejects(service.advance({runId:'stage-test',expectedStage:'complete'}),/Explicit plan or source/);
 });
-test('passing QA waits for an explicit decision and reason',async t=>{
+test('passing QA waits for an explicit decision with an optional acceptance reason',async t=>{
  const {service,run}=await planned(t);await saveExecution(run.directory,{exitCode:0});await saveCapture(run.directory,'after',capture('after'));await advance(service,'needs-structural-evaluation');await saveVisualReview(run.directory,visualQa());
  assert.equal((await service.state('stage-test')).workflow.stage,'awaiting-judgment');assert.equal((await service.localRun('stage-test')).manifest.judgment,null);
  await assert.rejects(service.advance({runId:'stage-test',expectedStage:'awaiting-judgment',reason:'Fixture'}),/Choose accept or reject/);
- await advance(service,'awaiting-judgment',{decision:'accept',reason:'Test-only acceptance'});
+ await advance(service,'awaiting-judgment',{decision:'accept'});
+ assert.equal((await service.localRun('stage-test')).manifest.judgment.reason,'');
+ assert.ok(Number.isFinite(Date.parse((await service.localRun('stage-test')).manifest.judgment.at)));
 });
 test('bootstrap uses absence and explicit foundation approval instead of confirming an invented finding',async t=>{
  const {service,run}=await fixture(t,'bootstrap');await advance(service,'needs-absent-baseline',{reason:'Test fixture has no initial page'});

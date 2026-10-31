@@ -11,7 +11,8 @@ export function setLanguage(value) {
   try { globalThis.localStorage?.setItem(LANGUAGE_KEY, language); } catch { /* Session-only when storage is unavailable. */ }
 }
 export function translate(key, values = [], locale = language) {
-  const template = messages[key]?.[locale === 'en' ? 1 : 0] ?? key;
+  const authored=messages[key]?.[locale === 'en' ? 1 : 0];
+  const template = authored === undefined ? key : authored.replaceAll('·','/');
   return template.replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match);
 }
 // Tagged templates translate only the authored UI segments, never interpolated evidence.

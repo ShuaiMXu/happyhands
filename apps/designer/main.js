@@ -1,3 +1,5 @@
+import {createControl} from '../../packages/ui/controls.js';
+import {installWorkbenchControls} from '../../packages/ui/workbench.js';
 import {openSiteHandoff,renderSiteHandoff} from './site-handoff.js';
 import {appendPageSurfaceLinks} from './page-surface-links.js';
 import {projectMemoryView} from './project-memory-view.js';
@@ -16,10 +18,11 @@ import happyclaw from '../../examples/happyclaw-site/experience.json' with { typ
 import sample from '../../examples/vibe-coded-app/experience.json' with { type: 'json' };
 import { assertExperienceSpec, rankedFindings, priority, codexBrief, recordJudgment } from '../../packages/experience-core/index.js';
 import { workflowState, visualReviewFor } from '../../packages/harness-core/workflow.js';
-import { renderCanvas, renderCodeDiff } from './canvas/index.js';
+import {renderCodeDiff} from './canvas/codediff.js';
 import './page-review/style.css';
 import { approvalFromDraft, createFoundationDraft, diffFoundations, foundationDecisionSummary, foundationEntries, nextFoundationVersion, summarizeFoundationEvidence, loadFoundationEvidenceRecords } from './foundation-review.js';
 
+installWorkbenchControls(document);
 const $ = id => document.getElementById(id);
 const cases = { happyclaw, sample };
 const RUNS_BASE = '/runs';
@@ -33,15 +36,15 @@ const updateShellLanguage = localizeShell();
 updateShellLanguage();
 let caseId = 'happyclaw';
 let indexProblem = null;
-const syncDirectionLink = () => { $('direction-link').href = `?case=${encodeURIComponent(caseId)}&view=directions&lang=${getLanguage()}`; $('legacy-tools-link').href = `?case=${encodeURIComponent(caseId)}&view=canvas&tools=legacy&lang=${getLanguage()}`; };
+const syncDirectionLink = () => { $('direction-link').href = 'https://happyhands.cc/components/?provider=systems'; $('direction-link').target='_blank';$('direction-link').rel='noopener noreferrer'; $('legacy-tools-link').href = `?case=${encodeURIComponent(caseId)}&view=canvas&tools=legacy&lang=${getLanguage()}`; };
 syncDirectionLink();
-$('direction-link').dataset.studioView = 'directions';
+delete $('direction-link').dataset.studioView;
 const directionStates = new Map();
-const directionContainer = document.createElement('div');
+const directionContainer = createControl('div');
 directionContainer.id = 'pd-fs-directions-container';
 directionContainer.hidden = true;
 $('pd-fs-codediff-container').after(directionContainer);
-document.querySelector('.workbench-view-nav').append($('direction-link'));
+
 document.querySelector('.workbench-experiments').hidden = true;
 let spec = null;
 let selected = null;
@@ -218,7 +221,7 @@ async function loadFoundationHistory(id) {
 const LOOP_STEPS = [
   ['needs-baseline', 'Baseline captured'],
   ['needs-diagnosis', 'Evidence diagnosed'],
-  ['awaiting-confirmation', 'Finding confirmed by a person'],
+  ['awaiting-confirmation', '修复任务已准备'],
   ['needs-plan', 'Scope planned'],
   ['needs-execution', 'Agent edit executed'],
   ['needs-after-capture', 'Result re-rendered'],
@@ -254,7 +257,7 @@ function normalisedFindings(spec, diagnosis) {
 
 function download(filename, content, type) {
   const url = URL.createObjectURL(new Blob([content], { type }));
-  const link = document.createElement('a');
+  const link = createControl('a');
   link.href = url;
   link.download = filename;
   link.click();
@@ -269,6 +272,7 @@ function stage(manifest) {
   if (manifest.captures.after) return t('AFTER CAPTURED');
   if (manifest.execution) return t('EXECUTED');
   if (manifest.plan) return t('PLANNED');
+  if (manifest.confirmation?.authority==='user-delegated') return t('自动修复已请求');
   if (manifest.confirmation) return t`CONFIRMED / ${t(manifest.confirmation.verdict)}`;
   return t('BASELINE ONLY');
 }
@@ -286,15 +290,15 @@ function captureItems(capture) {
 }
 
 function shot(base, phase, entry) {
-  const figure = document.createElement('figure');
-  const caption = document.createElement('figcaption');
+  const figure = createControl('figure');
+  const caption = createControl('figcaption');
   const state = entry?.stateId || 'page';
   const configuration = entry?.configurationId || 'unknown';
-  caption.textContent = `${t(phase)} · ${t(state)} · ${t(configuration)} · ${t(entry?.captureMode==='page-surfaces'?'页面概览与内部区域':entry?.captureMode==='full-page'?'整页原图':'视口截图')}`;
+  caption.textContent = `${t(phase)} / ${t(state)} / ${t(configuration)} / ${t(entry?.captureMode==='page-surfaces'?'页面概览与内部区域':entry?.captureMode==='full-page'?'整页原图':'视口截图')}`;
   let reference = entry?.screenshot;
   if (reference && !SAFE_SHOT.test(reference)) reference = null;
   if (!reference) {
-    const missing = document.createElement('p');
+    const missing = createControl('p');
     missing.className = 'run-missing';
     missing.dataset.error = entry?.reached === false ? 'true' : 'false';
     missing.textContent = entry?.reached === false
@@ -303,12 +307,12 @@ function shot(base, phase, entry) {
     figure.append(missing, caption);
     return figure;
   }
-  const image = document.createElement('img');
+  const image = createControl('img');
   image.loading = 'lazy';
   image.decoding = 'async';
   image.alt = t`${t(phase)} screenshot of ${t(state)} in ${t(configuration)}`;
   image.src = `${base}/${reference}`;
-  const link=document.createElement('a');link.href=image.src;link.target='_blank';link.rel='noopener noreferrer';link.append(image);const original=document.createElement('a');original.href=image.src;original.target='_blank';original.rel='noopener noreferrer';original.textContent=t('打开原始截图');caption.append(original);figure.append(link,caption);appendPageSurfaceLinks(figure,base,phase,entry);
+  const link=createControl('a');link.href=image.src;link.target='_blank';link.rel='noopener noreferrer';link.append(image);const original=createControl('a');original.href=image.src;original.target='_blank';original.rel='noopener noreferrer';original.textContent=t('打开原始截图');caption.append(original);figure.append(link,caption);appendPageSurfaceLinks(figure,base,phase,entry);
   return figure;
 }
 
@@ -327,10 +331,10 @@ async function actionChanged({runId}) {
     const summary = runs.find(item => item.id === runId);
     if (summary) for (const picker of [$('case-select'), $('studio-run-select')]) {
       if ([...picker.options].some(option => option.value === 'run:' + runId)) continue;
-      const option = document.createElement('option');option.value = 'run:' + runId;option.dataset.runSummary = JSON.stringify(summary);picker.append(option);
+      const option = createControl('option');option.value = 'run:' + runId;option.dataset.runSummary = JSON.stringify(summary);picker.append(option);
     }
     const record = await loadRun(runId);
-    if (record.manifest.diagnosis && !record.manifest.confirmation && !record.manifest.execution) params.set('view', 'directions');
+    if (record.manifest.diagnosis && !record.manifest.confirmation && !record.manifest.execution) params.set('view', 'canvas');
     updateRunOptions();await select('run:' + runId);$('case-select').value = caseId;return;
   }
   await refreshRun(true);
@@ -357,7 +361,7 @@ function renderLoop() {
   const track = $('loop-track');
   track.replaceChildren();
   for (const [index, [, label]] of LOOP_STEPS.entries()) {
-    const item = document.createElement('li');
+    const item = createControl('li');
     const done = state.stage === 'complete' || (current !== -1 && index < current);
     item.dataset.state = done ? 'done' : (current === index ? 'current' : 'pending');
     item.textContent = t(label);
@@ -374,13 +378,13 @@ function renderScore() {
   }
   box.hidden = false;
   box.replaceChildren();
-  const headline = document.createElement('p');
+  const headline = createControl('p');
   headline.className = 'score-headline';
   headline.textContent = score.status === 'scored'
-    ? t`Experience Score ${score.score} / 100 · ${score.evaluator?.name || t('evaluator')}@${score.evaluator?.version || '?'}`
+    ? t`Experience Score ${score.score} / 100 / ${score.evaluator?.name || t('evaluator')}@${score.evaluator?.version || '?'}`
     : t('Experience Score withheld — insufficient evidence');
   box.append(headline);
-  const detail = document.createElement('p');
+  const detail = createControl('p');
   detail.className = 'score-detail';
   detail.textContent = score.status === 'scored'
     ? t`Evidence coverage ${Math.round((score.evidenceCoverage || 0) * 100)}%. A score is a heuristic quality signal, not conversion or user research.`
@@ -410,13 +414,13 @@ function renderRun() {
   const oldKey=picker.dataset.runId===manifest.id?oldSelect?.value:null;
   const selectedKey=keys.includes(oldKey)?oldKey:keys.find(key=>(after.get(key)||before.get(key)).captureMode==='full-page'||(after.get(key)||before.get(key)).captureMode==='page-surfaces')||keys[0];
   picker.dataset.runId=manifest.id;picker.replaceChildren();
-  const label=document.createElement('label');label.textContent=t('对照页面与设备');
-  const select=document.createElement('select');select.setAttribute('aria-label',t('对照页面与设备'));
-  for(const key of keys){const item=after.get(key)||before.get(key),option=document.createElement('option');option.value=key;option.textContent=`${item.title||t(item.stateId)} · ${t(item.configurationId)}`;if(!before.get(key)?.screenshot||!after.get(key)?.screenshot)option.textContent+=' · '+t('存在缺失证据');select.append(option);}
+  const label=createControl('label');label.textContent=t('对照页面与设备');
+  const select=createControl('select');select.setAttribute('aria-label',t('对照页面与设备'));
+  for(const key of keys){const item=after.get(key)||before.get(key),option=createControl('option');option.value=key;option.textContent=`${item.title||t(item.stateId)} / ${t(item.configurationId)}`;if(!before.get(key)?.screenshot||!after.get(key)?.screenshot)option.textContent+=' / '+t('存在缺失证据');select.append(option);}
   select.value=selectedKey||'';select.disabled=!keys.length;label.append(select);picker.append(label);
-  const drawPair=()=>{shots.replaceChildren();const key=select.value;if(!key)return;const beforeEntry=before.get(key),afterEntry=after.get(key),identity=beforeEntry||afterEntry;const pair=document.createElement('div');pair.className='run-pair';pair.append(shot(base,'Before',beforeEntry||{stateId:identity.stateId,configurationId:identity.configurationId}),shot(base,'After',afterEntry||{stateId:identity.stateId,configurationId:identity.configurationId}));shots.append(pair);};
+  const drawPair=()=>{shots.replaceChildren();const key=select.value;if(!key)return;const beforeEntry=before.get(key),afterEntry=after.get(key),identity=beforeEntry||afterEntry;const pair=createControl('div');pair.className='run-pair';pair.append(shot(base,'Before',beforeEntry||{stateId:identity.stateId,configurationId:identity.configurationId}),shot(base,'After',afterEntry||{stateId:identity.stateId,configurationId:identity.configurationId}));shots.append(pair);};
   select.onchange=drawPair;drawPair();
-  const note=document.createElement('p');note.className='small-note';note.textContent=t('一次对照一个状态，所有原始截图仍可切换查看。');picker.append(note);
+  const note=createControl('p');note.className='small-note';note.textContent=t('一次对照一个状态，所有原始截图仍可切换查看。');picker.append(note);
   renderReviews();
 
   const rows = [];
@@ -424,10 +428,10 @@ function renderRun() {
     rows.push([t`Finding ${manifest.confirmation.findingId}`, `${t(manifest.confirmation.verdict)} — ${manifest.confirmation.note}`]);
   }
   if (manifest.execution) {
-    rows.push([t('Agent execution'), t`branch ${manifest.execution.branch} · log ${manifest.execution.logRetained ? t('retained locally, not published') : t('not retained')}`]);
+    rows.push([t('Agent execution'), t`branch ${manifest.execution.branch} / log ${manifest.execution.logRetained ? t('retained locally, not published') : t('not retained')}`]);
   }
   for (const skill of manifest.skills) {
-    rows.push([t`Skill ${skill.id}`, `${t(skill.status)} · v${skill.version}`]);
+    rows.push([t`Skill ${skill.id}`, `${t(skill.status)} / v${skill.version}`]);
   }
   if (manifest.evaluation) {
     for (const [viewport, view] of Object.entries(manifest.evaluation.views)) {
@@ -441,11 +445,11 @@ function renderRun() {
   const checks = $('run-checks');
   checks.replaceChildren();
   for (const [label, value] of rows) {
-    const row = document.createElement('div');
+    const row = createControl('div');
     row.className = 'run-check';
-    const name = document.createElement('span');
+    const name = createControl('span');
     name.textContent = label;
-    const detail = document.createElement('p');
+    const detail = createControl('p');
     detail.textContent = value;
     row.append(name, detail);
     checks.append(row);
@@ -475,11 +479,11 @@ function setFoundationField(collection, index, field, value) {
 }
 
 function foundationDecisionControl(collection, item, index, readOnly) {
-  const wrap = document.createElement('div');
+  const wrap = createControl('div');
   wrap.className = 'foundation-item-actions';
   const current = item.decision?.action || item.status;
   for (const [value, label] of [['approved', '批准'], ['replace', '替换'], ['deprecated', '弃用'], ['deferred', '暂不纳入本轮约束']]) {
-    const button = document.createElement('button');
+    const button = createControl('button');
     button.type = 'button'; button.textContent = t(label); button.dataset.decision = value;
     button.setAttribute('aria-pressed', String(current === value));
     button.disabled = readOnly;
@@ -498,19 +502,19 @@ function foundationReplacementFields(collection, item, index, visible, readOnly)
   const fields = collection === 'tokens' ? ['value', 'source']
     : collection === 'components' ? ['source', 'variants', 'states']
     : ['description', 'source'];
-  const form = document.createElement('div');
+  const form = createControl('div');
   form.className = 'foundation-replacement'; form.hidden = !visible;
   for (const field of fields) {
     if (!(field in item) && field === 'description' && collection === 'assets') continue;
     const fieldLabels = { value: '值', source: '来源', description: '说明', variants: '变体', states: '状态' };
-    const label = document.createElement('label'); label.textContent = t(fieldLabels[field] || field);
-    const input = document.createElement('input'); input.value = Array.isArray(item[field]) ? item[field].join(', ') : (item[field] || '');
+    const label = createControl('label'); label.textContent = t(fieldLabels[field] || field);
+    const input = createControl('input'); input.value = Array.isArray(item[field]) ? item[field].join(', ') : (item[field] || '');
     input.disabled = readOnly; input.setAttribute('aria-label', `${item.name} ${t(fieldLabels[field] || field)}`);
     input.addEventListener('input', event => setFoundationField(collection, index, field, event.target.value));
     label.append(input); form.append(label);
   }
   if(collection==='patterns'&&item.usage)for(const [field,title]of [['whenToUse','When to use'],['whenToAvoid','When to avoid'],['exceptions','Exceptions'],['limitations','Evidence limits'],['dependencies','Component dependencies'],['tokenReferences','Token references']]){
-    const label=document.createElement('label'),input=document.createElement('textarea');label.textContent=t(title);input.rows=3;input.disabled=readOnly;
+    const label=createControl('label'),input=createControl('textarea');label.textContent=t(title);input.rows=3;input.disabled=readOnly;
     input.value=(item.usage[field]||[]).join('\n');input.setAttribute('aria-label',`${item.name} ${t(title)}`);
     input.addEventListener('input',()=>{item.usage[field]=input.value.split(/\r?\n/).map(value=>value.trim()).filter(Boolean);});label.append(input);form.append(label);
   }
@@ -523,15 +527,15 @@ function renderFoundationDiff() {
   if (!selected || !foundationDraft) return;
   const changes = diffFoundations(selected.approval.foundation, foundationDraft);
   const changed = changes.filter(item => item.type !== 'unchanged');
-  const summary = document.createElement('p');
+  const summary = createControl('p');
   summary.className = 'foundation-diff-summary';
   summary.textContent = changed.length ? t`${changed.length} changes against v${selected.foundationVersion}` : t`No changes against v${selected.foundationVersion}`;
   root.append(summary);
   for (const change of changed) {
-    const row = document.createElement('div'); row.className = 'foundation-diff-row'; row.dataset.change = change.type;
-    const kind = document.createElement('span'); kind.textContent = t(change.type);
-    const name = document.createElement('strong'); name.textContent = change.item.name;
-    const detail = document.createElement('small'); detail.textContent = change.key.split(':')[0];
+    const row = createControl('div'); row.className = 'foundation-diff-row'; row.dataset.change = change.type;
+    const kind = createControl('span'); kind.textContent = t(change.type);
+    const name = createControl('strong'); name.textContent = change.item.name;
+    const detail = createControl('small'); detail.textContent = change.key.split(':')[0];
     row.append(kind, name, detail); root.append(row);
   }
 }
@@ -544,21 +548,21 @@ function renderFoundationEvidence(summary) {
   root.hidden = !summary.skills.length&&!hasDesignSystem;
   if (root.hidden) return;
 
-  const heading = document.createElement('div'); heading.className = 'foundation-evidence-heading';
-  const copy = document.createElement('div');
-  const title = document.createElement('h3'); title.id = 'foundation-evidence-title'; title.textContent = t('Automatic extraction review');
-  const description = document.createElement('p');
+  const heading = createControl('div'); heading.className = 'foundation-evidence-heading';
+  const copy = createControl('div');
+  const title = createControl('h3'); title.id = 'foundation-evidence-title'; title.textContent = t('Automatic extraction review');
+  const description = createControl('p');
   description.textContent = summary.filesScanned
     ? t`${summary.filesScanned} source files were scanned. Review conflicts and limits before approving any candidate.`
     : t('Review conflicts and limits before approving any candidate.');
   copy.append(title, description);
-  const issueCount = document.createElement('span'); issueCount.className = 'foundation-evidence-count';
+  const issueCount = createControl('span'); issueCount.className = 'foundation-evidence-count';
   issueCount.dataset.warning = String(summary.findings.length > 0 || summary.incompleteCount > 0);
   issueCount.textContent = summary.incompleteCount ? t('Extraction evidence incomplete')
     : summary.findings.length ? t`${summary.findings.length} items need review` : t('No extraction conflicts found');
   heading.append(copy, issueCount); root.append(heading);
 
-  const skills = document.createElement('div'); skills.className = 'foundation-skill-list';
+  const skills = createControl('div'); skills.className = 'foundation-skill-list';
   const labels = {
     'foundation-extractor': t('Tokens and themes'),
     'brand-foundation-extractor': t('Brand assets and voice evidence'),
@@ -566,13 +570,13 @@ function renderFoundationEvidence(summary) {
     'pattern-library-curator': t('Accepted pattern candidates')
   };
   for (const skill of summary.skills) {
-    const row = document.createElement('div'); row.className = 'foundation-skill';
-    const name = document.createElement('strong'); name.textContent = labels[skill.id] || skill.id;
-    const state = document.createElement('span'); state.dataset.status = skill.status;
+    const row = createControl('div'); row.className = 'foundation-skill';
+    const name = createControl('strong'); name.textContent = labels[skill.id] || skill.id;
+    const state = createControl('span'); state.dataset.status = skill.status;
     state.textContent = skill.findingCount ? t`${skill.findingCount} findings` : t(skill.status);
     const record = run?.manifest.skills.find(item => item.id === skill.id);
     if (/^skills\/[a-zA-Z0-9_-]+\.json$/.test(record?.path || '')) {
-      const source = document.createElement('a'); source.href = `${run.base}/${record.path}`; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = t('Raw result');
+      const source = createControl('a'); source.href = `${run.base}/${record.path}`; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = t('Raw result');
       row.append(name, state, source);
     } else row.append(name, state);
     skills.append(row);
@@ -581,50 +585,50 @@ function renderFoundationEvidence(summary) {
   for(const inventory of summary.brandDeclarations){
     const categoryLabels={promise:'Product promise',audience:'Target audience',voice:'Brand voice',terminology:'Core terminology',cta:'Action language',error:'Error language',trust:'Trust claims',prohibited:'Prohibited claims',visual:'Visual language',principle:'Brand principles'};
     const categoryLabel=value=>t(categoryLabels[value]||value);
-    const details=document.createElement('details'),label=document.createElement('summary');details.className='foundation-limitations';label.textContent=t('Declared brand intent');details.append(label);
-    const note=document.createElement('p');note.textContent=t('Source declarations are evidence, not approved rules. Differences may belong to different versions or platforms.');details.append(note);
+    const details=createControl('details'),label=createControl('summary');details.className='foundation-limitations';label.textContent=t('Declared brand intent');details.append(label);
+    const note=createControl('p');note.textContent=t('Source declarations are evidence, not approved rules. Differences may belong to different versions or platforms.');details.append(note);
     for(const entry of (Array.isArray(inventory.declarations)?inventory.declarations:[]).filter(entry=>entry&&typeof entry.text==='string'&&typeof entry.source==='string'&&typeof entry.category==='string').slice(0,128)){
-      const item=document.createElement('p');item.style.overflowWrap='anywhere';item.textContent=`${categoryLabel(entry.category)} · ${entry.source}:${entry.line} — ${entry.text}`;details.append(item);
+      const item=createControl('p');item.style.overflowWrap='anywhere';item.textContent=`${categoryLabel(entry.category)} / ${entry.source}:${entry.line} — ${entry.text}`;details.append(item);
     }
-    if(inventory.alternatives?.length){const note=document.createElement('p');note.textContent=t('Conflicting declarations need review.');details.append(note);}
-    const missing=document.createElement('p');missing.textContent=t('Undocumented categories')+': '+(Array.isArray(inventory.missingCategories)?inventory.missingCategories:[]).map(categoryLabel).join(', ');details.append(missing);root.append(details);
+    if(inventory.alternatives?.length){const note=createControl('p');note.textContent=t('Conflicting declarations need review.');details.append(note);}
+    const missing=createControl('p');missing.textContent=t('Undocumented categories')+': '+(Array.isArray(inventory.missingCategories)?inventory.missingCategories:[]).map(categoryLabel).join(', ');details.append(missing);root.append(details);
   }
   if(summary.patternCandidates.length){
-    const details=document.createElement('details');details.className='foundation-limitations';details.dataset.patternCandidates='true';details.open=patternsOpen;
-    const label=document.createElement('summary');label.textContent=t('Accepted pattern candidates');details.append(label);
-    const note=document.createElement('p');note.textContent=t('These repeated compositions still need usage guidance and design review before becoming shared patterns.');details.append(note);
+    const details=createControl('details');details.className='foundation-limitations';details.dataset.patternCandidates='true';details.open=patternsOpen;
+    const label=createControl('summary');label.textContent=t('Accepted pattern candidates');details.append(label);
+    const note=createControl('p');note.textContent=t('These repeated compositions still need usage guidance and design review before becoming shared patterns.');details.append(note);
     for(const candidate of summary.patternCandidates){
-      const section=document.createElement('section'),title=document.createElement('h4'),source=document.createElement('p');
+      const section=createControl('section'),title=createControl('h4'),source=createControl('p');
       title.textContent=candidate.name;source.textContent=candidate.source;section.append(title,source);
-      const list=document.createElement('ul');
+      const list=createControl('ul');
       for(const example of (Array.isArray(candidate.examples)?candidate.examples:[]).slice(0,16)){
-        const item=document.createElement('li');item.textContent=`${example.route||''} · ${example.stateId||''} · ${example.configurationId||''}`;
+        const item=createControl('li');item.textContent=`${example.route||''} / ${example.stateId||''} / ${example.configurationId||''}`;
         if(/^[a-z0-9][a-z0-9_-]{0,63}$/.test(example.runId||'')&&[...$('case-select').options].some(option=>option.value==='run:'+example.runId)){
-          const link=document.createElement('a');link.href=`/apps/designer/?case=${encodeURIComponent('run:'+example.runId)}&view=canvas&lang=${getLanguage()}`;
-          link.textContent=t('Open source review');item.append(' · ',link);
-        }else item.append(' · ',t('Source review is not exported.'));
+          const link=createControl('a');link.href=`/apps/designer/?case=${encodeURIComponent('run:'+example.runId)}&view=canvas&lang=${getLanguage()}`;
+          link.textContent=t('Open source review');item.append(' / ',link);
+        }else item.append(' / ',t('Source review is not exported.'));
         list.append(item);
       }
       section.append(list);
       const review=(run.patternReviews||[]).filter(item=>item.source===candidate.source&&(item.unavailable||item.language===getLanguage())).at(-1);
       if(review){
-        const heading=document.createElement('h5');heading.textContent=t('Usage guidance draft');section.append(heading);
-        const verdict=document.createElement('p');verdict.textContent=t(review.guidance?.verdict==='propose'?'Proposed guidance':review.guidance?.verdict==='not-reusable'?'Not reusable with current evidence':'More evidence needed');section.append(verdict);
-        const text=document.createElement('p');text.textContent=review.unavailable?t('Pattern guidance is unavailable. Reload the source record.'):review.guidance?.summary||'';section.append(text);
+        const heading=createControl('h5');heading.textContent=t('Usage guidance draft');section.append(heading);
+        const verdict=createControl('p');verdict.textContent=t(review.guidance?.verdict==='propose'?'Proposed guidance':review.guidance?.verdict==='not-reusable'?'Not reusable with current evidence':'More evidence needed');section.append(verdict);
+        const text=createControl('p');text.textContent=review.unavailable?t('Pattern guidance is unavailable. Reload the source record.'):review.guidance?.summary||'';section.append(text);
         for(const [field,label] of [['whenToUse','When to use'],['whenToAvoid','When to avoid'],['exceptions','Exceptions'],['limitations','Evidence limits']]){
           const items=review.guidance?.[field];if(!Array.isArray(items)||!items.length)continue;
-          const title=document.createElement('strong'),list=document.createElement('ul');title.textContent=t(label);
-          for(const value of items.slice(0,24)){const item=document.createElement('li');item.textContent=String(value);list.append(item);}
+          const title=createControl('strong'),list=createControl('ul');title.textContent=t(label);
+          for(const value of items.slice(0,24)){const item=createControl('li');item.textContent=String(value);list.append(item);}
           section.append(title,list);
         }
-        const note=document.createElement('p');note.textContent=t('Model guidance is a proposal. It has not changed the approved design system.');section.append(note);
+        const note=createControl('p');note.textContent=t('Model guidance is a proposal. It has not changed the approved design system.');section.append(note);
         for(const [index,image] of (review.images||[]).entries()){
-          const link=document.createElement('a');link.href=`${run.base}/pattern-reviews/${review.id}/${image.file}`;link.target='_blank';link.rel='noopener noreferrer';
-          link.textContent=t('Reviewed original')+` ${index+1}`;section.append(link,document.createElement('br'));
+          const link=createControl('a');link.href=`${run.base}/pattern-reviews/${review.id}/${image.file}`;link.target='_blank';link.rel='noopener noreferrer';
+          link.textContent=t('Reviewed original')+` ${index+1}`;section.append(link,createControl('br'));
         }
       }
       if(editableFoundation()){
-        const button=document.createElement('button');button.type='button';button.textContent=t('Draft usage guidance');
+        const button=createControl('button');button.type='button';button.textContent=t('Draft usage guidance');
         button.addEventListener('click',async()=>{
           const id=run.manifest.id;button.disabled=true;button.textContent=t('Reviewing original evidence…');
           try{
@@ -634,7 +638,7 @@ function renderFoundationEvidence(summary) {
           }catch(error){$('notice').textContent=error.message;}finally{button.disabled=false;button.textContent=t('Draft usage guidance');}
         });section.append(button);
         if(review?.guidance?.verdict==='propose'){
-          const staged=(run.manifest.patternAdmissions||[]).some(item=>item.source===candidate.source),admit=document.createElement('button');admit.type='button';
+          const staged=(run.manifest.patternAdmissions||[]).some(item=>item.source===candidate.source),admit=createControl('button');admit.type='button';
           admit.disabled=staged;admit.textContent=t(staged?'Already in Foundation review':'Add to Foundation review');
           admit.addEventListener('click',async()=>{
             const id=run.manifest.id;admit.disabled=true;
@@ -652,49 +656,49 @@ function renderFoundationEvidence(summary) {
   for(const phase of ['before','after']){
     const record=run?.manifest.designSystemExtractions?.[phase];
     if(record?.path!==`${phase}/design-system.json`)continue;
-    const row=document.createElement('p'),link=document.createElement('a');
+    const row=createControl('p'),link=createControl('a');
     link.href=`${run.base}/${record.path}`;link.target='_blank';link.rel='noopener noreferrer';
     link.textContent=getLanguage()==='zh'?(phase==='before'?'整改前：设计系统与组件证据':'整改后：设计系统与组件证据'):(phase==='before'?'Before: design system and component evidence':'After: design system and component evidence');
     row.append(link);root.append(row);
   }
 
   if (summary.findings.length) {
-    const alert = document.createElement('div'); alert.className = 'foundation-evidence-alert';
-    const alertTitle = document.createElement('strong'); alertTitle.textContent = t('Resolve these before approval');
-    const list = document.createElement('ul');
-    for (const finding of summary.findings) { const item = document.createElement('li'); item.textContent = finding.title; list.append(item); }
+    const alert = createControl('div'); alert.className = 'foundation-evidence-alert';
+    const alertTitle = createControl('strong'); alertTitle.textContent = t('Resolve these before approval');
+    const list = createControl('ul');
+    for (const finding of summary.findings) { const item = createControl('li'); item.textContent = finding.title; list.append(item); }
     alert.append(alertTitle, list); root.append(alert);
   }
   if (summary.limitations.length) {
-    const details = document.createElement('details'); details.className = 'foundation-limitations';
-    const label = document.createElement('summary'); label.textContent = t`${summary.limitations.length} extraction limits`;
-    const list = document.createElement('ul');
-    for (const limitation of summary.limitations) { const item = document.createElement('li'); item.textContent = t(limitation.message); list.append(item); }
+    const details = createControl('details'); details.className = 'foundation-limitations';
+    const label = createControl('summary'); label.textContent = t`${summary.limitations.length} extraction limits`;
+    const list = createControl('ul');
+    for (const limitation of summary.limitations) { const item = createControl('li'); item.textContent = t(limitation.message); list.append(item); }
     details.append(label, list); root.append(details);
   }
 }
 
 function foundationItemMeta(collection, item, summary) {
-  const meta = document.createElement('div'); meta.className = 'foundation-item-meta';
-  const detail = document.createElement('span');
-  detail.textContent = collection === 'tokens' ? `${item.value || t('No value')} · ${item.source || t('Unknown source')}` : item.source || item.description || t('Unknown source');
+  const meta = createControl('div'); meta.className = 'foundation-item-meta';
+  const detail = createControl('span');
+  detail.textContent = collection === 'tokens' ? `${item.value || t('No value')} / ${item.source || t('Unknown source')}` : item.source || item.description || t('Unknown source');
   meta.append(detail);
   if (collection === 'tokens') {
     const labels = { conflict: t('Conflicting values'), 'unresolved-alias': t('Unresolved alias'), 'alias-cycle': t('Alias cycle') };
     for (const flag of summary.tokenFlags.get(item.name) || []) {
-      const warning = document.createElement('small'); warning.className = 'foundation-item-warning'; warning.textContent = labels[flag]; meta.append(warning);
+      const warning = createControl('small'); warning.className = 'foundation-item-warning'; warning.textContent = labels[flag]; meta.append(warning);
     }
   }
   if(item.evidence){
-    const details=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');
+    const details=createControl('details'),summary=createControl('summary'),pre=createControl('pre');
     summary.textContent=t('查看来源、依赖与覆盖缺口');pre.textContent=JSON.stringify(item.evidence,null,2);details.append(summary,pre);meta.append(details);
   }
   if(item.usage){
-    const details=document.createElement('details'),label=document.createElement('summary');label.textContent=t('Pattern conditions and dependencies');details.append(label);
+    const details=createControl('details'),label=createControl('summary');label.textContent=t('Pattern conditions and dependencies');details.append(label);
     for(const [field,title]of [['whenToUse','When to use'],['whenToAvoid','When to avoid'],['exceptions','Exceptions'],['limitations','Evidence limits'],['dependencies','Component dependencies'],['tokenReferences','Token references']]){
       const values=item.usage[field];if(!Array.isArray(values)||!values.length)continue;
-      const heading=document.createElement('strong'),list=document.createElement('ul');heading.textContent=t(title);
-      for(const value of values){const li=document.createElement('li');li.textContent=value;list.append(li);}details.append(heading,list);
+      const heading=createControl('strong'),list=createControl('ul');heading.textContent=t(title);
+      for(const value of values){const li=createControl('li');li.textContent=value;list.append(li);}details.append(heading,list);
     }
     meta.append(details);
   }
@@ -702,9 +706,9 @@ function foundationItemMeta(collection, item, summary) {
 }
 
 function foundationDecisionReason(item,readOnly){
-  const label=document.createElement('label');label.className='foundation-decision-reason';label.hidden=!item.decision;label.textContent=t('本项判断原因');
-  const input=document.createElement('textarea');input.rows=2;input.disabled=readOnly;input.value=item.decision?.reason||'';input.setAttribute('aria-label',`${item.name} ${t('本项判断原因')}`);
-  input.addEventListener('input',()=>{item.decision.reason=input.value;const decisions=foundationDecisionSummary(foundationDraft);prefillFoundationApproval(decisions,summarizeFoundationEvidence(run?.foundationEvidence||[]));$('foundation-decision-summary').dataset.pending=String(decisions.pending>0);$('foundation-decision-summary').textContent=decisions.pending?t`${decisions.pending} pending · ${decisions.approved} approved · ${decisions.deprecated} deprecated · ${decisions.deferred} deferred`:t`${decisions.approved} approved · ${decisions.deprecated} deprecated · ${decisions.deferred} deferred`;$('foundation-save').disabled=decisions.pending>0||![...foundationDraft.tokens,...foundationDraft.components,...foundationDraft.patterns].some(entry=>entry.status==='approved');});
+  const label=createControl('label');label.className='foundation-decision-reason';label.hidden=!item.decision;label.textContent=t('本项判断原因');
+  const input=createControl('textarea');input.rows=2;input.disabled=readOnly;input.value=item.decision?.reason||'';input.setAttribute('aria-label',`${item.name} ${t('本项判断原因')}`);
+  input.addEventListener('input',()=>{item.decision.reason=input.value;const decisions=foundationDecisionSummary(foundationDraft);prefillFoundationApproval(decisions,summarizeFoundationEvidence(run?.foundationEvidence||[]));$('foundation-decision-summary').dataset.pending=String(decisions.pending>0);$('foundation-decision-summary').textContent=decisions.pending?t`${decisions.pending} pending / ${decisions.approved} approved / ${decisions.deprecated} deprecated / ${decisions.deferred} deferred`:t`${decisions.approved} approved / ${decisions.deprecated} deprecated / ${decisions.deferred} deferred`;$('foundation-save').disabled=decisions.pending>0||![...foundationDraft.tokens,...foundationDraft.components,...foundationDraft.patterns].some(entry=>entry.status==='approved');});
   label.append(input);return label;
 }
 
@@ -722,7 +726,7 @@ function prefillFoundationApproval(decisions, evidenceSummary) {
     if (newRun) $('foundation-reviewer-type').value = localStorage.getItem(FOUNDATION_REVIEWER_TYPE_KEY) || 'human';
   } catch { $('foundation-reviewer').value ||= t('Local reviewer'); }
   if ($('foundation-reason').dataset.manual !== 'true') {
-    $('foundation-reason').value = t`${decisions.total} candidates reviewed: ${decisions.approved} approved and ${decisions.deprecated} deprecated · ${decisions.deferred} deferred. The decision considered ${evidenceSummary.filesScanned} scanned source files and ${evidenceSummary.findings.length} extraction findings.`;
+    $('foundation-reason').value = t`${decisions.total} candidates reviewed: ${decisions.approved} approved and ${decisions.deprecated} deprecated / ${decisions.deferred} deferred. The decision considered ${evidenceSummary.filesScanned} scanned source files and ${evidenceSummary.findings.length} extraction findings.`;
   }
   $('foundation-approval-guidance').textContent = decisions.pending
     ? t`Complete ${decisions.pending} candidate decisions before confirming this version.`
@@ -736,7 +740,7 @@ function renderFoundation() {
   if (!foundation) {
     $('foundation-status').textContent = run?.manifest.foundationInventory?.status === 'failed' ? t('EXTRACTION FAILED') : t('NOT INVENTORIED');
     $('foundation-summary').textContent = t('0 artifacts');
-    const empty = document.createElement('p');
+    const empty = createControl('p');
     empty.className = 'foundation-empty';
     empty.textContent = t('This case has no brand, token, component or pattern inventory yet.');
     root.append(empty);
@@ -757,10 +761,10 @@ function renderFoundation() {
   $('foundation-toolbar').hidden = false;
   const inventory = run?.manifest.foundationInventory;
   $('foundation-status').textContent = run?.approval
-    ? t`APPROVED · v${run.approval.foundationVersion}`
-    : inventory?.status === 'failed' ? t('OBSERVED · EXTRACTION FAILED')
-    : inventory?.status === 'partial' ? t('OBSERVED · PARTIAL EXTRACTION')
-    : inventory?.materialized ? t('OBSERVED · AUTO-EXTRACTED')
+    ? t`APPROVED / v${run.approval.foundationVersion}`
+    : inventory?.status === 'failed' ? t('OBSERVED / EXTRACTION FAILED')
+    : inventory?.status === 'partial' ? t('OBSERVED / PARTIAL EXTRACTION')
+    : inventory?.materialized ? t('OBSERVED / AUTO-EXTRACTED')
     : t(draft.status);
   const groups = [
     ['assets', t('Brand assets'), draft.brand.assets],
@@ -771,34 +775,34 @@ function renderFoundation() {
   const total = groups.reduce((count, [, , items]) => count + items.length, 0);
   $('foundation-summary').textContent = t`${total} artifacts`;
   renderFoundationEvidence(evidenceSummary);
-  const guidance = document.createElement('article'); guidance.className = 'foundation-guidance';
-  const guidanceTitle = document.createElement('h3'); guidanceTitle.textContent = t('Brand guidance'); guidance.append(guidanceTitle);
+  const guidance = createControl('article'); guidance.className = 'foundation-guidance';
+  const guidanceTitle = createControl('h3'); guidanceTitle.textContent = t('Brand guidance'); guidance.append(guidanceTitle);
   for (const [field, label] of [['principles', 'Principles'], ['voice', 'Voice']]) {
-    const control = document.createElement('label'); control.textContent = t(label);
-    const textarea = document.createElement('textarea'); textarea.rows = 3; textarea.value = draft.brand[field].join('\n'); textarea.disabled = readOnly;
+    const control = createControl('label'); control.textContent = t(label);
+    const textarea = createControl('textarea'); textarea.rows = 3; textarea.value = draft.brand[field].join('\n'); textarea.disabled = readOnly;
     textarea.addEventListener('input', event => { draft.brand[field] = event.target.value.split('\n').map(item => item.trim()).filter(Boolean); });
     control.append(textarea); guidance.append(control);
   }
   root.append(guidance);
   for (const [collection, label, items] of groups) {
-    const group = document.createElement('article');
-    const title = document.createElement('h3');
-    title.textContent = `${label} · ${items.length}`;
+    const group = createControl('article');
+    const title = createControl('h3');
+    title.textContent = `${label} / ${items.length}`;
     group.append(title);
     if (!items.length) {
-      const empty = document.createElement('p');
+      const empty = createControl('p');
       empty.textContent = t('Not documented');
       group.append(empty);
     }
     for (const [index, item] of items.entries()) {
-      const row = document.createElement('div');
+      const row = createControl('div');
       row.className = 'foundation-item';
       row.dataset.foundationCollection = collection;
       row.dataset.foundationName = item.name;
-      const body = document.createElement('div'); body.className = 'foundation-item-body';
-      const name = document.createElement('span');
+      const body = createControl('div'); body.className = 'foundation-item-body';
+      const name = createControl('span');
       name.textContent = item.name;
-      const status = document.createElement('small');
+      const status = createControl('small');
       status.dataset.status = item.status;
       status.textContent = t(item.status);
       const { wrap: actions, current } = foundationDecisionControl(collection, item, index, readOnly);
@@ -813,13 +817,13 @@ function renderFoundation() {
     prefillFoundationApproval(decisions, evidenceSummary);
     $('foundation-decision-summary').dataset.pending = String(decisions.pending > 0);
     $('foundation-decision-summary').textContent = decisions.pending
-      ? t`${decisions.pending} pending · ${decisions.approved} approved · ${decisions.deprecated} deprecated · ${decisions.deferred} deferred`
-      : t`${decisions.approved} approved · ${decisions.deprecated} deprecated · ${decisions.deferred} deferred`;
+      ? t`${decisions.pending} pending / ${decisions.approved} approved / ${decisions.deprecated} deprecated / ${decisions.deferred} deferred`
+      : t`${decisions.approved} approved / ${decisions.deprecated} deprecated / ${decisions.deferred} deferred`;
     const hasUsableApproved = [...draft.tokens, ...draft.components, ...draft.patterns].some(item => item.status === 'approved');
     $('foundation-save').disabled = decisions.pending > 0 || !hasUsableApproved;
   }
   $('foundation-version-note').textContent = run?.approval
-    ? t`Reviewed by ${run.approval.reviewer.name} · ${run.approval.reviewedAt || ''}`
+    ? t`Reviewed by ${run.approval.reviewer.name} / ${run.approval.reviewedAt || ''}`
     : inventory?.status === 'failed' ? t`Automatic extraction failed: ${inventory.error || ''}`
     : !run || run.foundationWritable === false ? t('This exported record is read-only. Open its connected local run to review or approve the foundation.')
     : readOnly ? t('Foundation decisions are frozen after planning begins.') : t('Automatically extracted candidates still need an explicit decision before generation can use them.');
@@ -829,7 +833,7 @@ function renderFoundation() {
   }
   const compare = $('foundation-compare'), previousValue = compare.value;
   compare.replaceChildren(new Option(t('Choose a prior version'), ''));
-  for (const item of foundationHistory.filter(item => item.foundationVersion !== run?.approval?.foundationVersion)) compare.append(new Option(`v${item.foundationVersion} · ${item.reviewer.name}`, item.foundationVersion));
+  for (const item of foundationHistory.filter(item => item.foundationVersion !== run?.approval?.foundationVersion)) compare.append(new Option(`v${item.foundationVersion} / ${item.reviewer.name}`, item.foundationVersion));
   compare.value = [...compare.options].some(option => option.value === previousValue) ? previousValue : (compare.options[1]?.value || '');
   renderFoundationDiff();
 }
@@ -850,7 +854,7 @@ function render() {
   $('report-empty').hidden = Boolean(run);
   const model=run?.diagnosis?.modelDiagnosis;
   $('baseline-model').hidden=!run;
-  $('baseline-model-status').textContent=model? t(model.status==='complete'?'模型已基于本轮原图提出候选，仍需确认范围。':model.status==='needs-evidence'?'页面诊断缺少证据，不能据此判定页面通过。':'模型诊断未完成；当前仅保留规则候选。')+' '+model.summary:t('此记录尚未运行模型页面诊断。');
+  $('baseline-model-status').textContent=model? t(model.status==='complete'?'页面诊断已完成，可一键修复。修改后再审阅最终结果。':model.status==='needs-evidence'?'页面诊断缺少证据，不能据此判定页面通过。':'模型诊断未完成；当前仅保留规则候选。')+' '+model.summary:t('此记录尚未运行模型页面诊断。');
   $('baseline-model-limits').textContent=(model?.limitations||[]).join(' ');
   $('baseline-model-retry').hidden=!run||run.foundationWritable!==true||!['needs-diagnosis','awaiting-confirmation'].includes(workflowState(run.manifest).stage)||Boolean(run.manifest.confirmation||run.manifest.plan||run.manifest.execution);
   $('foundation-new-review').disabled=!run||run.foundationRefreshAvailable!==true;
@@ -881,11 +885,11 @@ function render() {
   const evidenceList = $('evidence-list');
   evidenceList.replaceChildren();
   for (const evidence of spec.evidence) {
-    const item = document.createElement('div');
+    const item = createControl('div');
     item.className = 'evidence-item';
-    const label = document.createElement('span');
+    const label = createControl('span');
     label.textContent = `${evidence.id} / ${t(evidence.state)}`;
-    const observation = document.createElement('p');
+    const observation = createControl('p');
     observation.textContent = evidence.observation;
     item.append(label, observation);
     evidenceList.append(item);
@@ -893,22 +897,22 @@ function render() {
   const findings = $('findings');
   findings.replaceChildren();
   for (const item of list) {
-    const button = document.createElement('button');
+    const button = createControl('button');
     button.type = 'button';
     button.className = 'finding';
     button.dataset.status = item.status;
     button.setAttribute('aria-pressed', item.id === selected ? 'true' : 'false');
-    const top = document.createElement('span');
+    const top = createControl('span');
     top.className = 'finding-top';
-    top.textContent = t`${item.id} · PRIORITY ${item.priority.toFixed(1)}`;
-    const status = document.createElement('em');
+    top.textContent = t`${item.id} / PRIORITY ${item.priority.toFixed(1)}`;
+    const status = createControl('em');
     status.className = 'finding-status';
     status.textContent = t(item.status);
     top.append(status);
-    const title = document.createElement('strong');
+    const title = createControl('strong');
     title.textContent = item.title;
-    const explanation = document.createElement('small');
-    explanation.textContent = t`Impact ${item.impact}/5 · Confidence ${item.confidence}/5 · Effort ${item.effort}/5 · ${item.evidence.length} evidence`;
+    const explanation = createControl('small');
+    explanation.textContent = t`Impact ${item.impact}/5 / Confidence ${item.confidence}/5 / Effort ${item.effort}/5 / ${item.evidence.length} evidence`;
     button.append(top, title, explanation);
     button.addEventListener('click', () => { selected = item.id; render(); });
     findings.append(button);
@@ -1023,8 +1027,8 @@ function updateRunOptions() {
     const when = summary.createdAt ? summary.createdAt.slice(0, 10) : t('undated');
     const purpose = summary.findingTitle || t('基线审阅');
     const compact = [...purpose].length > 18 ? [...purpose].slice(0, 18).join('') + '…' : purpose;
-    option.textContent = `${when} · ${compact} · ${summary.id}`;
-    option.title = `${summary.project} · ${when} · ${purpose} · ${summary.id}`;
+    option.textContent = `${when} / ${compact} / ${summary.id}`;
+    option.title = `${summary.project} / ${when} / ${purpose} / ${summary.id}`;
   });
   for (const picker of [$('case-select'), $('studio-run-select')]) picker.title = picker.selectedOptions[0]?.title || '';
   renderReviewHistory();
@@ -1037,22 +1041,22 @@ function renderReviewHistory() {
   const options = [...$('case-select').options].sort((a, b) => Number(Boolean(b.dataset.runSummary)) - Number(Boolean(a.dataset.runSummary)));
   const groups = groupReviewHistory(options.map(option => ({ option, value: option.value, summary: option.dataset.runSummary ? JSON.parse(option.dataset.runSummary) : null })));
   for (const group of groups) {
-    const folder = document.createElement('details'); folder.className = 'review-project-folder'; folder.dataset.projectKey = group.key;
+    const folder = createControl('details'); folder.className = 'review-project-folder'; folder.dataset.projectKey = group.key;
     const current = Boolean(spec) && group.records.some(record => record.value === caseId);
     folder.open = reviewFolderState.has(group.key) ? reviewFolderState.get(group.key) : current;
-    const heading = document.createElement('summary');
+    const heading = createControl('summary');
     heading.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>';
-    const label = document.createElement('span'); label.textContent = group.examples ? t('示例') : group.name; label.title = group.key;
+    const label = createControl('span'); label.textContent = group.examples ? t('示例') : group.name; label.title = group.key;
     heading.addEventListener('click', () => reviewFolderState.set(group.key, !folder.open));
     heading.append(label); folder.append(heading);
-    const children = document.createElement('div'); children.className = 'review-project-records'; folder.append(children); list.append(folder);
+    const children = createControl('div'); children.className = 'review-project-records'; folder.append(children); list.append(folder);
     for (const { option, summary } of group.records) {
-    const title = summary ? summary.findingTitle || `${t('基线审阅')} · ${summary.createdAt?.slice(5, 10) || t('undated')}` : option.textContent;
-    const button = document.createElement('button');
+    const title = summary ? (summary.findingTitle==='Repair current diagnosis candidates'?t('本轮修复'):summary.findingTitle) || `${t('基线审阅')} / ${summary.createdAt?.slice(5, 10) || t('undated')}` : option.textContent;
+    const button = createControl('button');
     button.type = 'button'; button.dataset.reviewId = option.value;
     button.title = summary ? option.title : title;
     button.setAttribute('aria-current', String(option.value === caseId));
-    const name = document.createElement('span'); name.textContent = title;
+    const name = createControl('span'); name.textContent = title;
     button.append(name);
     button.onclick = async () => {
       const previousId = caseId;
@@ -1089,16 +1093,16 @@ function renderEmptyEvidenceView(view) {
   $('studio-command-details').hidden = true;
   $('studio-followup').textContent = t('你仍然可以切换到其他页面；缺少证据不会锁住工作台导航。');
   $('pd-sidebar-tree').replaceChildren();
-  const directoryEmpty = document.createElement('p');
+  const directoryEmpty = createControl('p');
   directoryEmpty.className = 'studio-empty-copy';
   directoryEmpty.textContent = t('完成一次采集后，这里会列出页面、状态和视口。');
   $('pd-sidebar-tree').append(directoryEmpty);
   $('pd-inspector-body').replaceChildren();
-  const inspectorEmpty = document.createElement('div');
+  const inspectorEmpty = createControl('div');
   inspectorEmpty.className = 'studio-empty-state';
-  const inspectorTitle = document.createElement('h2');
+  const inspectorTitle = createControl('h2');
   inspectorTitle.textContent = t('暂无可检查的证据');
-  const inspectorCopy = document.createElement('p');
+  const inspectorCopy = createControl('p');
   inspectorCopy.textContent = isCanvas
     ? t('Canvas 会在基线采集完成后显示真实界面，而不是占位截图。')
     : t('Code diff 会在受控执行完成后显示真实补丁。');
@@ -1107,17 +1111,17 @@ function renderEmptyEvidenceView(view) {
 
   const target = isCanvas ? $('pd-fs-canvas') : $('pd-fs-codediff-container');
   target.replaceChildren();
-  const empty = document.createElement('article');
+  const empty = createControl('article');
   empty.className = 'pd-canvas-empty workbench-empty-view';
-  const title = document.createElement('h3');
+  const title = createControl('h3');
   title.textContent = isCanvas ? t('开始第一次页面审阅') : t('代码改动已打开');
-  const copy = document.createElement('p');
+  const copy = createControl('p');
   copy.textContent = isCanvas
     ? t('连接本地项目后，工作台会采集真实页面并带你查看首条有证据的问题。')
     : t('当前项目还没有可审阅的 diff.patch。完成一次隔离修改后，这里会显示真实代码差异。');
   empty.append(title, copy);
   if (isCanvas) {
-    const start = document.createElement('button');
+    const start = createControl('button');
     start.type = 'button';
     start.className = 'button primary';
     start.textContent = t('连接项目并开始审阅');
@@ -1128,6 +1132,9 @@ function renderEmptyEvidenceView(view) {
 }
 
 async function applyView(view) {
+  // Historical report/direction URLs keep their run and capture selection, but
+  // all primary review work now lives in the page workspace.
+  if((view==='list'&&location.hash!=='#foundation-title')||view==='directions'){view='canvas';const url=new URL(location.href);url.searchParams.set('view','canvas');history.replaceState(null,'',url);}
   reportAction?.destroy(); reportAction = null;codeAction?.destroy();codeAction = null;
   if (currentView === 'list') reportScroll = window.scrollY;
   if (!['list', 'canvas', 'codediff', 'directions'].includes(view)) view = run ? 'canvas' : 'list';
@@ -1155,7 +1162,7 @@ async function applyView(view) {
     button.setAttribute('aria-pressed', String(active));
     if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
   });
-  document.querySelector('.studio-local').textContent = legacyTools ? t('本地 · 可编辑草稿') : t('本地 · 审阅记录');
+  document.querySelector('.studio-local').textContent = legacyTools ? t('本地 / 可编辑草稿') : t('本地 / 审阅记录');
   $('workbench-view-title').textContent = view === 'directions' ? t('设计方向') : view === 'codediff' ? t('代码改动') : t('页面审阅');
   if (view === 'list') requestAnimationFrame(() => window.scrollTo(0, reportScroll));
   else window.scrollTo(0, 0);
@@ -1169,7 +1176,7 @@ async function applyView(view) {
   if (view === 'directions') {
     $('studio-message').textContent = run ? t('证据来自本地导出记录') : t('当前项目可以浏览工作区，但还没有可展示的运行证据。');
     refreshedAt = run ? Date.now() : null;
-    $('pd-fs-last-update').textContent = run ? t('刚刚读取 · ') + run.manifest.id : '';
+    $('pd-fs-last-update').textContent = run ? t('刚刚读取 / ') + run.manifest.id : '';
     const { renderRunDirections } = await import('./directions/run-directions.js');
     canvasController = renderRunDirections(directionContainer, run, {
       previous: directionStates.get(run?.manifest.id),
@@ -1202,13 +1209,12 @@ async function applyView(view) {
     }
   }
   else {
-    canvasController = await renderCanvas($('pd-fs-canvas'), run, canvasState || {});
     await renderCodeDiff($('pd-fs-codediff-container'), run, run.base);
-    const codePrimary = document.createElement('div');codePrimary.id = 'code-primary-action';$('pd-fs-codediff-container').prepend(codePrimary);
+    const codePrimary = createControl('div');codePrimary.id = 'code-primary-action';$('pd-fs-codediff-container').prepend(codePrimary);
     codeAction = mountReviewAction(codePrimary, run, {onChanged: actionChanged, onFoundation: openFoundationStep});
   }
   refreshedAt = Date.now();
-  $('pd-fs-last-update').textContent = t('刚刚读取 · ') + run.manifest.id;
+  $('pd-fs-last-update').textContent = t('刚刚读取 / ') + run.manifest.id;
   } finally {
     $('fullscreen-shell').setAttribute('aria-busy', 'false');
     document.querySelectorAll('[data-studio-view], .pd-view-jump').forEach(button => {
@@ -1235,7 +1241,7 @@ async function refreshRun(manual = false) {
       $('studio-message').textContent = t('已读取最新导出证据，保留画布位置。');
     }
     refreshedAt = Date.now();
-    $('pd-fs-last-update').textContent = t('刚刚读取 · ') + id;
+    $('pd-fs-last-update').textContent = t('刚刚读取 / ') + id;
   } catch {
     $('studio-message').textContent = t('读取失败，保留上次证据。请重新导出后重试。');
   } finally { refreshing = false; $('studio-refresh').disabled = false; }
@@ -1245,7 +1251,7 @@ let refreshTimer;
 const scheduleRefresh = () => { clearTimeout(refreshTimer); refreshTimer = setTimeout(() => refreshRun(), 300); };
 window.addEventListener('focus', scheduleRefresh);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleRefresh(); });
-setInterval(() => { if (refreshedAt && run) $('pd-fs-last-update').textContent = t`${Math.floor((Date.now()-refreshedAt)/60000)} 分钟前读取 · ${run.manifest.id}`; }, 60000);
+setInterval(() => { if (refreshedAt && run) $('pd-fs-last-update').textContent = t`${Math.floor((Date.now()-refreshedAt)/60000)} 分钟前读取 / ${run.manifest.id}`; }, 60000);
 matchMedia('(max-width:899px)').addEventListener('change', event => { document.body.style.overflow = event.matches || currentView === 'list' ? '' : 'hidden'; });
 document.querySelectorAll('[data-studio-view], .pd-view-jump').forEach(button => {
   button.addEventListener('click', event => { event.preventDefault(); params.delete('tools'); applyView(button.dataset.studioView || button.dataset.view).catch(() => { $('studio-message').textContent = t('无法读取页面，请重试。'); }); });
@@ -1344,7 +1350,7 @@ function mergeRunSummaries(runs) {
   }
   for (const summary of runs) for (const picker of [$('case-select'), $('studio-run-select')]) {
     const value = `${RUN_PREFIX}${summary.id}`;
-    const option = [...picker.options].find(item => item.value === value) || document.createElement('option');
+    const option = [...picker.options].find(item => item.value === value) || createControl('option');
     option.value = value;
     option.dataset.runSummary = JSON.stringify(summary);
     if (!option.parentNode) picker.append(option);

@@ -236,3 +236,10 @@ test('isolated package-less JavaScript does not inherit a host ESM package', asy
   const {root,run}=await plannedRun(t,'legacy01');await saveOnboarding(run.directory,{});
   await assert.rejects(executeWithAgent({directory:run.directory,repo:root,commandOverride:'never-start-this-agent'}),/identity is missing/);
  });
+
+
+test('git diagnostics cannot contaminate repository fingerprint fields',async t=>{
+ const {root}=await temporaryRepo(t),previous=process.env.GIT_TRACE;process.env.GIT_TRACE='1';
+ try{const result=await repositoryFingerprint(root);assert.match(result.head,/^[a-f0-9]{40}$/);assert.doesNotMatch(result.refs,/trace:/);assert.equal(result.worktree,'');}
+ finally{if(previous===undefined)delete process.env.GIT_TRACE;else process.env.GIT_TRACE=previous;}
+});

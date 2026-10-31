@@ -6,10 +6,12 @@
   <meta name="theme-color" content="#F7F6F3">
   <link rel="icon" type="image/png" href="/brand/happyhands-mark-ink.png">
   <title>HappyHands · 设计审阅工作台</title>
+  <script src="/workbench-theme.js"></script>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./studio.css">
   <link rel="stylesheet" href="./workbench-base.css">
   <link rel="stylesheet" href="./workbench-system.css">
+  <link rel="stylesheet" href="./site-theme.css">
 </head>
 <body class="workspace-page">
   <aside class="workbench-navigation" aria-label="工作台导航">
@@ -17,15 +19,12 @@
     <div class="workbench-nav-caption">工作空间</div>
     <nav class="workbench-view-nav" aria-label="工作台视图">
       <button type="button" data-studio-view="canvas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M9 9v11"/></svg><span>页面审阅</span></button>
-      <button type="button" data-studio-view="list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg><span>审阅报告</span></button>
       <button type="button" data-studio-view="codediff"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 20"/></svg><span>代码改动</span></button>
 
     </nav>
     <details id="review-history" class="workbench-history" open><summary>审阅记录</summary><nav id="review-history-list" aria-label="审阅记录"></nav></details>
-    <details class="workbench-experiments"><summary>实验工具</summary>
-      <a id="direction-link" class="workbench-nav-link" href="./directions/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 8v8l8 5 8-5V8zM8 10l4 2 4-2M12 12v5"/></svg><span>设计方向</span></a>
-      <a id="legacy-tools-link" href="?view=canvas&tools=legacy">旧版截图批注与创作</a>
-    </details>
+    <details class="workbench-resources"><summary>设计方向</summary><nav aria-label="官网设计资源"><a id="direction-link" href="https://happyhands.cc/components/?provider=systems" target="_blank" rel="noopener noreferrer">设计系统</a><a href="https://happyhands.cc/apps/portal/" target="_blank" rel="noopener noreferrer">Design.md</a><a href="https://happyhands.cc/components/?provider=cult-ui" target="_blank" rel="noopener noreferrer">组件库</a></nav></details>
+    <details class="workbench-experiments" hidden><summary>实验工具</summary><a id="legacy-tools-link" href="?view=canvas&tools=legacy">旧版截图批注与创作</a></details>
     <div class="workbench-nav-bottom"><span class="workbench-local-dot"></span><span>本地工作台</span><a href="https://github.com/ShuaiMXu/happyhands/issues/1">产品路线 ↗</a></div>
   </aside>
   <div id="workbench-shell">

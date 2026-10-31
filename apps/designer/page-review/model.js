@@ -1,3 +1,4 @@
+import {isReportableFinding} from '../../../packages/harness-core/finding-admission.js';
 import { buildNodes, safeScreenshot } from '../canvas/nodes.js';
 import { exportedReviewState } from '../cowart/review-state.js';
 
@@ -62,7 +63,7 @@ export function livePreviewAvailable(preview) {
 export function reviewFindings(run) {
   const authored = new Map((run.spec.findings || []).map(item => [item.id, item]));
   const diagnosed = run.diagnosis?.findings || [];
-  return diagnosed.length ? diagnosed.map(item => ({ ...item, ...authored.get(item.id) })) : [...authored.values()];
+  return diagnosed.length ? diagnosed.filter(isReportableFinding).map(item => ({ ...item, ...authored.get(item.id) })) : [...authored.values()].filter(isReportableFinding);
 }
 
 function evidenceSource(value) {

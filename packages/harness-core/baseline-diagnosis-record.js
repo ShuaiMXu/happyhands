@@ -21,11 +21,12 @@ export async function verifyBaselineDiagnosis(run,diagnosis,{current=true}={}){
  if(record.sourceHash!==baselineSourceHash(run))throw Error('Baseline diagnosis source context changed.');
  if(current&&record.binding!==baselineBinding(run))throw Error('Baseline diagnosis context changed.');
  for(const original of record.originals)if(baselineHash(await readVerificationFile(run.directory,original.reference,24*1024*1024))!==original.sha256)throw Error('Baseline diagnosis original changed.');
+ const skillFiles=[];for(const ref of new Map((record.batches||[]).flatMap(batch=>batch.skillReferences||[]).map(ref=>[ref.path,ref])).values()){const content=await readVerificationFile(run.directory,ref.path,2*1024*1024);if(baselineHash(content)!==ref.sha256)throw Error('Baseline diagnosis skill snapshot changed.');skillFiles.push({path:ref.path,bytes:content});}
  const model=diagnosis.findings.filter(item=>(item.sources||[]).some(source=>source.id==='baseline-model-diagnosis'));
  if(model.length!==record.result.findings.length||new Set(model.map(item=>item.id)).size!==model.length)throw Error('Baseline diagnosis findings changed.');
  for(const [index,item] of record.result.findings.entries()){
-  const found=model.find(value=>value.id===`MODEL-${reference.sha256.slice(0,12)}-${index+1}`);if(!found||found.title!==item.title||found.proposal!==item.proposal||found.evidenceRefs.length!==item.screenshotRefs.length)throw Error('Baseline diagnosis proposal changed.');
+  const found=model.find(value=>value.id===`MODEL-${reference.sha256.slice(0,12)}-${index+1}`);if(!found||found.title!==item.title||found.proposal!==item.proposal||JSON.stringify(found.findingBasis||null)!==JSON.stringify(item.findingBasis||null)||found.evidenceRefs.length!==item.screenshotRefs.length)throw Error('Baseline diagnosis proposal changed.');
   for(const [i,ref] of found.evidenceRefs.entries()){const evidence=diagnosis.evidence.find(value=>value.id===ref);if(evidence?.source!==item.screenshotRefs[i]||evidence?.observation!==item.observation)throw Error('Baseline diagnosis evidence changed.');}
  }
- return {record,bytes,foundationChanged:record.foundationHash!==baselineFoundationHash(run)};
+ return {record,bytes,skillFiles,foundationChanged:record.foundationHash!==baselineFoundationHash(run)};
 }

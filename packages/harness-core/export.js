@@ -182,7 +182,7 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
     const diagnosis=JSON.parse(await readFile(join(run.directory,run.manifest.diagnosis.path),'utf8'));
     const model=await verifyBaselineDiagnosis(run,diagnosis,{current:false});
     if(model?.foundationChanged){staleModelDiagnosis=structuredClone(diagnosis);staleModelDiagnosis.modelDiagnosis={...diagnosis.modelDiagnosis,status:'needs-evidence',summary:'Design Foundation changed after this diagnosis; rerun diagnosis before confirming model findings.',limitations:[...diagnosis.modelDiagnosis.limitations,'These model observations refer to the previous Foundation snapshot.']};for(const item of staleModelDiagnosis.findings)if(item.sources?.some(source=>source.id==='baseline-model-diagnosis')){item.verificationStatus='stale-candidate';item.priority=0;}}
-    if(model){await mkdir(join(target,'baseline-diagnosis'),{recursive:true});await writeFile(join(target,diagnosis.modelDiagnosis.path),model.bytes);copied.push(diagnosis.modelDiagnosis.path);}
+    if(model){await mkdir(join(target,'baseline-diagnosis'),{recursive:true});await writeFile(join(target,diagnosis.modelDiagnosis.path),model.bytes);copied.push(diagnosis.modelDiagnosis.path);for(const file of model.skillFiles){await mkdir(dirname(join(target,file.path)),{recursive:true});await writeFile(join(target,file.path),file.bytes);copied.push(file.path);}}
   }
   if(incrementalCapture){await writeJson(join(target,'incremental-capture-plan.json'),incrementalCapture);copied.push('incremental-capture-plan.json');}
   for (const name of RUN_FILES) {
