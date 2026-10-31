@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "generatedAt", "evaluatorVersion", "evidence", "findings", "priorityOverrides", "experienceScore"],
   "properties": {
+    "findingPolicy": {"const":"clear-defects@1"},
     "modelDiagnosis": {"type": "object", "required": ["status", "summary", "limitations"], "properties": {"status": {"enum": ["complete", "needs-evidence", "failed"]}, "summary": {"type": "string"}, "limitations": {"type": "array", "items": {"type": "string"}}, "path": {"type": "string"}, "sha256": {"type": "string"}}},
     "schemaVersion": { "const": "0.1" },
     "generatedAt": { "type": "string", "minLength": 1 },

@@ -1,3 +1,4 @@
+import {createControl} from '../../packages/ui/controls.js';
 import {decodeSiteHandoff,assertSiteHandoff} from '../../packages/workbench/site-handoff-contract.js';
 import {workbenchApi,reviewLink} from './cowart/operations.js';
 import {t} from './i18n.js';
@@ -27,12 +28,12 @@ export function renderSiteHandoff(run) {
   document.getElementById('site-handoff-receipt')?.remove();
   const config=run?.manifest.onboarding?.config;
   if (!config?.siteHandoff) return;
-  const details=document.createElement('details');details.id='site-handoff-receipt';details.className='panel';
-  const title=document.createElement('summary');title.textContent=t('来自官网的本次审阅');
-  const note=document.createElement('p');note.textContent=t('项目设计来源已绑定到这份运行记录，仍需正常确认规范、修改范围和最终结果。');
-  const link=document.createElement('a');link.href='/apps/designer/'+reviewLink(run.manifest.id,'list');link.textContent=t('本次结果记录')+' · '+run.manifest.id;
-  const list=document.createElement('ul');
-  for(const ref of config.designSources||[]){const item=document.createElement('li');item.textContent=ref.path+' · '+ref.sha256.slice(0,12);list.append(item);}
+  const details=createControl('details');details.id='site-handoff-receipt';details.className='panel';
+  const title=createControl('summary');title.textContent=t('来自官网的本次审阅');
+  const note=createControl('p');note.textContent=t('项目设计来源已绑定到这份运行记录，仍需正常确认规范、修改范围和最终结果。');
+  const link=createControl('a');link.href='/apps/designer/'+reviewLink(run.manifest.id,'list');link.textContent=t('本次结果记录')+' / '+run.manifest.id;
+  const list=createControl('ul');
+  for(const ref of config.designSources||[]){const item=createControl('li');item.textContent=ref.path+' / '+ref.sha256.slice(0,12);list.append(item);}
   details.append(title,note,link,list);
   document.getElementById('notice').after(details);
 }

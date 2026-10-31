@@ -1,6 +1,7 @@
+import {createControl} from '../../../packages/ui/controls.js';
 import {t} from '../i18n.js';
 import {workbenchApi,reviewLink} from '../cowart/operations.js';
-const el=(tag,text)=>{const node=document.createElement(tag);if(text)node.textContent=t(text);return node;};
+const el=(tag,text)=>{const node=createControl(tag);if(text)node.textContent=t(text);return node;};
 
 // Planning expands evidence in a new run; it cannot authorize a source edit or
 // overwrite the historical screenshots currently displayed in the workspace.
@@ -51,15 +52,15 @@ export function reviewPlanning(run,{onChanged=({runId})=>{location.href=reviewLi
             surfaceGroup=surfaces.get(key);parent=surfaceGroup.items;
           }
           const label=el('label'),box=el('input');box.type='checkbox';box.value=candidate.id;selected.set(candidate.id,box);
-          label.append(box,document.createTextNode(`${t(candidate.kind)} · ${candidate.title} · ${candidate.state.configurations.join(', ')}`));parent.append(label);
-          if(surfaceGroup){surfaceGroup.boxes.push(box);surfaceGroup.summary.textContent=`${t('内部滚动分段')} · ${candidate.state.configurations.join(', ')} · ${surfaceGroup.boxes.length}`;box.onchange=()=>{const checked=surfaceGroup.boxes.filter(item=>item.checked).length;surfaceGroup.all.checked=checked===surfaceGroup.boxes.length;surfaceGroup.all.indeterminate=checked>0&&checked<surfaceGroup.boxes.length;};}
+          label.append(box,document.createTextNode(`${t(candidate.kind)} / ${candidate.title} / ${candidate.state.configurations.join(', ')}`));parent.append(label);
+          if(surfaceGroup){surfaceGroup.boxes.push(box);surfaceGroup.summary.textContent=`${t('内部滚动分段')} / ${candidate.state.configurations.join(', ')} / ${surfaceGroup.boxes.length}`;box.onchange=()=>{const checked=surfaceGroup.boxes.filter(item=>item.checked).length;surfaceGroup.all.checked=checked===surfaceGroup.boxes.length;surfaceGroup.all.indeterminate=checked>0&&checked<surfaceGroup.boxes.length;};}
           if(candidate.testData)parent.append(el('small','仅使用合成测试值检查原生校验，不提交表单。'));
           const details=el('details'),summary=el('summary','查看完整动作与预期状态'),pre=el('pre');pre.textContent=JSON.stringify(candidate.state,null,2);details.append(summary,pre);parent.append(details);
         }
       }
       if(!proposal.candidates.length)form.append(el('p','没有可自动规划的状态。请查看缺口，补充路由与明确动作。'));
       const gaps=el('details'),gapTitle=el('summary','未发现或无法推断的状态');gaps.append(gapTitle);
-      for(const gap of proposal.gaps||[]){const p=el('p');p.textContent=`${gap.url||''} ${gap.configuration||''} · ${gap.reason}`;gaps.append(p);}form.append(gaps);
+      for(const gap of proposal.gaps||[]){const p=el('p');p.textContent=`${gap.url||''} ${gap.configuration||''} / ${gap.reason}`;gaps.append(p);}form.append(gaps);
       const advanced=el('details'),advancedTitle=el('summary','高级：补充路由与自定义交互'),manualLabel=el('label','补充状态 JSON'),manual=el('textarea');manual.rows=8;manual.value='[]';manual.setAttribute('aria-label',t('补充状态 JSON'));manualLabel.append(manual);advanced.append(advancedTitle,el('p','可声明未链接的路由、自定义菜单、表单、弹窗、失败与重试状态。使用当前预览地址、唯一选择器和明确预期；新增路由会自动补全整页原图。'),manualLabel);form.append(advanced);
       const acknowledge=el('label','我已核对所选页面、交互动作与测试值，同意建立新基线'),confirmed=el('input');confirmed.type='checkbox';confirmed.required=true;acknowledge.prepend(confirmed);form.append(acknowledge);
       const submit=el('button','确认范围并采集');submit.type='submit';submit.className='button primary';form.append(submit);

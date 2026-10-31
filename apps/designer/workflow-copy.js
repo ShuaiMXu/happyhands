@@ -10,8 +10,8 @@ export function scoreMessage(message) {
 
 const stages = {
   'needs-baseline': '采集起始界面', 'needs-diagnosis': '诊断已有证据',
-  'awaiting-confirmation': '确认值得解决的问题', 'needs-plan': '确定修改范围',
-  'needs-execution': '开始隔离修改', 'needs-after-capture': '采集修改后的界面',
+  'awaiting-confirmation': '诊断完成，可以开始修复', 'needs-plan': '准备自动修复',
+  'needs-execution': '准备自动修复', 'needs-after-capture': '采集修改后的界面',
   'needs-structural-evaluation': '检查结构与可达性', 'needs-visual-qa': '独立视觉复核',
   'awaiting-judgment': '等待你的最终判断', complete: '本次审阅已记录',
   'judgment-withdrawn':'本轮决定已撤回',

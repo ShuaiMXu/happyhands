@@ -98,3 +98,15 @@ test('provider failure or tampered source preserves the active failure and evide
  const cwd=join(root,'offline');await mkdir(cwd);await assert.rejects(runAiVisualReview(directory,{cwd,signal:new AbortController().signal,evidenceRetry:{reason:'New evidence',evidenceIds:[item.id]},generate:async()=>{throw Error('Provider offline fixture');}}),/Provider offline/);assert.deepEqual((await loadRun(directory)).manifest.visualReviews,[old]);
  await writeFile(join(directory,'after/desktop.png'),'changed');await assert.rejects(prepareEvidenceRetry(await loadRun(directory),old,{reason:'Wrong source',evidenceIds:[item.id]}),/changed/);
 });
+
+
+test('missing-evidence review requires genuinely new bound evidence and retains the previous review',async t=>{
+ const {directory,run}=await fixture(t,{reviewer:{type:'model',name:'Fixture',version:CURRENT_VISUAL_REVIEW_PROTOCOL+'; fixture'}}),old=run.manifest.visualReviews[0];
+ await assert.rejects(prepareEvidenceRetry(run,old,{reason:'No new evidence',evidenceIds:[]}),/counter-evidence/);
+ const attachment=await counterEvidence(directory),current=await loadRun(directory),attempt=await prepareEvidenceRetry(current,old,{reason:'New source-bound interaction capture',evidenceIds:[attachment.id]});
+ assert.equal(attempt.kind,'evidence-retry');assert.equal(attempt.previousReviewPath,old.path);
+ assert.deepEqual(current.manifest.visualReviews,[old]);assert.equal(current.manifest.judgment,null);
+ await saveVisualReview(directory,{schemaVersion:'0.1',skillId:'visual-qa-evaluator',reviewer:{type:'model',name:'New fixture reviewer',version:CURRENT_VISUAL_REVIEW_PROTOCOL+'; fixture'},reviewedAt:new Date().toISOString(),verdict:'pass',screenshotRefs:['before/desktop.png','after/desktop.png'],findings:[],rationale:'Synthetic new evidence only',limitations:['Fixture, not product acceptance'],attempt,attachmentRefs:[attachment.id],findingResolutions:[]});
+ const after=await loadRun(directory);await readVisualReviewBinding(after,after.manifest.visualReviews[0],{requireBound:true});
+ assert.deepEqual(after.manifest.visualReviewHistory,[old]);
+});

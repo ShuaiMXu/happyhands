@@ -92,7 +92,7 @@ pnpm harness confirm --run DIRECTORY --finding ID --verdict supported|stale --no
 pnpm harness plan --run DIRECTORY [--finding ID]
 pnpm harness execute --run DIRECTORY --repo DIRECTORY [--agent ID] [--command PATH]
 pnpm harness evaluate --run DIRECTORY
-pnpm harness judge --run DIRECTORY --decision accept|reject --reason TEXT
+pnpm harness judge --run DIRECTORY --decision accept|reject [--reason TEXT] (required for reject)
 pnpm harness withdraw-judgment --run DIRECTORY --reason TEXT
 pnpm harness memory-exception --run DIRECTORY --principle ID --hash CONTENT_HASH --decision exclude|apply --reason TEXT
 pnpm harness status --run DIRECTORY
@@ -313,7 +313,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
     await withdrawJudgment(required(options,'run'),required(options,'reason'));
     console.log('Judgment withdrawn. Original decision and evidence retained; start a new run to reassess.');
   } else if (command === 'judge') {
-    await saveJudgment(directory, required(options, 'decision'), required(options, 'reason'));
+    await saveJudgment(directory, required(options, 'decision'), options.reason ?? '');
     await printWorkbenchLink((await loadRun(directory)).manifest.id);
     process.stdout.write(`Saved judgment in ${directory}\n`);
   } else {

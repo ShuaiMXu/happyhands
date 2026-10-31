@@ -1,6 +1,7 @@
+import {createServer} from 'vite';
 import {chromium} from 'playwright-core';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {projectMemory} from '../packages/workbench/memory.js';
@@ -9,10 +10,12 @@ import {projectMemory} from '../packages/workbench/memory.js';
 const root=await mkdtemp(join(tmpdir(),'memory-browser-'));
 const browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});
 const run={spec:{project:{name:'Fixture',task:'Review'}},manifest:{id:'fixture-run',captures:{},judgment:{decision:'reject',reason:'Synthetic fixture'}}};
+let server;
 try {
+  server=await createServer({configFile:false,root:process.cwd(),cacheDir:join(root,'vite-cache'),server:{host:'127.0.0.1',port:0,fs:{allow:[process.cwd(),root]}},optimizeDeps:{noDiscovery:true,include:['react','react/jsx-runtime','react/jsx-dev-runtime','react-dom','react-dom/client','@radix-ui/react-dialog','@radix-ui/react-checkbox','@radix-ui/react-select'],exclude:['@tldraw/assets']}});await server.listen();const base='http://127.0.0.1:'+server.httpServer.address().port;
   for(const language of ['zh','en']){
-    const store=projectMemory(root,language),page=await browser.newPage();
-    await page.route('http://memory.test/**',async route=>{
+    const store=projectMemory(root,language),page=await browser.newPage();page.on('pageerror',error=>console.error(error.message));
+    await page.route(base+'/**',async route=>{
       const url=new URL(route.request().url());
       try {
         if(url.pathname.startsWith('/api/')){
@@ -28,12 +31,11 @@ try {
           }
           return route.fulfill({json:value});
         }
-        if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:'<!doctype html><html><head><title>Memory fixture</title></head><body></body></html>'});
-        if(!/^\/(apps|packages)\/[\w/.-]+\.js$/.test(url.pathname)||url.pathname.includes('..'))return route.abort();
-        return route.fulfill({contentType:'text/javascript',body:await readFile(new URL('..'+url.pathname,import.meta.url),'utf8')});
+        if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:'<!doctype html><html><head><title>Memory fixture</title></head><body><script type="module" src="/packages/ui/workbench.js"></script></body></html>'});
+        return route.continue();
       }catch(error){return route.fulfill({status:400,json:{error:error.message}});}
     });
-    await page.goto('http://memory.test/');
+    await page.goto(base);await page.waitForFunction(()=>document.documentElement.dataset.hhComponents==='ready');
     await page.evaluate(async({run,language})=>{const i18n=await import('/apps/designer/i18n.js');i18n.setLanguage(language);const {openOperations}=await import('/apps/designer/cowart/operations.js');openOperations(run);},{run,language});
     const labels=language==='zh'?['项目经验候选','建议保留的原则','适用范围','不适用的情况（可选，每行一项）','经验记录理由','提出经验候选','批准原则','停用原则','已弃用']:['Project memory candidates','Proposed principle','Applicable context','Exceptions (optional, one per line)','Reason for the memory record','Propose project memory','Approve principle','Retire principle','Deprecated'];
     await page.getByText(labels[0],{exact:true}).click();
@@ -49,7 +51,7 @@ try {
     const entries=await store.list();assert.equal(entries[0].review.decision,'approve');assert.deepEqual(entries[0].exceptions,['Destructive actions']);
     assert.equal(await page.getByRole('button',{name:labels[7],exact:true}).count(),0);
     await page.evaluate(async()=>{
-      document.querySelector('dialog').close();
+      document.querySelector('[data-ui-dialog][open]').close();
       const {projectMemoryView}=await import('/apps/designer/project-memory-view.js');
       const view=projectMemoryView({context:{entries:[{principle:'<img src=x onerror=alert(1)>',context:'Review screens',exceptions:['Destructive actions'],source:{runId:'prior-run'}}]}});
       document.body.append(view);view.open=true;
@@ -90,4 +92,4 @@ try {
     await control.click();await page.waitForFunction(()=>document.body.dataset.withdrawalChanged==='true');assert.equal(await control.isDisabled(),true);
     await page.close();console.log('PASS memory lifecycle UI',language);
   }
-}finally{await browser.close();await rm(root,{recursive:true,force:true});}
+}finally{await browser.close();await server?.close();await rm(root,{recursive:true,force:true});}

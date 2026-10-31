@@ -81,11 +81,20 @@ export async function stageDesignGuidance(directory,mode,value={}){
   const bundle=await loadDesignGuidance(mode,value),reference='design-guidance/v1/'+bundle.metadata.bundleHash,destination=join(directory,reference),documents=snapshotDocuments(bundle);
   if(await exists(destination))await verify(destination,documents);
   else{
-    await mkdir(dirname(destination),{recursive:true});const temporary=await mkdtemp(join(dirname(destination),'.pending-'+bundle.metadata.bundleHash+'-'));
+    // The destination already binds the complete hash. A short unique staging
+    // name also works under nested Windows workbench/job directories.
+    await mkdir(dirname(destination),{recursive:true});const temporary=await mkdtemp(join(dirname(destination),'.pending-'));
     try{
       for(const document of documents){const path=join(temporary,document.path);await mkdir(dirname(path),{recursive:true});await writeFile(path,document.content,{flag:'wx'});}
       await verify(temporary,documents);
-      try{await rename(temporary,destination);}catch(error){if(!['EEXIST','ENOTEMPTY','EPERM','EACCES'].includes(error.code)||!await exists(destination))throw error;await verify(destination,documents);}
+      for(let attempt=0;;attempt++){
+        try{await rename(temporary,destination);break;}
+        catch(error){
+          if(['EEXIST','ENOTEMPTY','EPERM','EACCES'].includes(error.code)&&await exists(destination)){await verify(destination,documents);break;}
+          if(!['EPERM','EACCES','EBUSY'].includes(error.code)||attempt>=8)throw error;
+          await new Promise(resolve=>setTimeout(resolve,20*(attempt+1)));
+        }
+      }
     }finally{await rm(temporary,{recursive:true,force:true});}
   }
   return {...bundle,metadata:{...bundle.metadata,reference}};

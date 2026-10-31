@@ -16,7 +16,7 @@ export function assertExperienceSpec(spec) {
   for (const finding of spec.findings) {
     for (const id of finding.evidenceIds) if (!ids.has(id)) throw new Error(`Finding ${finding.id} references missing evidence ${id}.`);
   }
-  if (spec.review.judgment !== 'pending' && !spec.review.reason.trim()) throw new Error('Accept/reject requires a reason.');
+  if (spec.review.judgment === 'reject' && !spec.review.reason.trim()) throw new Error('Reject requires a reason.');
   return spec;
 }
 
@@ -146,9 +146,10 @@ This run is evaluated as a conformance check against the approved foundation plu
 `;
 }
 
-export function recordJudgment(spec, judgment, reason) {
+export function recordJudgment(spec, judgment, reason = '') {
   if (!['accept', 'reject'].includes(judgment)) throw new Error('Choose accept or reject.');
-  if (!reason?.trim()) throw new Error('Explain the reason for the decision.');
+  if (typeof reason !== 'string') throw new Error('Decision reason must be text.');
+  if (judgment === 'reject' && !reason.trim()) throw new Error('Explain the reason for rejecting the change.');
   const next = structuredClone(spec);
   next.review.judgment = judgment;
   next.review.reason = reason.trim();

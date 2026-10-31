@@ -1,3 +1,4 @@
+import {createControl} from '../../../packages/ui/controls.js';
 import { t } from '../i18n.js';
 import { findingSummary } from '../finding-summary.js';
 import { mountReviewAction } from '../review-action.js';
@@ -7,7 +8,7 @@ export function renderRunDirections(container, run, options = {}) {
   let selected = options.previous?.findingId || null, expanded = false, controller;
   container.className = 'workspace-directions';
   const node = (tag, text, className) => {
-    const element = document.createElement(tag);
+    const element = createControl(tag);
     if (text) element.textContent = text;
     if (className) element.className = className;
     return element;
@@ -15,7 +16,7 @@ export function renderRunDirections(container, run, options = {}) {
   function render() {
     controller?.destroy();
     container.replaceChildren();
-    container.append(node('h1', t('设计方向')), node('p', t('建议来自本轮诊断。先核对依据和修改范围，确认后生成计划，再到画布查看和批注。')));
+    container.append(node('h1', t('设计方向')), node('p', t('建议来自本轮诊断，可选择单项修复，也可一键修复全部问题。完成后再审阅结果。')));
     if (!run) {
       const connect = node('button', t('连接项目并开始审阅'), 'wb-button');
       connect.onclick = options.onConnect;
@@ -52,7 +53,7 @@ export function renderRunDirections(container, run, options = {}) {
       (index < 3 ? grid : moreGrid).append(card);
     }
     if (findings.length > 3) container.append(more);
-    controller = mountReviewAction(action, run, { getFindingId: () => selected, onChanged: options.onChanged, onFoundation: options.onFoundation });
+    controller = mountReviewAction(action, run, { getRepairFindingId: () => selected, onChanged: options.onChanged, onFoundation: options.onFoundation });
   }
   render();
   return { snapshot: () => ({ findingId: selected }), destroy: () => controller?.destroy() };

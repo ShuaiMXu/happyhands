@@ -8,6 +8,7 @@ import { discoverReviewTargets, confirmedReviewPlan } from '../harness-core/revi
 import { discoverProject } from './project-setup.js';
 import {diagnoseBaseline,assertBaselineModelCapacity} from './baseline-diagnosis.js';
 import { runAiVisualReview } from './ai-review.js';
+import {createReviewedPullRequest} from './pull-request.js';
 import {runPatternReview} from './pattern-review.js';
 import {stagePatternAdmission} from '../harness-core/store.js';
 import { autoExecuteDirection } from './direction-execution.js';
@@ -25,7 +26,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import { chromium } from 'playwright-core';
 import { createJobs, runLocal, writeJson } from './jobs.js';
 import { resolveCanvasTarget } from './cowart-storage.js';
-import { createRun, loadRun, saveOnboarding, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveDiagnosis, saveVisualReview, saveReviewAttachment, saveFoundationApproval, recordAbsentBaseline, runFilePath } from '../harness-core/store.js';
+import { createRun, loadRun, saveOnboarding, confirmFinding, saveRepairScope, savePlan, saveEvaluation, saveJudgment, saveDiagnosis, saveVisualReview, saveReviewAttachment, saveFoundationApproval, recordAbsentBaseline, runFilePath } from '../harness-core/store.js';
 import { loadProjectConfig, inspectRepository, publicProjectConfig, spawnPreview, stopPreview, waitForPreview } from '../harness-core/onboard.js';
 import { captureBrowser, captureBrowserPlan } from '../harness-core/browser.js';
 import { captureEntries } from '../harness-core/capture-state.js';
@@ -67,7 +68,7 @@ export function managedPreviewVersionStatus(repository, manifest, session, curre
 export function createWorkbench(root, dependencies = {}) {
   const advancing = new Set();
   const jobs = createJobs(root), runRoot = join(root, '.harness', 'runs'), bindings = join(root, '.harness', 'workbench-projects'), previewSessions = new Map();
-  const execute = dependencies.execute || executeWithAgent, generate = dependencies.generate || runLocal;
+  const execute = dependencies.execute || executeWithAgent, generate = dependencies.generate || runLocal,createPr=dependencies.createPullRequest||createReviewedPullRequest;
   const inspect = dependencies.inspectRepository || inspectRepository, launchPreview = dependencies.spawnPreview || spawnPreview, haltPreview = dependencies.stopPreview || stopPreview, awaitPreview = dependencies.waitForPreview || waitForPreview, fingerprintPreview = dependencies.previewResponseFingerprint || previewResponseFingerprint;
   const request = dependencies.fetch || fetch;
   const capturePage = dependencies.captureBrowser || captureBrowser, capturePlan = dependencies.captureBrowserPlan || captureBrowserPlan;
@@ -299,7 +300,7 @@ export function createWorkbench(root, dependencies = {}) {
     if (!['diagnose', 'confirm', 'plan', 'execute', 'recapture', 'evaluate', 'baseline', 'judge', 'attest', 'foundation', 'foundation-approve'].includes(kind)) throw new Error('Unsupported action');
     if (kind === 'baseline') text(input.reason, 'Baseline absence reason');
     if (kind === 'confirm') { text(input.findingId, 'Finding'); text(input.note, 'Confirmation reason'); }
-    if (kind === 'judge') { if (!['accept','reject'].includes(input.decision)) throw new Error('Choose accept or reject'); text(input.reason, 'Judgment reason'); }
+    if (kind === 'judge') { if (!['accept','reject'].includes(input.decision)) throw new Error('Choose accept or reject'); if(input.decision==='reject') text(input.reason, 'Judgment reason'); else if(input.reason!==undefined&&typeof input.reason!=='string') throw new Error('Decision reason must be text.'); }
     if(kind==='attest'){const verification=await readVerificationEvidence(run.directory,run.manifest);assertVisualReview(input.review,{...run.manifest,verificationRecords:verification.records});}
     const config = ['execute','recapture','foundation','foundation-approve'].includes(kind) ? await configFor(run) : null;
     return jobs.start({ kind, runId: input.runId, ...(input.directionTaskId ? {directionTaskId:input.directionTaskId,directionStepId:input.directionStepId} : {}) }, async ({ signal, update, cwd }) => {
@@ -349,12 +350,42 @@ export function createWorkbench(root, dependencies = {}) {
     if (advancing.has(input.runId)) throw new Error('A task is already being submitted for this review.');
     advancing.add(input.runId);
     try {
-      const run = await localRun(input.runId), primary = reviewPrimaryAction(run.manifest);
+      const run = await localRun(input.runId);
+      let primary = reviewPrimaryAction(run.manifest);
       if (!primary || primary.stage !== input.expectedStage) throw new Error('Review stage changed. Reload the current evidence before continuing.');
       const busy = (await jobs.list()).some(job => ['queued','running','cancelling'].includes(job.status) && [job.runId,job.resultRunId,job.originRunId].includes(input.runId));
       if (busy) throw new Error('A task is already running for this review. Wait for its result before continuing.');
       if (['reconnect','foundation'].includes(primary.kind)) throw new Error('Review the connection or foundation form before continuing.');
       await configFor(run);
+      if(primary.kind==='pull-request') {
+        if(input.publishRequested!==true)throw Error('Explicit pull request submission is required.');
+        return await jobs.start({kind:'pull-request',runId:input.runId},async context=>{
+          try{await assertExpectedStage(run.directory,input.expectedStage);await context.update({stage:'publishing-pr'});const pullRequest=await createPr(run.directory,context);return {runId:input.runId,pullRequest};}
+          finally{await publish(run.directory);}
+        });
+      }
+      if(primary.kind==='repair') {
+        // Keep existing CLI/legacy clients usable; the workbench uses one repair click.
+        if(input.confirmed===true && !input.repairRequested)primary={...primary,kind:primary.stage==='awaiting-confirmation'?'confirm':primary.stage==='needs-plan'?'plan':'execute'};
+        else {
+          if(input.repairRequested!==true)throw Error('Explicit repair request is required.');
+          const config=await configFor(run),repository=await inspect(config.repo),baseline=run.manifest.onboarding?.repository;
+          if(!config.start)throw Error('An isolated preview start command is required before automatic repair. Connect a runnable project preview first.');
+          if(repository.dirty||!baseline?.root||repository.commit!==baseline.commit||await realpath(repository.root)!==await realpath(baseline.root))throw Error('Baseline repository changed. Capture a fresh review before repairing.');
+          return await jobs.start({kind:'repair',runId:input.runId},async context=>{
+            try {
+              await assertExpectedStage(run.directory,input.expectedStage);
+              await context.update({stage:'preparing-repair'});
+              const current=await loadRun(run.directory);
+              if(!current.manifest.confirmation)await saveRepairScope(run.directory,{findingId:input.findingId});
+              else if(input.findingId && !(current.manifest.repair?.findingIds||[current.manifest.findingId]).includes(input.findingId))throw Error('This repair scope is already bound. Start a fresh review to change it.');
+              const scoped=await loadRun(run.directory);
+              if(!scoped.manifest.plan)await savePlan(run.directory,scoped.manifest.findingId);
+              return await changePipeline(run.directory,config,context,{executeNow:true,language:input.language});
+            } finally {await publish(run.directory);}
+          });
+        }
+      }
       if (['restart','execute'].includes(primary.kind) && input.confirmed !== true) throw new Error('Explicit plan or source confirmation is required.');
       if (primary.kind === 'restart') return await onboard({configPath:(await configFor(run)).configPath,originRunId:input.runId,expectedStage:primary.stage});
       if (primary.kind === 'ai-review') return await aiReview(input);

@@ -16,5 +16,5 @@ export function findingSummary(finding) {
   const rule=rules.find(([pattern])=>pattern.test(finding.id));
   if(!rule)return {title:finding.title,proposal:''};
   const device=/-DESKTOP$/.test(finding.id)?t('desktop'):/-MOBILE$/.test(finding.id)?t('mobile'):'';
-  return {title:t(rule[1])+(device?' · '+device:''),proposal:t(rule[2])};
+  return {title:t(rule[1])+(device?' / '+device:''),proposal:t(rule[2])};
 }

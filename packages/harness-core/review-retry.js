@@ -28,7 +28,7 @@ export async function assertProtocolRetry(run,reference,review){
 // Revisit a failure only with a genuinely new, source-bound image, never a random reroll.
 export async function prepareEvidenceRetry(run,reference,{reason,evidenceIds}={}){
   if(typeof reason!=='string'||!reason.trim()||reason.trim().length>2000)throw Error('A bounded evidence review reason is required.');
-  if(run.manifest.judgment||run.manifest.judgmentWithdrawal||reference?.skillId!=='visual-qa-evaluator'||reference.verdict!=='fail'||reference.reviewer?.type!=='model')throw Error('Evidence review requires a bound model failure without a human decision.');
+  if(run.manifest.judgment||run.manifest.judgmentWithdrawal||reference?.skillId!=='visual-qa-evaluator'||!['fail','needs-evidence'].includes(reference.verdict)||reference.reviewer?.type!=='model')throw Error('Evidence review requires a bound model failure or missing-evidence review without a human decision.');
   if(!Array.isArray(evidenceIds)||!evidenceIds.length||evidenceIds.length>12||new Set(evidenceIds).size!==evidenceIds.length)throw Error('Select new source-bound counter-evidence.');
   const saved=await readVisualReviewBinding(run,reference,{requireBound:true});
   const used=new Set(saved.review.attachmentRefs||[]),attachments=run.manifest.reviewAttachments||[];
