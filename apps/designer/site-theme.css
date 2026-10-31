@@ -167,3 +167,6 @@ body.workspace-page .pd-codediff-file>summary{border-radius:0;}
 
 /* Navigation groups keep native disclosure semantics without repeated arrows. */
 .workspace-page .workbench-navigation details>summary::after{display:none;}
+
+/* Status is part of the shell, not the legacy warm studio panel. */
+.workspace-page #fullscreen-shell > .pd-fs-statusbar{background:var(--hh-bg);color:var(--hh-ink-muted);}
