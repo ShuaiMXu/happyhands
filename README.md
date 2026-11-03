@@ -38,16 +38,22 @@ pnpm install --frozen-lockfile
 pnpm workbench
 ```
 
-Open **http://127.0.0.1:4190/apps/designer/** and connect the product you want to review. Bring a working preview and a specific task, for example:
+Keep this terminal running. `pnpm workbench` starts the **local HappyHands workbench** and opens **http://127.0.0.1:4190/apps/designer/**. This address works on your computer after startup; it is not the public website or Theme Studio.
+
+Make sure the product you want to review has a working preview. If it needs a local server, start it in a separate terminal using that project's own instructions. Confirm the preview URL opens in your browser, then connect the project in the HappyHands workbench with its local repository directory, preview URL and a specific user task.
+
+The following is an example of the information to provide, **not a terminal command**. Replace the directory and URL with your project's actual values; port `3000` is only an example and is separate from the workbench's port `4190`.
 
 ```text
 Repository: /path/to/your-product
 Preview: http://localhost:3000
 User task: Sign up and create the first project
-Design sources: DESIGN.md, src/styles/tokens.css, src/components
+Existing design sources (optional): DESIGN.md, src/styles/tokens.css, src/components
 ```
 
-Check the proposed pages, devices and interaction states before capture. For configuration and command-line use, follow the [Harness guide](docs/harness.md). The [public website](https://happyhands.cc) provides guidance and design resources; the repository workflow runs locally.
+Design sources are optional references to files or directories that already exist in the product repository. The paths above are examples, not required files; use your actual paths and omit any that do not exist.
+
+Check the proposed pages, devices and interaction states before capture. For configuration and command-line use, follow the [Harness guide](docs/harness.md). The [public website](https://happyhands.cc) provides guidance and design resources; repository review and code changes run locally.
 
 ## How it works
 
