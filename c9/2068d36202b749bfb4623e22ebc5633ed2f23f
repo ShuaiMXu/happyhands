@@ -1,0 +1,25 @@
+README.zh-CN.md
+  s_c3a809bd8a1ec1::t_7c811739a625ea 41,44-45,51,54-56
+  s_c3a809bd8a1ec1::t_531859fb16681c 43
+  s_c3a809bd8a1ec1::t_e5853dd3626aaa 42
+README.md
+  s_c3a809bd8a1ec1::t_531859fb16681c 43
+  s_c3a809bd8a1ec1::t_7c811739a625ea 41,44-45,51,54-56
+  s_c3a809bd8a1ec1::t_4ec3cd26a3c112 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "c92068d36202b749bfb4623e22ebc5633ed2f23f",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
