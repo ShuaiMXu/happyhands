@@ -1,0 +1,46 @@
+packages/harness-core/store.js
+  s_c3a809bd8a1ec1::t_c79220694b72bb 709-715
+  s_c3a809bd8a1ec1::t_7795e10929a165 1,393,673,685,700,705-708,716-719
+  s_c3a809bd8a1ec1::t_84e12ddf6a3f9b 460,487,720
+packages/harness-core/runner.js
+  s_c3a809bd8a1ec1::t_eff7278e39ecb3 1,151,175
+tests/experience-cases.test.mjs
+  s_c3a809bd8a1ec1::t_aaa3c5f72aa64b 1,44
+  s_c3a809bd8a1ec1::t_eff7278e39ecb3 2-9,11,14-43,45-46
+  s_c3a809bd8a1ec1::t_723e633c95db9e 10
+  s_c3a809bd8a1ec1::t_1d4bd7a76f0d01 12-13
+scripts/harness.mjs
+  s_c3a809bd8a1ec1::t_7795e10929a165 2-3,99-101,314-319
+packages/harness-core/experience-cases.js
+  s_c3a809bd8a1ec1::t_aaa3c5f72aa64b 1,104-106
+  s_c3a809bd8a1ec1::t_14ec0fdd96a820 3,30-31,37-39
+  s_c3a809bd8a1ec1::t_37f8ca93ac29af 2,5-29,32-36,40-97,99-103,107-112,119
+  s_c3a809bd8a1ec1::t_eff7278e39ecb3 113-118
+  s_c3a809bd8a1ec1::t_723e633c95db9e 4,98
+docs/experience-cases.md
+  s_c3a809bd8a1ec1::t_aaa3c5f72aa64b 1-34,36-43
+  s_c3a809bd8a1ec1::t_7343af21a52f60 44-49
+  s_c3a809bd8a1ec1::t_61ee2939ea83a2 35
+docs/experience-remediation.md
+  s_c3a809bd8a1ec1::t_24470fe2ac122e 65-66
+docs/harness.md
+  s_c3a809bd8a1ec1::t_27208a1d56b1b9 272-273
+tests/harness.test.mjs
+  s_c3a809bd8a1ec1::t_706219e3df12d6 1-2,61-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "6b7f5c49623746ef46ea7220df0801faf9243d9b",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
