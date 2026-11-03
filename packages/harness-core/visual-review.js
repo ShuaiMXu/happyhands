@@ -1,3 +1,4 @@
+import {assertMethodChecks} from './remediation.js';
 import { wholePageReviewCoverage, missingAfterStates } from './whole-page.js';
 import Ajv from 'ajv/dist/2020.js';
 import schema from '../../visual-review.schema.json' with { type: 'json' };
@@ -17,6 +18,10 @@ function availableScreenshots(manifest) {
 export function assertVisualReview(review, manifest) {
   if (!validate(review)) throw new Error(validate.errors.map(error => `${error.instancePath || '/'} ${error.message}`).join('; '));
   const available = availableScreenshots(manifest);
+  if(review.skillId==='visual-qa-evaluator'&&manifest.plan?.remediation){
+    if(review.remediationHash!==manifest.plan.remediation.hash)throw Error('Review remediation contract changed.');
+    assertMethodChecks(review.methodChecks,manifest.plan.remediation.ruleIds,manifest,review.verdict);
+  }
   if(review.verificationDigest && review.verificationDigest!==manifest.verificationEvidence?.digest)throw Error('Review verification evidence changed.');
   const records=manifest.verificationRecords||[];
   if(records.length){

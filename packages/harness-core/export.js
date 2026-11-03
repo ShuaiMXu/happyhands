@@ -1,3 +1,4 @@
+import {readRemediation,remediationExportFiles} from './remediation.js';
 import {verifyBaselineDiagnosis} from './baseline-diagnosis-record.js';
 import {readVerificationEvidence,readVerificationFile} from './verification.js';
 import {readProjectMemorySnapshot,readMemoryExceptionSnapshot} from './project-memory.js';
@@ -22,7 +23,7 @@ const INDEX = 'index.json';
 // paths. Export copies an allow-list instead of walking the directory.
 const CAPTURE_FILES = ['capture.json'];
 const LEGACY_SCREENSHOTS = ['desktop.png', 'mobile.png'];
-const RUN_FILES = ['experience.json', 'diagnosis.json', 'evaluation.json', 'codex-brief.md', 'component-reuse-plan.json', 'diff.patch', 'execution-context.json'];
+const RUN_FILES = ['experience.json', 'diagnosis.json', 'evaluation.json', 'codex-brief.md', 'component-reuse-plan.json', 'diff.patch', 'execution-context.json', ...remediationExportFiles];
 
 async function writeJson(path, value) {
   const temporary = `${path}.${process.pid}.${randomUUID()}.tmp`;
@@ -157,6 +158,7 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
   } else if (!run.manifest.captures.before) {
     throw new Error('Nothing to publish: capture the baseline before exporting a run.');
   }
+  await readRemediation(run,{execution:Boolean(run.manifest.execution?.remediation)});
   assertSafeScreenshots(run.manifest);
   assertSafeSkillIds(run.manifest);
   for(const reference of run.manifest.visualReviews||[])await readVisualReviewBinding(run,reference);

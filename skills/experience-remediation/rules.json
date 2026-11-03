@@ -1,0 +1,255 @@
+{
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "UX-task",
+      "title": "Task, hierarchy and purposeful copy",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "project",
+      "remediation": "Map the primary task and reading order; group related information and expose the primary action.",
+      "verification": "Walk the supplied task; check that competing actions and copy do not obscure its next step."
+    },
+    {
+      "id": "UX-grid",
+      "title": "Adopted grid, alignment, gutters, spacing and responsive reflow",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "project",
+      "remediation": "Read project grid sources; set container, flexible columns, gutters, margins and breakpoints together. Fix overflowing children rather than hiding overflow.",
+      "verification": "Measure viewport and document widths; inspect aligned edges and reading order at supplied desktop and phone sizes."
+    },
+    {
+      "id": "UX-components",
+      "title": "Shared components, consumers and applicable interaction states",
+      "reference": "upstream/references/component-recipe.md",
+      "profile": "project",
+      "remediation": "Find the shared primitive and its consumers; repair the root cause while retaining role-specific variants.",
+      "verification": "Exercise applicable states and inspect affected consumers; source reuse alone does not prove rendered consistency."
+    },
+    {
+      "id": "UX-icons",
+      "title": "Icon family, dropdown arrows and selected indicators",
+      "reference": "upstream/references/icon-guidelines.md",
+      "profile": "project",
+      "remediation": "Use the adopted icon family and explicit size/alignment; reserve space for dropdown arrows and checkmarks.",
+      "verification": "Inspect long labels, open/closed and selected/unselected states; verify no overlap, clipping or duplicate icon."
+    },
+    {
+      "id": "UX-motion",
+      "title": "Purposeful feedback and reduced motion",
+      "reference": "upstream/references/motion-system.md",
+      "profile": "project",
+      "remediation": "Remove nonessential motion; use existing timing and reduced-motion behavior for useful feedback.",
+      "verification": "Exercise the transition and reduced-motion setting; screenshots alone cannot establish a motion pass."
+    },
+    {
+      "id": "AS-01",
+      "title": "Semantic tags and italics",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Remove decorative tags and italics; keep only labels with a clear semantic role.",
+      "verification": "Check remaining labels aid scanning or state recognition and removed labels lose no essential information."
+    },
+    {
+      "id": "AS-02",
+      "title": "No decorative Instrument Serif / Space Grotesk / Bricolage Grotesque",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "happyhands",
+      "remediation": "Replace unapproved decorative font choices with the adopted project family; preserve intentional brand exceptions.",
+      "verification": "Inspect computed fonts, fallbacks and wrapping in both supported languages."
+    },
+    {
+      "id": "AS-03",
+      "title": "Monospace only for code or aligned data",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "happyhands",
+      "remediation": "Restrict monospace to code or data whose alignment helps a task; use the text family elsewhere.",
+      "verification": "Inspect headings, labels and body text separately from code examples."
+    },
+    {
+      "id": "AS-04",
+      "title": "No unnecessary borders, shadows or layered containers",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Remove redundant container layers, separators and shadows; retain boundaries needed to identify controls.",
+      "verification": "Check hierarchy remains clear and default input boundaries remain visible without focus."
+    },
+    {
+      "id": "AS-05",
+      "title": "Charts support the current decision",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Retain only chart dimensions and annotations needed for the decision; simplify redundant decoration.",
+      "verification": "Verify labels, units, comparisons and essential uncertainty survive simplification."
+    },
+    {
+      "id": "AS-06",
+      "title": "Professional precise copy without invented terms",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Replace invented terms and chatty filler with established product vocabulary and direct actions.",
+      "verification": "Read labels in task order; verify concrete meaning and no loss of necessary limitations."
+    },
+    {
+      "id": "AS-07",
+      "title": "No decorative breadcrumbs, numbering or eyebrows",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Remove ornamental eyebrows and numbering; keep breadcrumbs only where they support actual navigation.",
+      "verification": "Check heading hierarchy and orientation after removal; do not delete functional progress numbering."
+    },
+    {
+      "id": "AS-08",
+      "title": "No decorative purple gradients",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "happyhands",
+      "remediation": "Replace decorative purple gradients with adopted surfaces unless explicitly required by the brand.",
+      "verification": "Check contrast and hierarchy across supported themes."
+    },
+    {
+      "id": "AS-09",
+      "title": "No decorative uppercase headings",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "happyhands",
+      "remediation": "Replace ornamental uppercase headings with normal case; retain real acronyms.",
+      "verification": "Check scanning, label width and wrapping."
+    },
+    {
+      "id": "AS-10",
+      "title": "No middle-dot separators in owned copy",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Replace middle-dot separators with spacing or a meaningful sentence structure.",
+      "verification": "Check paired metadata remains understandable and does not become a run-on label."
+    },
+    {
+      "id": "AS-11",
+      "title": "No decorative Emoji or useless body copy",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Remove decorative Emoji and filler; use meaningful text or adopted icons when identification is needed.",
+      "verification": "Verify essential warnings and task instructions remain."
+    },
+    {
+      "id": "AS-12",
+      "title": "Hero scale supports the task",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "happyhands",
+      "remediation": "Reduce the hero to a scale that leaves the task and primary action visible in context.",
+      "verification": "Inspect desktop and phone first view for wrapping, action visibility and content balance."
+    },
+    {
+      "id": "AS-13",
+      "title": "Remove redundant explanations, preserve essential limits",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Delete repeated explanations; retain requirements, consequences and recovery instructions near their action.",
+      "verification": "Walk the task without relying on removed text to understand an irreversible or unfamiliar action."
+    },
+    {
+      "id": "AS-14",
+      "title": "Concentric nested radii",
+      "reference": "upstream/references/component-recipe.md",
+      "profile": "happyhands",
+      "remediation": "Derive nested radii from outer radius and inset where the surfaces are concentric.",
+      "verification": "Inspect corners at actual render sizes; avoid forcing unrelated adjacent objects into one radius formula."
+    },
+    {
+      "id": "AS-15",
+      "title": "Consistent hairlines; separate focus/icon strokes",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "happyhands",
+      "remediation": "Use adopted hairline/border tokens consistently; keep focus indicators and icon strokes independently accessible.",
+      "verification": "Inspect default, focus and both themes; a thinner border must remain perceptible."
+    },
+    {
+      "id": "AS-16",
+      "title": "Restrained scroll motion and transitions",
+      "reference": "upstream/references/motion-system.md",
+      "profile": "happyhands",
+      "remediation": "Remove excessive scroll reveals and abrupt transitions; use restrained adopted motion.",
+      "verification": "Scroll and trigger transitions with reduced motion on and off; record missing runtime evidence."
+    },
+    {
+      "id": "AS-17",
+      "title": "At most four rendered text sizes, minimum 12px",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "happyhands",
+      "remediation": "Consolidate owned interface text into at most four size roles, none below 12px; do not restyle embedded source specimens.",
+      "verification": "Inspect computed sizes and long labels across breakpoints, including helper text."
+    },
+    {
+      "id": "AS-18",
+      "title": "No decorative colored left card stripe",
+      "reference": "upstream/references/design-audit.md",
+      "profile": "happyhands",
+      "remediation": "Remove purely decorative colored left stripes; express necessary status through a clear label and adopted treatment.",
+      "verification": "Check status remains perceivable without color alone."
+    },
+    {
+      "id": "AS-19",
+      "title": "Dropdown trigger, menu, selected, focus and keyboard states",
+      "reference": "upstream/references/component-recipe.md",
+      "profile": "happyhands",
+      "remediation": "Repair the shared dropdown trigger, popup padding, item gaps, selected indicator and focus behavior.",
+      "verification": "Open, select, reopen, use arrows/Enter/Escape, and inspect disabled options, long labels, scrolling and focus return."
+    },
+    {
+      "id": "AS-20",
+      "title": "Adjacent controls remain distinct",
+      "reference": "upstream/references/component-recipe.md",
+      "profile": "happyhands",
+      "remediation": "Add consistent spacing between adjacent controls and separate label, value and action roles.",
+      "verification": "Inspect narrow layouts and long labels for collisions and misleading grouping."
+    },
+    {
+      "id": "AS-21",
+      "title": "Necessary information is not unnecessarily collapsed",
+      "reference": "upstream/references/component-recipe.md",
+      "profile": "happyhands",
+      "remediation": "Keep essential instructions visible; use disclosure only for genuinely optional detail.",
+      "verification": "Verify the default state supports the task and expanded content has adequate spacing."
+    },
+    {
+      "id": "AS-22",
+      "title": "Reuse actual adopted component primitives",
+      "reference": "upstream/references/component-recipe.md",
+      "profile": "happyhands",
+      "remediation": "Reuse the project-adopted primitive instead of parallel hand-built controls; preserve justified variations.",
+      "verification": "Inspect imports and actual rendered consumers, including keyboard and state behavior."
+    },
+    {
+      "id": "AS-23",
+      "title": "Consistent radius for the same component role",
+      "reference": "upstream/references/component-recipe.md",
+      "profile": "happyhands",
+      "remediation": "Apply consistent radius tokens to components with the same role and size.",
+      "verification": "Compare like-for-like inputs, buttons, menus and cards; do not erase purposeful role distinctions."
+    },
+    {
+      "id": "AS-24",
+      "title": "No duplicate navigation or redundant nested shells",
+      "reference": "upstream/references/component-recipe.md",
+      "profile": "happyhands",
+      "remediation": "Remove duplicate navigation and redundant shells; retain a single clear current-location indicator.",
+      "verification": "Navigate between related views and inspect active state, back behavior and small-screen layout."
+    }
+  ],
+  "workflow": [
+    {
+      "instruction": "Inspect the current page first against every applicable own AI slop rule and the recorded recurring UI defects. Record evidence, not preferences.",
+      "phase": "current-page"
+    },
+    {
+      "instruction": "Repair root causes in shared components and verify current-page default, hover, open, selected, focus and keyboard behavior where applicable.",
+      "phase": "shared-components"
+    },
+    {
+      "instruction": "Verify task flow, information hierarchy, copy, component relationships and the adopted current-page grid.",
+      "phase": "task-layout"
+    },
+    {
+      "instruction": "Only after current-page remediation, check phone and other supported sizes for reflow and regressions. Responsive fixes do not substitute for current-page experience work.",
+      "phase": "cross-device-regression"
+    }
+  ]
+}

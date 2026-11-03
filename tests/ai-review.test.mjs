@@ -350,3 +350,23 @@ test('small whole-page runs hand every planned original to the final independent
  }});
  assert.ok(crossed);assert.equal(review.verdict,'pass');assert.equal((await loadRun(run.directory)).manifest.judgment,null);
 });
+
+test('independent QA receives the selected project grid source and rejects source drift',async t=>{
+ const {collectDesignSources}=await import('../packages/harness-core/design-sources.js');
+ for(const mutate of [false,true])await t.test(mutate?'changed source blocks publication':'bound source reaches reviewer',async st=>{
+  const {run,cwd}=await fixture(st,{dom:{h1:['Current page'],horizontalOverflow:false}}),repo=await realpath(dirname(cwd));
+  await writeFile(join(repo,'DESIGN.md'),'# Adopted grid\nContainer 1120px; gutter 24px.\n');
+  const designSources=await collectDesignSources(repo,['DESIGN.md']);
+  await saveOnboarding(run.directory,{repository:{root:repo},config:{repo,designSourcePaths:['DESIGN.md'],designSources}});
+  const action=runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate:async(command,args,options)=>{
+   const context=JSON.parse(await readFile(join(cwd,'review-context.json')));
+   assert.equal(context.selectedDesignSources[0].sha256,designSources[0].sha256);
+   assert.deepEqual(context.plannedCaptures.find(item=>item.phase==='after').dom,{h1:['Current page'],horizontalOverflow:false});
+   assert.match(context.selectedDesignSources[0].content,/gutter 24px/);
+   if(mutate)await writeFile(join(repo,'DESIGN.md'),'# Different grid\nGutter 8px.\n');
+   await generator(result)(command,args,options);
+  }});
+  if(mutate){await assert.rejects(action,/design sources changed/i);assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);}
+  else assert.equal((await action).verdict,'needs-evidence');
+ });
+});

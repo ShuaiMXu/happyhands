@@ -243,3 +243,39 @@ test('git diagnostics cannot contaminate repository fingerprint fields',async t=
  try{const result=await repositoryFingerprint(root);assert.match(result.head,/^[a-f0-9]{40}$/);assert.doesNotMatch(result.refs,/trace:/);assert.equal(result.worktree,'');}
  finally{if(previous===undefined)delete process.env.GIT_TRACE;else process.env.GIT_TRACE=previous;}
 });
+
+async function strictPlannedRun(t,id){
+ const value=await plannedRun(t,id);
+ await saveOnboarding(value.run.directory,{repository:{root:value.root,commit:(await value.git('rev-parse','HEAD')).stdout.trim()},config:{designGuidance:{remediation:{profile:'project',adoptionReason:'Explicit synthetic execution fixture adoption'}}}});
+ await savePlan(value.run.directory,'F1');return value;
+}
+test('strict executor archives reports and removes their Git index entries, including malformed reports',{skip:process.platform==='win32'},async t=>{
+ for(const malformed of [false,true])await t.test(malformed?'malformed report is retained outside source':'valid report never pollutes source inventory',async st=>{
+  const {root,run}=await strictPlannedRun(st,malformed?'reportbad':'reportgood');
+  const actor=join(run.directory,'synthetic-agent.mjs');
+  await writeFile(actor,`#!/usr/bin/env node
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+const raw=readFileSync(${JSON.stringify(join(run.directory,'remediation-contract.json'))},'utf8'),contract=JSON.parse(raw);
+const row={status:'preserved',observed:'Synthetic source inventory check',decision:'Preserve existing source for this protocol-only fixture',files:[],verification:'Synthetic test, no real visual verification'};
+const value={contractHash:createHash('sha256').update(raw).digest('hex'),checks:contract.rules.map(rule=>({...row,ruleId:rule.id})),issues:contract.issueIds.map(id=>({...row,id}))};
+writeFileSync('.harness-remediation-result.json',${malformed?"'{'":"JSON.stringify(value)"});
+`,{mode:0o755});
+  const action=executeWithAgent({directory:run.directory,repo:root,commandOverride:actor});
+  if(malformed)await assert.rejects(action,/JSON|property name|Unexpected/);else await action;
+  const worktree=join(run.directory,'worktree');
+  assert.equal((await execFileAsync('git',['ls-files','--','.harness-remediation-result.json'],{cwd:worktree})).stdout.trim(),'');
+  await assert.rejects(readFile(join(worktree,'.harness-remediation-result.json')),/ENOENT/);
+  const archived=await readFile(join(run.directory,'remediation-result.json'),'utf8');assert.equal(malformed?archived:JSON.parse(archived).checks.length,malformed?'{':5);
+  const manifest=JSON.parse(await readFile(join(run.directory,'run.json'),'utf8'));
+  assert.equal(manifest.execution.exitCode,malformed?1:0);assert.equal(manifest.execution.dirty,false);
+  assert.doesNotMatch(await readFile(join(run.directory,'diff.patch'),'utf8'),/harness-remediation-result/);
+ });
+});
+test('strict executor preserves a project file using the reserved report name',async t=>{
+ const {root,git,run}=await strictPlannedRun(t,'reportcollision');
+ await writeFile(join(root,'.harness-remediation-result.json'),'Existing project content');await git('add','.');await git('commit','-qm','Existing reserved filename');
+ await saveOnboarding(run.directory,{repository:{root,commit:(await git('rev-parse','HEAD')).stdout.trim()},config:{designGuidance:{remediation:{profile:'project',adoptionReason:'Explicit synthetic execution fixture adoption'}}}});await savePlan(run.directory,'F1');
+ await assert.rejects(executeWithAgent({directory:run.directory,repo:root,commandOverride:'never-run'}),/already tracks the reserved/);
+ assert.equal(await readFile(join(root,'.harness-remediation-result.json'),'utf8'),'Existing project content');assert.equal((await git('branch','--list','pd/reportcollision')).stdout.trim(),'');
+});

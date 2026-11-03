@@ -265,3 +265,7 @@ pnpm harness verify --run .harness/runs/RUN_ID --config project.json --repo /pat
 ## Disputed visual findings
 
 In the local workbench, a failed model review can be rejected or independently re-reviewed with genuinely new, source-bound PNG counter-evidence. Open “处理复核问题”, choose “提交反证重新复核”, select/upload the evidence and state the method, actual results and limitations. The complete original failure stays in history. A fresh final reviewer must explicitly resolve every prior finding; unresolved findings and missing coverage block pass. A new pass only enables the human decision form, whose default remains empty. Existing human decisions, unchanged evidence, altered sources or broken parent bindings cannot be overridden. See [the real counter-evidence case](counter-evidence-review-2026-10-21.md).
+
+## Strict experience remediation
+
+Projects can explicitly enable the [experience remediation contract](experience-remediation.md). It binds the own execution Skill, AI slop rules and project grid/layout constraints to the existing plan, isolated execution and independent QA. Missing per-rule results, incomplete assigned-state review and altered method evidence cannot be accepted as complete. Legacy runs keep their original contract.

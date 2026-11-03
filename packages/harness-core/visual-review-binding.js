@@ -1,3 +1,4 @@
+import {readRemediation} from './remediation.js';
 import {mkdir,realpath,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {captureOriginals} from './capture-state.js';
@@ -55,6 +56,7 @@ export async function bindVisualReview(run,review,path,expectedHashes={}){
 }
 
 export async function readVisualReviewBinding(run,reference,{requireBound=false,checkOriginals=true,checkContext=true,retryDepth=0}={}){
+  if(checkContext&&reference.skillId==='visual-qa-evaluator')await readRemediation(run,{execution:true});
   safeReviewPath(reference);
   if(!reference.evidenceBinding){
     let sidecar=false;try{await readVerificationFile(run.directory,reference.path.replace(/\.json$/,'.binding.json'),8*1024*1024);sidecar=true;}catch(error){if(error.code!=='ENOENT')throw error;}
