@@ -36,11 +36,11 @@ test('tampering and unsafe case identifiers fail closed',async t=>{
  const run=await fixture(t),{id,path}=await collectExperienceCase(run);await assert.rejects(readExperienceCase(run,'../../file'),/Unknown/);
  await writeFile(join(run.directory,path),'{}');await assert.rejects(readExperienceCase(run,id),/changed/);
 });
-test('same-project retrieval enters plan context and later withdrawal blocks execution',async t=>{
+test('same-project retrieval excludes positives without durable independent QA',async t=>{
  const run=await fixture(t),{id}=await collectExperienceCase(run);await admitExperienceCase(run,input(id));
  await writeFile(join(run.directory,'run.json'),JSON.stringify(run.manifest));
  const next={directory:join(run.directory,'..','second'),manifest:{onboarding:run.manifest.onboarding}};
- const brief=await experienceCaseBrief(next);assert.match(brief,/historical examples/);await verifyExperienceCaseBrief(next,brief);assert.equal((await relatedExperienceCases(next)).length,1);
- run.manifest.judgmentWithdrawal={schemaVersion:'0.1',runId:'first',judgmentHash:judgmentHash(run.manifest.judgment),reason:'Later regression found',withdrawnAt:new Date().toISOString()};await writeFile(join(run.directory,'judgment-withdrawal.json'),JSON.stringify(run.manifest.judgmentWithdrawal));await writeFile(join(run.directory,'run.json'),JSON.stringify(run.manifest));await assert.rejects(verifyExperienceCaseBrief(next,brief),/replan/);
+ const brief=await experienceCaseBrief(next);assert.doesNotMatch(brief,/historical examples/);await verifyExperienceCaseBrief(next,brief);assert.equal((await relatedExperienceCases(next)).length,0);
+ run.manifest.judgmentWithdrawal={schemaVersion:'0.1',runId:'first',judgmentHash:judgmentHash(run.manifest.judgment),reason:'Later regression found',withdrawnAt:new Date().toISOString()};await writeFile(join(run.directory,'judgment-withdrawal.json'),JSON.stringify(run.manifest.judgmentWithdrawal));await writeFile(join(run.directory,'run.json'),JSON.stringify(run.manifest));await verifyExperienceCaseBrief(next,brief);assert.equal((await relatedExperienceCases(next)).length,0);
  next.manifest={onboarding:{repository:{root:'/other'}}};assert.equal((await relatedExperienceCases(next)).length,0);
 });

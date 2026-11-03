@@ -47,3 +47,7 @@ Remaining work: a visual case browser, task-aware ranking, and an explicitly sch
 Lifecycle and store integration tests cover candidate idempotency, explicit admission, missing/changed evidence, incompatible classifications, tampered snapshots, project isolation and withdrawal invalidating planned references. The existing design-source binding regression is retained: case context is placed before the bound design-source suffix rather than weakening its verification.
 
 A previous real GPT-6 Astra run was backfilled through the public CLI. Its 12 referenced artifacts remained current and no admission was fabricated: independent QA alone does not provide final human acceptance. Synthetic test screenshots are used only in automated fixtures and are not published as real design examples.
+
+## Export and reuse boundary
+
+Public exports omit the historical-case section from current and archived execution briefs. These are display copies; their original plan hashes remain provenance, not a claim that the redacted copy is executable. Local execution briefs are unchanged. Positive historical examples are reused only after validating durable QA binding, specialist verification and remediation evidence again. Invalid examples are excluded and a changed example digest requires replanning.

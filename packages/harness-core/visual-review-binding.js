@@ -13,7 +13,7 @@ function context(run,review){
   return {runId:run.manifest.id,skillId:review.skillId,...(review.brandAssessments?{designSystemExtractions:run.manifest.designSystemExtractions||null}:{}),captures:Object.fromEntries(phases.map(phase=>[phase,run.manifest.captures?.[phase]||null])),
     attachments:(run.manifest.reviewAttachments||[]).filter(attachment=>review.attachmentRefs?.includes(attachment.id)),
     ...(qa?{project:run.spec.project,foundation:run.spec.designFoundation,foundationApproval:run.manifest.foundationApproval||null,findings:run.spec.findings,evidence:run.spec.evidence,
-      confirmation:run.manifest.confirmation||null,plan:run.manifest.plan||null,evaluation:run.manifest.evaluation||null,verificationDigest:run.manifest.verificationEvidence?.digest||null}: {})};
+      ...(run.manifest.plan?.remediation?{remediationResult:run.manifest.execution?.remediation||null}:{}),confirmation:run.manifest.confirmation||null,plan:run.manifest.plan||null,evaluation:run.manifest.evaluation||null,verificationDigest:run.manifest.verificationEvidence?.digest||null}: {})};
 }
 
 export async function assertReviewStorage(directory){

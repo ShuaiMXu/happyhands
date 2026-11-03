@@ -1,3 +1,6 @@
+import {readVisualReviewBinding} from './visual-review-binding.js';
+import {readVerificationEvidence} from './verification.js';
+import {readRemediation} from './remediation.js';
 import {readJudgmentWithdrawal} from './judgment-withdrawal.js';
 import {createHash} from 'node:crypto';
 import {mkdir,writeFile,readdir,readFile,lstat} from 'node:fs/promises';
@@ -104,7 +107,19 @@ export async function relatedExperienceCases(run){
   const peer={directory:join(root,entry.name),manifest};
   const withdrawal=await readJudgmentWithdrawal(peer.directory,manifest.judgment,manifest.id);
   if(withdrawal&&!manifest.judgmentWithdrawal)manifest.judgmentWithdrawal=withdrawal;
-  for(const item of await listExperienceCases(peer,{acceptedOnly:true}))results.push({runId:manifest.id,caseId:item.id,kind:item.admission.kind,reason:item.admission.reason,tags:item.admission.tags,sourceCommit:manifest.onboarding.repository.commit,ruleIds:manifest.plan?.remediation?.ruleIds||[],reference:join(peer.directory,`experience-cases/${item.id}.json`)});
+  for(const item of await listExperienceCases(peer,{acceptedOnly:true})){
+   if(['improved','preserved'].includes(item.admission.kind)){
+    try{
+     peer.spec=JSON.parse(await readVerificationFile(peer.directory,'experience.json',2*1024*1024));
+     const qa=manifest.visualReviews?.find(review=>review.skillId==='visual-qa-evaluator'&&review.verdict==='pass');
+     if(!qa)continue;
+     await readVisualReviewBinding(peer,qa,{requireBound:true});
+     await readVerificationEvidence(peer.directory,manifest);
+     await readRemediation(peer,{execution:true});
+    }catch{continue;} // Invalid historical evidence cannot enter a new plan.
+   }
+   results.push({runId:manifest.id,caseId:item.id,kind:item.admission.kind,reason:item.admission.reason,tags:item.admission.tags,sourceCommit:manifest.onboarding.repository.commit,ruleIds:manifest.plan?.remediation?.ruleIds||[],reference:join(peer.directory,`experience-cases/${item.id}.json`)});
+  }
  }
  return results.sort((a,b)=>a.caseId.localeCompare(b.caseId)).slice(0,20);
 }

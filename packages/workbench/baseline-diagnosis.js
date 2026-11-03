@@ -76,7 +76,12 @@ Finding admission schema: each finding MUST include findingBasis={policyVersion:
  };
  await verifyInputs();
  const rawOutput=await readVerificationFile(session,'result.json',1024*1024);
- const result=admitModelFindings(assertBaselineResult(JSON.parse(rawOutput),originals.map(item=>item.reference)),{catalog,ownedUi});
+ const parsed=assertBaselineResult(JSON.parse(rawOutput),originals.map(item=>item.reference));
+ if(method){
+  assertMethodChecks(parsed.methodChecks,method.contract.rules.map(rule=>rule.id),methodManifest,parsed.status);
+  if(parsed.status==='complete'&&parsed.methodChecks.some(row=>row.status==='needs-evidence'))throw Error('Incomplete remediation checks cannot complete baseline diagnosis.');
+ }
+ const result=admitModelFindings(parsed,{catalog,ownedUi});
  return {verifyInputs,record:{findingPolicy:{version:FINDING_POLICY_VERSION,hash:hash(findingPolicy)},rawOutputHash:hash(rawOutput),skillReferences:[...new Set(result.findings.flatMap(item=>item.findingBasis.skillRefs.map(ref=>ref.path)))].map(path=>({path,sha256:hash(catalog.find(file=>file.path===path).content)})),contextHash:hash(contextBytes),promptHash:hash(prompt),designGuidance:design.metadata,ojo:ojo.metadata,originals,result}};
 }
 
@@ -117,6 +122,7 @@ export async function diagnoseBaseline(directory,diagnosis,{cwd,generate,signal=
   summary:language==='en'?`Inspected ${originals.length} originals in ${batchCount} batches. ${complete?'All batches completed.':'Capture or diagnosis evidence is incomplete; no model findings are published.'} Full summaries remain in the batch records.`:`已分 ${batchCount} 批检查 ${originals.length} 张原图。${complete?'各批诊断已完成。':'采集或诊断证据不完整，不发布模型问题。'}完整摘要保留在各批记录中。`,
   screenshotRefs:originals.map(item=>item.reference),
   limitations:[...new Set(batches.flatMap(batch=>batch.result.limitations)),language==='en'?'Batch completion does not establish cross-batch consistency or human acceptance.':'分批完成不代表跨批一致性通过或人工接受。',...(missingStates.length?[language==='en'?`${missingStates.length} planned states were not reached; restore the missing capture evidence before publishing model findings.`:`${missingStates.length} 个计划状态未到达；补齐采集证据后才能发布模型问题。`]:[])],
+  ...(shared.remediation?{methodChecks:batches.flatMap(batch=>batch.result.methodChecks)}:{}),
   findings:complete?batches.flatMap(batch=>batch.result.findings):[]
  };
  assertBaselineResult(result,originals.map(item=>item.reference),{maxFindings:30*batchCount});
