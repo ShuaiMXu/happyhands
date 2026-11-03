@@ -38,16 +38,22 @@ pnpm install --frozen-lockfile
 pnpm workbench
 ```
 
-打开 **http://127.0.0.1:4190/apps/designer/**，连接要审阅的项目。准备可用的预览，并说明具体任务，例如：
+保持这个终端运行。`pnpm workbench` 会启动 **HappyHands 本地工作台**，并打开 **http://127.0.0.1:4190/apps/designer/**。这个地址需要启动服务后才能在你的电脑上访问，不是官网，也不是主题工作室。
+
+确保待审阅产品有可用的预览。如果需要本地服务，请另开一个终端，按照该项目自身的说明启动。确认预览地址能在浏览器中打开后，再到 HappyHands 工作台连接项目，提供本地仓库目录、预览地址和具体的用户任务。
+
+下面是需要提供的信息示例，**不是终端命令**。请将目录和地址替换为项目的实际值；`3000` 只是示例端口，与工作台使用的 `4190` 不同。
 
 ```text
 项目仓库：/path/to/your-product
 预览地址：http://localhost:3000
 用户任务：完成注册并创建第一个项目
-设计来源：DESIGN.md、src/styles/tokens.css、src/components
+已有设计资料（可选）：DESIGN.md、src/styles/tokens.css、src/components
 ```
 
-采集前核对建议的页面、设备和交互状态。项目配置和命令行操作见 [Harness 指南](docs/harness.md)。[官网](https://happyhands.cc) 提供使用指引和设计资源，仓库审阅流程在本地运行。
+设计资料是待审阅仓库中已有的规范文件、样式或组件目录，供审阅参考。上面的路径只是示例，并非必须具备的文件；请使用实际路径，没有的可以省略。
+
+采集前核对建议的页面、设备和交互状态。项目配置和命令行操作见 [Harness 指南](docs/harness.md)。[官网](https://happyhands.cc) 提供使用指引和设计资源；仓库审阅和代码修改在本地执行。
 
 ## 一次审阅怎么进行
 
