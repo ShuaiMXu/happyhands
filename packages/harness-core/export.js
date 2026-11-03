@@ -1,3 +1,4 @@
+import {readRemediation,remediationExportFiles} from './remediation.js';
 import {verifyBaselineDiagnosis} from './baseline-diagnosis-record.js';
 import {readVerificationEvidence,readVerificationFile} from './verification.js';
 import {readProjectMemorySnapshot,readMemoryExceptionSnapshot} from './project-memory.js';
@@ -16,13 +17,19 @@ import {designSystemContext} from '../skill-core/design-system.js';
 
 const INDEX = 'index.json';
 
+// Public display copies are not executable; preserve the original local brief and hash.
+export function publicExecutionBrief(brief){
+ const start=brief.indexOf('\n\nExperience-case digest: ');
+ return start<0?brief:brief.slice(0,start)+'\n\nHistorical case context omitted from this public display copy. Execute only from the original local run.\n';
+}
+
 // A run directory also holds a full Git worktree and the raw Codex event log.
 // Neither belongs in a statically served folder: the worktree is a second copy
 // of the target repository, and the log echoes repository content and local
 // paths. Export copies an allow-list instead of walking the directory.
 const CAPTURE_FILES = ['capture.json'];
 const LEGACY_SCREENSHOTS = ['desktop.png', 'mobile.png'];
-const RUN_FILES = ['experience.json', 'diagnosis.json', 'evaluation.json', 'codex-brief.md', 'component-reuse-plan.json', 'diff.patch', 'execution-context.json'];
+const RUN_FILES = ['experience.json', 'diagnosis.json', 'evaluation.json', 'codex-brief.md', 'component-reuse-plan.json', 'diff.patch', 'execution-context.json', ...remediationExportFiles];
 
 async function writeJson(path, value) {
   const temporary = `${path}.${process.pid}.${randomUUID()}.tmp`;
@@ -157,6 +164,7 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
   } else if (!run.manifest.captures.before) {
     throw new Error('Nothing to publish: capture the baseline before exporting a run.');
   }
+  await readRemediation(run,{execution:Boolean(run.manifest.execution?.remediation)});
   assertSafeScreenshots(run.manifest);
   assertSafeSkillIds(run.manifest);
   for(const reference of run.manifest.visualReviews||[])await readVisualReviewBinding(run,reference);
@@ -186,6 +194,10 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
   }
   if(incrementalCapture){await writeJson(join(target,'incremental-capture-plan.json'),incrementalCapture);copied.push('incremental-capture-plan.json');}
   for (const name of RUN_FILES) {
+    if(name==='codex-brief.md'){
+      try{const brief=await readFile(join(run.directory,name),'utf8');await writeFile(join(target,name),publicExecutionBrief(brief));copied.push(name);}catch(error){if(error.code!=='ENOENT')throw error;}
+      continue;
+    }
     if (await copyIfPresent(join(run.directory, name), join(target, name))) copied.push(name);
   }
   if(staleModelDiagnosis)await writeJson(join(target,'diagnosis.json'),staleModelDiagnosis);
@@ -200,7 +212,7 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
       if(!event.priorPlan)continue;
       const bytes=await readFile(join(run.directory,event.priorPlan.path));
       if(createHash('sha256').update(bytes).digest('hex')!==event.priorPlan.hash)throw Error('Archived project memory plan changed.');
-      await mkdir(join(target,'project-memory-plans'),{recursive:true});await writeFile(join(target,event.priorPlan.path),bytes);copied.push(event.priorPlan.path);
+      await mkdir(join(target,'project-memory-plans'),{recursive:true});await writeFile(join(target,event.priorPlan.path),publicExecutionBrief(bytes.toString('utf8')));copied.push(event.priorPlan.path);
     }
   }
   const memoryRefs=[run.manifest.plan?.projectMemory,run.manifest.diagnosis?.projectMemory,...(exceptions?.events||[]).map(event=>event.priorPlan?.metadata?.projectMemory)].filter(Boolean);

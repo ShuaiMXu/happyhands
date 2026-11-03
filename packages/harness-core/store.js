@@ -1,3 +1,5 @@
+import {collectExperienceCase,admitExperienceCase,experienceCaseBrief} from './experience-cases.js';
+import {stageRemediation,readRemediation} from './remediation.js';
 import {isReportableFinding} from './finding-admission.js';
 import {designSourceBrief,designSourcesDigest} from './design-sources.js';
 import {verifyBaselineDiagnosis} from './baseline-diagnosis-record.js';
@@ -388,6 +390,7 @@ export async function saveVisualReview(directory, review, { screenshotHashes = {
     await writeJson(runFilePath(run.directory, path), review);
     const evidenceBinding=await bindVisualReview({...run,manifest:{...run.manifest,verificationRecords:verification.records}},review,path,expectedHashes);
     run.manifest.visualReviews.push({ skillId: review.skillId, verdict: review.verdict, reviewer: review.reviewer, reviewedAt: review.reviewedAt, path, evidenceBinding, ...(verification.digest?{verificationDigest:verification.digest}:{}) });
+    await collectExperienceCase(run);
     await writeJson(join(run.directory, MANIFEST), run.manifest);
     return run.manifest;
   });
@@ -453,9 +456,10 @@ export async function savePlan(directory, findingId) {
       // The approved Foundation replaces the confirmed Finding as the gate: with nothing rendered,
       // there is no evidence to confirm, so the constraint has to come from the spec.
       const memory=await stageProjectMemory(run);
-      const brief = bootstrapBrief(run.spec, { entries: run.manifest.baseline.entries || [], reason: run.manifest.baseline.reason, approval: run.manifest.foundationApproval })+projectMemoryBrief(memory)+selectedDesignSources;
+      const remediation=await stageRemediation(run,findingId);
+      const brief = bootstrapBrief(run.spec, { entries: run.manifest.baseline.entries || [], reason: run.manifest.baseline.reason, approval: run.manifest.foundationApproval })+projectMemoryBrief(memory)+await experienceCaseBrief(run)+selectedDesignSources;
       await writeFile(join(run.directory, 'codex-brief.md'), brief, 'utf8');
-      run.manifest.plan = { path: 'codex-brief.md', kind: 'bootstrap', briefHash: createHash('sha256').update(brief).digest('hex'), foundationVersion: run.manifest.foundationApproval.foundationVersion, createdAt: new Date().toISOString() };
+      run.manifest.plan = { path: 'codex-brief.md', kind: 'bootstrap', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), foundationVersion: run.manifest.foundationApproval.foundationVersion, createdAt: new Date().toISOString() };
       if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(run.manifest.onboarding.config.designSources);
       if(memory)run.manifest.plan.projectMemory=memory;
       await writeJson(join(run.directory, MANIFEST), run.manifest);
@@ -479,10 +483,11 @@ export async function savePlan(directory, findingId) {
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
     const delegated=run.manifest.confirmation.authority==='user-delegated';
     const confirmedScope = `\n\n## ${delegated?'User-delegated repair scope':'Human-confirmed scope'}\n\nConfirmation note (JSON string): ${JSON.stringify(run.manifest.confirmation.note)}\n\n${delegated?'The user delegated investigation and repair, not candidate verification. Reproduce candidates, skip false positives, and leave final judgment to the user.':'This confirmation narrows the diagnosis proposal. Follow these explicit boundaries; do not implement unconfirmed suggestions.'}\n`+await repairRequestContext(run);
-    const brief = codexBrief(run.spec, findingId) + confirmedScope + componentReuseBrief(reuse) + designSystemBrief(designSystem) + (run.manifest.foundationApproval ? `\n\nApproved Foundation version: ${run.manifest.foundationApproval.foundationVersion}\nApproval artifact: ${run.manifest.foundationApproval.path}\n` : '')+projectMemoryBrief(memory)+captureScope+requestContext+selectedDesignSources;
+    const remediation=await stageRemediation(run,findingId);
+    const brief = codexBrief(run.spec, findingId) + confirmedScope + componentReuseBrief(reuse) + designSystemBrief(designSystem) + (run.manifest.foundationApproval ? `\n\nApproved Foundation version: ${run.manifest.foundationApproval.foundationVersion}\nApproval artifact: ${run.manifest.foundationApproval.path}\n` : '')+projectMemoryBrief(memory)+captureScope+requestContext+await experienceCaseBrief(run)+selectedDesignSources;
     await writeFile(join(run.directory, 'codex-brief.md'), brief, 'utf8');
     run.manifest.findingId = findingId;
-    run.manifest.plan = { path: 'codex-brief.md', kind: 'fix', briefHash: createHash('sha256').update(brief).digest('hex'), confirmationHash: projectMemoryDigest(run.manifest.confirmation), componentReuse: {path: reusePath, findingId, status: reuse.status}, createdAt: new Date().toISOString() };
+    run.manifest.plan = { path: 'codex-brief.md', kind: 'fix', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), confirmationHash: projectMemoryDigest(run.manifest.confirmation), componentReuse: {path: reusePath, findingId, status: reuse.status}, createdAt: new Date().toISOString() };
     if(run.manifest.repair)run.manifest.plan.repairRequestHash=run.manifest.repair.hash;
     if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(run.manifest.onboarding.config.designSources);
     if(incrementalCapture)run.manifest.plan.incrementalCapturePlan=run.manifest.onboarding.incrementalCapturePlan;
@@ -660,10 +665,12 @@ export async function saveJudgment(directory, decision, reason = '') {
     if (!visualQa) throw new Error('Independent Visual QA is required before human judgment.');
     if(decision==='accept')await readVisualReviewBinding(run,visualQa);
     if(decision==='accept')await readVerificationEvidence(directory,run.manifest);
+    if(decision==='accept')await readRemediation(run,{execution:true});
     if (decision === 'accept' && visualQa.verdict !== 'pass') throw new Error('Cannot accept a change that did not pass independent Visual QA.');
     const updated = recordJudgment(run.spec, decision, reason);
     await writeJson(join(run.directory, SPEC), updated);
     run.manifest.judgment = { decision, reason: updated.review.reason, at: new Date().toISOString() };
+    await collectExperienceCase(run);
     await writeJson(join(run.directory, MANIFEST), run.manifest);
     return run.manifest;
   });
@@ -675,7 +682,7 @@ export async function savePullRequest(directory,pullRequest) {
     if(run.manifest.judgment?.decision!=='accept')throw Error('Final acceptance is required before recording a pull request.');
     if(!/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/.test(pullRequest.url||''))throw Error('Invalid pull request URL.');
     if(run.manifest.pullRequest&&run.manifest.pullRequest.url!==pullRequest.url)throw Error('A different pull request is already recorded.');
-    run.manifest.pullRequest=pullRequest;await writeJson(join(run.directory,MANIFEST),run.manifest);return run.manifest;
+    run.manifest.pullRequest=pullRequest;await collectExperienceCase(run);await writeJson(join(run.directory,MANIFEST),run.manifest);return run.manifest;
   });
 }
 
@@ -690,7 +697,24 @@ export async function withdrawJudgment(directory,reason) {
     // even if a process exits before the manifest mirror is updated.
     await writeFile(join(run.directory,JUDGMENT_WITHDRAWAL),JSON.stringify(record,null,2)+'\n',{flag:'wx'});
     run.manifest.judgmentWithdrawal={...record,path:JUDGMENT_WITHDRAWAL};
+    await collectExperienceCase(run);
     await writeJson(join(run.directory,MANIFEST),run.manifest);
     return run.manifest;
   });
+}
+
+export async function saveExperienceCase(directory,input=null){
+ return withRunLock(directory,async()=>{
+  const run=await loadRun(directory);
+  if(input&&['improved','preserved'].includes(input.kind)){
+   const qa=visualReviewFor(run.manifest,'visual-qa-evaluator');
+   if(!qa)throw Error('Independent QA is required for positive case admission.');
+   await readVisualReviewBinding(run,qa);
+   await readVerificationEvidence(directory,run.manifest);
+   await readRemediation(run,{execution:true});
+  }
+  const result=input?await admitExperienceCase(run,input):await collectExperienceCase(run);
+  await writeJson(join(run.directory,MANIFEST),run.manifest);
+  return result;
+ });
 }

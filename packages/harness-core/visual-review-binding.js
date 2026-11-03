@@ -1,3 +1,4 @@
+import {readRemediation} from './remediation.js';
 import {mkdir,realpath,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {captureOriginals} from './capture-state.js';
@@ -12,7 +13,7 @@ function context(run,review){
   return {runId:run.manifest.id,skillId:review.skillId,...(review.brandAssessments?{designSystemExtractions:run.manifest.designSystemExtractions||null}:{}),captures:Object.fromEntries(phases.map(phase=>[phase,run.manifest.captures?.[phase]||null])),
     attachments:(run.manifest.reviewAttachments||[]).filter(attachment=>review.attachmentRefs?.includes(attachment.id)),
     ...(qa?{project:run.spec.project,foundation:run.spec.designFoundation,foundationApproval:run.manifest.foundationApproval||null,findings:run.spec.findings,evidence:run.spec.evidence,
-      confirmation:run.manifest.confirmation||null,plan:run.manifest.plan||null,evaluation:run.manifest.evaluation||null,verificationDigest:run.manifest.verificationEvidence?.digest||null}: {})};
+      ...(run.manifest.plan?.remediation?{remediationResult:run.manifest.execution?.remediation||null}:{}),confirmation:run.manifest.confirmation||null,plan:run.manifest.plan||null,evaluation:run.manifest.evaluation||null,verificationDigest:run.manifest.verificationEvidence?.digest||null}: {})};
 }
 
 export async function assertReviewStorage(directory){
@@ -55,6 +56,7 @@ export async function bindVisualReview(run,review,path,expectedHashes={}){
 }
 
 export async function readVisualReviewBinding(run,reference,{requireBound=false,checkOriginals=true,checkContext=true,retryDepth=0}={}){
+  if(checkContext&&reference.skillId==='visual-qa-evaluator')await readRemediation(run,{execution:true});
   safeReviewPath(reference);
   if(!reference.evidenceBinding){
     let sidecar=false;try{await readVerificationFile(run.directory,reference.path.replace(/\.json$/,'.binding.json'),8*1024*1024);sidecar=true;}catch(error){if(error.code!=='ENOENT')throw error;}

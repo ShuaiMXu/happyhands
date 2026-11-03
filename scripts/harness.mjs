@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {saveExperienceCase} from '../packages/harness-core/store.js';
+import {listExperienceCases} from '../packages/harness-core/experience-cases.js';
 import {runVerificationChecks} from '../packages/workbench/verification.js';
 import {withdrawJudgment} from '../packages/harness-core/store.js';
 import {saveRunMemoryException} from '../packages/harness-core/store.js';
@@ -94,6 +96,9 @@ pnpm harness execute --run DIRECTORY --repo DIRECTORY [--agent ID] [--command PA
 pnpm harness evaluate --run DIRECTORY
 pnpm harness judge --run DIRECTORY --decision accept|reject [--reason TEXT] (required for reject)
 pnpm harness withdraw-judgment --run DIRECTORY --reason TEXT
+pnpm harness case-collect --run DIRECTORY
+pnpm harness case-list --run DIRECTORY [--query TEXT]
+pnpm harness case-admit --run DIRECTORY --id HASH --kind improved|preserved|regressed|withdrawn --reason TEXT [--tags comma,separated]
 pnpm harness memory-exception --run DIRECTORY --principle ID --hash CONTENT_HASH --decision exclude|apply --reason TEXT
 pnpm harness status --run DIRECTORY
 pnpm harness next --run DIRECTORY
@@ -306,6 +311,12 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const result = await exportRun({ directory, outputRoot: resolve(options.out || 'public/runs') });
     process.stdout.write(`Published run ${result.summary.id} to ${result.directory} (${result.files.length} files)
 `);
+  } else if (command === 'case-collect') {
+    console.log(JSON.stringify(await saveExperienceCase(required(options,'run')),null,2));
+  } else if (command === 'case-list') {
+    console.log(JSON.stringify(await listExperienceCases(await loadRun(required(options,'run')),{query:options.query||''}),null,2));
+  } else if (command === 'case-admit') {
+    console.log(JSON.stringify(await saveExperienceCase(required(options,'run'),{id:required(options,'id'),kind:required(options,'kind'),reason:required(options,'reason'),tags:options.tags?options.tags.split(','):[]}),null,2));
   } else if (command === 'memory-exception') {
     await saveRunMemoryException(required(options,'run'),{id:required(options,'principle'),principleHash:required(options,'hash'),decision:required(options,'decision'),reason:required(options,'reason')});
     console.log('Run exception recorded. Generate a new plan before execution.');

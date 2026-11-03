@@ -1,3 +1,4 @@
+import {remediationProfile} from '../harness-core/remediation.js';
 import {reviewOrderPrompt} from '../experience-core/review-order.js';
 import {readFile,mkdir,writeFile,mkdtemp,rename,rm,lstat,realpath} from 'node:fs/promises';
 import {join,dirname,relative,isAbsolute} from 'node:path';
@@ -15,7 +16,7 @@ const modes=new Set(['review','implementation']);
 const impeccableBase='.agents/skills/impeccable/';
 export function designGuidanceProfile(value={}){
   if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Design guidance profile must be an object.');
-  if(Object.keys(value).some(key=>!['taste','intent','dials'].includes(key)))throw Error('Unknown design guidance profile field.');
+  if(Object.keys(value).some(key=>!['taste','intent','dials','remediation'].includes(key)))throw Error('Unknown design guidance profile field.');
   const taste=value.taste??'existing',intent=value.intent??'polish';
   if(!['existing','app-screen','public-page','dials-v1'].includes(taste)||!['polish','layout','animate'].includes(intent))throw Error('Unknown design guidance taste or intent.');
   let dials=null;
@@ -25,7 +26,8 @@ export function designGuidanceProfile(value={}){
     if(!value.dials||typeof value.dials!=='object'||Array.isArray(value.dials)||Object.keys(value.dials).some(key=>!names.includes(key))||Object.values(value.dials).some(number=>!Number.isInteger(number)||number<1||number>10))throw Error('Taste dials must be named integers from 1 to 10.');
     dials=Object.fromEntries(names.filter(name=>Object.hasOwn(value.dials,name)).map(name=>[name,value.dials[name]]));
   }
-  return {taste,intent,...(dials?{dials}:{})};
+  const remediation=remediationProfile(value.remediation);
+  return {taste,intent,...(dials?{dials}:{}),...(remediation?{remediation}:{})};
 }
 function readingRoute(id,mode,profile){
   // Keep the complete legacy snapshot available, but never route current work to its retired entry.

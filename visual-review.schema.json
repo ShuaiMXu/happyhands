@@ -387,6 +387,54 @@
           }
         }
       }
+    },
+    "remediationHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "methodChecks": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ruleId",
+          "stateKey",
+          "status",
+          "reason",
+          "screenshotRefs"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string"
+          },
+          "stateKey": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "needs-evidence",
+              "not-applicable"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 16000
+          },
+          "screenshotRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        }
+      }
     }
   }
 }
