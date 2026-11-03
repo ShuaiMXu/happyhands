@@ -62,3 +62,5 @@ These records are included in the existing run export. Private screenshots and a
 ## Evolving our methods
 
 Edit `skills/experience-remediation/SKILL.md` and its rule catalog through reviewed changes. Preserve the full upstream snapshots. Add a real accepted example and regression cases before promoting a new general rule; scope preferences to projects and keep exceptions explicit. New runs capture new versions; historical snapshots remain verifiable. This release does not implement automatic generalization from feedback or claim real end-to-end validation for every agent.
+
+Case collection, admission and same-project execution references are now available; see [Experience cases](experience-cases.md).

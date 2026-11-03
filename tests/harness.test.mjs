@@ -1,3 +1,5 @@
+import {listExperienceCases} from '../packages/harness-core/experience-cases.js';
+import {saveExperienceCase} from '../packages/harness-core/store.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, mkdir, writeFile } from 'node:fs/promises';
@@ -56,6 +58,14 @@ test('harness enforces baseline → plan → after → evaluation → judgment',
   });
   await saveJudgment(directory, 'accept', 'The next step is clearer.');
   assert.equal((await loadRun(directory)).spec.review.judgment, 'accept');
+  const cases=await listExperienceCases(await loadRun(directory));
+  assert.equal(cases.length,2);
+  assert.equal(cases.filter(item=>item.current).length,1);
+  const current=cases.find(item=>item.current);
+  await saveExperienceCase(directory,{id:current.id,kind:'improved',reason:'The accepted scroll hint improves task discovery',tags:['scroll']});
+  assert.equal((await listExperienceCases(await loadRun(directory),{acceptedOnly:true})).length,1);
+  await writeFile(join(directory,'after','desktop.png'),'Changed image');
+  assert.equal((await listExperienceCases(await loadRun(directory),{acceptedOnly:true})).length,0);
   await assert.rejects(saveJudgment(directory, 'reject', 'Changed my mind.'), /already has a judgment/i);
 });
 

@@ -269,3 +269,5 @@ In the local workbench, a failed model review can be rejected or independently r
 ## Strict experience remediation
 
 Projects can explicitly enable the [experience remediation contract](experience-remediation.md). It binds the own execution Skill, AI slop rules and project grid/layout constraints to the existing plan, isolated execution and independent QA. Missing per-rule results, incomplete assigned-state review and altered method evidence cannot be accepted as complete. Legacy runs keep their original contract.
+
+For automatic local positive/negative case collection, explicit admission and historical references in execution plans, see [Experience cases](experience-cases.md).
