@@ -1,0 +1,25 @@
+docs/experience-orchestration.md
+  s_c3a809bd8a1ec1::t_170cc910004bc9 1-33
+docs/harness.md
+  s_c3a809bd8a1ec1::t_7a296d9ffcc1ba 274-275
+packages/experience-core/review-order.js
+  s_c3a809bd8a1ec1::t_1a0bfc9582928d 2,5-9
+skills/happyhands-ui/SKILL.md
+  s_c3a809bd8a1ec1::t_e20fc859e928a1 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "ab18aec6cc2d7e8bde6e8f68dd61170f8221c0b6",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
