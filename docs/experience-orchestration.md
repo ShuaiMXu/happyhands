@@ -31,3 +31,9 @@ Current-page AI slop/details → shared-component states/consumers → user task
 Use the HappyHands website as the target, separately from the Harness workbench. Start with the resource discovery task: browse Design.md, search/filter, open a resource and switch preview/download views. Reproduce the reported dropdown, checkmark, focus, spacing and tab issues against the current version before proposing fixes. Check shared consumers in studio/setup when the implementation is shared. Preserve third-party design specimens.
 
 A batch is complete only with source-bound baseline, actual task/state evidence, justified shared-source changes (or evidence-backed preservation), after evidence, independent QA and an explicit list of remaining gaps. Static fixture success is not this batch's acceptance. Later device checks cannot replace fixing the current-page defects.
+
+## Anti-slop Skill identity and placement
+
+`design-taste-frontend` is the locally installed name for the Taste v2 anti-slop frontend method. The Harness already vendors a pinned Taste v2 package. It now explicitly routes public pages through the complete `tells.md` in diagnosis, implementation and independent review. App screens use the complete app-screen run and its generated-dashboard tells instead. No duplicate local package or parallel executor is introduced.
+
+Diagnosis identifies observable task harm or an adopted-rule violation. Implementation records the concrete repair/preservation in the existing per-rule result. Independent review checks the rendered after state and whether simplification removed useful information. OJO supplies control/icon/grid recipes and Impeccable supplies the selected repair method. Our operational Skill owns scope, ordering and report coverage. New unadopted suggestions remain proposals rather than automatic repair obligations.

@@ -91,3 +91,14 @@ test('project UI profile is preserved in review and implementation snapshots and
   await assert.rejects(stageDesignGuidance(directory,mode),/snapshot changed/);
  }
 });
+
+test('anti-slop routing distinguishes public-page tells from working-interface methods in both modes',async()=>{
+ for(const mode of ['review','implementation']){
+  const page=await loadDesignGuidance(mode,{taste:'public-page'}),app=await loadDesignGuidance(mode,{taste:'app-screen'});
+  const pageTaste=page.packs.find(pack=>pack.metadata.id==='taste-v2'),appTaste=app.packs.find(pack=>pack.metadata.id==='taste-v2');
+  assert.ok(pageTaste.metadata.readFirst.some(path=>path.endsWith('/tells.md')));
+  assert.ok(appTaste.metadata.readFirst.some(path=>path.endsWith('/app-screens.md')));
+  assert.ok(!appTaste.metadata.readFirst.some(path=>path.endsWith('/tells.md')));
+  for(const pack of [pageTaste,appTaste])for(const path of pack.metadata.readFirst.filter(path=>path.startsWith('upstream/')))assert.ok(pack.documents.some(doc=>doc.path===path&&doc.content.length>100));
+ }
+});

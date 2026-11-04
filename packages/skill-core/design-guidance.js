@@ -32,7 +32,7 @@ export function designGuidanceProfile(value={}){
 function readingRoute(id,mode,profile){
   // Keep the complete legacy snapshot available, but never route current work to its retired entry.
   if(id==='taste')return profile.taste==='dials-v1'?['skills/taste-skill-v1/SKILL.md']:[];
-  if(id==='taste-v2')return profile.taste==='dials-v1'?[]:['skills/taste-skill/SKILL.md',...(profile.taste==='public-page'?['skills/taste-skill/references/critique.md','skills/taste-skill/references/layout.md']:['skills/taste-skill/references/app-screens.md'])];
+  if(id==='taste-v2')return profile.taste==='dials-v1'?[]:['skills/taste-skill/SKILL.md',...(profile.taste==='public-page'?['skills/taste-skill/references/tells.md','skills/taste-skill/references/critique.md','skills/taste-skill/references/layout.md']:['skills/taste-skill/references/app-screens.md'])];
   return [impeccableBase+'SKILL.md',...(mode==='review'?['audit','critique']:['polish',...(profile.intent==='polish'?[]:[profile.intent])]).map(name=>impeccableBase+'reference/'+name+'.md')];
 }
 const safePath=path=>typeof path==='string'&&path.length>0&&!isAbsolute(path)&&!path.includes('\\')&&!path.split('/').some(part=>!part||part==='.'||part==='..')&&!/^[A-Za-z]:/.test(path);
