@@ -1,0 +1,25 @@
+docs/experience-orchestration.md
+  s_c3a809bd8a1ec1::t_6f9bed10031da4 34-39
+packages/skill-core/design-guidance.js
+  s_c3a809bd8a1ec1::t_8430ed426c049c 35
+skills/vendor/taste-v2/ADAPTER.md
+  s_c3a809bd8a1ec1::t_32c4179703a755 17-26
+tests/design-guidance.test.mjs
+  s_c3a809bd8a1ec1::t_24608432bec1fb 94-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "59ac5e0c63063d5d122048b60975ba4e40b3f55e",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
