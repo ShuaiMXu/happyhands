@@ -21,7 +21,7 @@ User-approved profile, 2026-10-23. Read the foundational rules and all additiona
 
 ## Acceptance
 
-Review complete pages at normal desktop and phone sizes first, including navigation, empty/error/loading states and interactions. Inspect computed type sizes, color-token roles and focus, then visually check optical alignment and content hierarchy. Keep 200% zoom as a supplemental check; do not introduce arbitrary word breaks to satisfy it. Record screenshots, changed files, source/version, checks and remaining limitations. Static lint and source availability do not constitute visual acceptance. Await the user's requested preview confirmation before merging.
+Start with current-page AI slop and recurring UI details at the working viewport, then shared-component states and consumers, then task/hierarchy/layout. After that, review every planned device and route, including phone reflow and applicable empty/error/loading states. This ordering never waives required state coverage. Inspect computed type sizes, color-token roles and focus, then visually check optical alignment and content hierarchy. Keep 200% zoom as a supplemental check; do not introduce arbitrary word breaks to satisfy it. Record screenshots, changed files, source/version, checks and remaining limitations. Static lint and source availability do not constitute visual acceptance. Await the user's requested preview confirmation before merging.
 
 
 ## 2026-10-31 自有界面补充检查
