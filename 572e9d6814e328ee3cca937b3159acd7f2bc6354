@@ -1,0 +1,66 @@
+docs/experience-remediation-validation.md
+  s_c3a809bd8a1ec1::t_b1bea2dd6472e8 1-41
+docs/experience-remediation.md
+  s_c3a809bd8a1ec1::t_8c0a8c015e04d1 48-49
+  s_c3a809bd8a1ec1::t_ebcfe71f660106 24,54-56
+  s_c3a809bd8a1ec1::t_d15ab68199ecc2 1-23,25-47,50-53,57-64
+skills/experience-remediation/SKILL.md
+  s_c3a809bd8a1ec1::t_e5d4ff63a9370b 1-11,17-34
+  s_c3a809bd8a1ec1::t_76a26ba67951a4 12-16
+packages/harness-core/visual-review.js
+  s_c3a809bd8a1ec1::t_3af7e11fcb30bb 1,21-24
+packages/harness-core/export.js
+  s_c3a809bd8a1ec1::t_3af7e11fcb30bb 1,26,161
+skills/experience-remediation/rules.json
+  s_c3a809bd8a1ec1::t_b313b7b87ab95e 8-10,16-18,24-26,32-34,40-42,48-50,56-58,64-66,72-74,80-82,88-90,96-98,104-106,112-114,120-122,128-130,136-138,144-146,152-154,160-162,168-170,176-178,184-186,192-194,200-202,208-210,216-218,224-226,232-234
+  s_c3a809bd8a1ec1::t_e5d4ff63a9370b 1-7,11-15,19-23,27-31,35-39,43-47,51-55,59-63,67-71,75-79,83-87,91-95,99-103,107-111,115-119,123-127,131-135,139-143,147-151,155-159,163-167,171-175,179-183,187-191,195-199,203-207,211-215,219-223,227-231,235-255
+packages/harness-core/runner.js
+  s_c3a809bd8a1ec1::t_3af7e11fcb30bb 1,152,179-181,214-215,225
+  s_c3a809bd8a1ec1::t_23c42e2ba486a8 125-126
+  s_c3a809bd8a1ec1::t_22f0b9e336af94 176,182
+packages/harness-core/store.js
+  s_c3a809bd8a1ec1::t_3af7e11fcb30bb 1,457,460,484,488,666
+packages/skill-core/design-guidance.js
+  s_c3a809bd8a1ec1::t_3af7e11fcb30bb 1,19,29-30
+tests/agents.test.mjs
+  s_c3a809bd8a1ec1::t_fa2fe4de3300c7 246-281
+packages/workbench/ai-review.js
+  s_c3a809bd8a1ec1::t_48db4154a3b12d 100
+  s_c3a809bd8a1ec1::t_3af7e11fcb30bb 2,108-109,120,127,139,245
+  s_c3a809bd8a1ec1::t_bc10f95983bef2 1,92,99
+visual-review.schema.json
+  s_c3a809bd8a1ec1::t_3af7e11fcb30bb 390-437
+packages/harness-core/remediation.js
+  s_c3a809bd8a1ec1::t_b313b7b87ab95e 40
+  s_c3a809bd8a1ec1::t_b4f5b9f20ac4de 1-20,22-39,41-74,76-78,80-84,86-87,89-109
+  s_c3a809bd8a1ec1::t_23c42e2ba486a8 75,79
+  s_c3a809bd8a1ec1::t_7b48b5617e9a47 21
+  s_c3a809bd8a1ec1::t_abd6ebc5734d9f 85
+  s_c3a809bd8a1ec1::t_bcc5aae3179656 88
+docs/harness.md
+  s_c3a809bd8a1ec1::t_67a53f44013598 268-271
+packages/harness-core/visual-review-binding.js
+  s_c3a809bd8a1ec1::t_ff42babc3384d8 1,59
+packages/workbench/baseline-diagnosis.js
+  s_c3a809bd8a1ec1::t_0cac90e88d2de2 1,60-62,66-67,93-94,96
+tests/ai-review.test.mjs
+  s_c3a809bd8a1ec1::t_a0317af992745c 353-372
+tests/remediation.test.mjs
+  s_c3a809bd8a1ec1::t_40a3f71e7519e1 1-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "572e9d6814e328ee3cca937b3159acd7f2bc6354",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
