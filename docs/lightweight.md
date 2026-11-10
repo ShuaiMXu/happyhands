@@ -1,6 +1,6 @@
 # Lightweight Alpha
 
-The `happyhands` Skill packages the existing Harness engine, its pinned design methods and six runtime dependencies. It does not include the workbench frontend, React/tldraw, browser binaries or the complete website resource library. It writes the same `.harness` run format and uses the existing source, execution, independent-review and human-judgment gates.
+The `happyhands` Skill packages the existing Harness engine, its pinned design methods and six runtime dependencies. It does not include the workbench frontend, React/tldraw, browser binaries or the complete website resource library. It uses the existing run format and source, execution, independent-review and human-judgment gates. Lightweight `start`, `init` and `onboard` store records in `~/.happyhands/runs` by default, outside the product repository. `HAPPYHANDS_RUNS_DIR` selects another state directory; an explicit `--out DIRECTORY` takes precedence. Keep an explicit output outside the target or ignore it deliberately before source-bound execution. The installer never edits Git ignore rules. Generated Spec/config/Capture Plan files also belong outside the target unless deliberately tracked or ignored. The source CLI retains its existing `.harness/runs` default.
 
 ## Install
 

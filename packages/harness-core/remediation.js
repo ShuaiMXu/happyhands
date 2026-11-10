@@ -91,13 +91,14 @@ export function methodReviewPrompt(method,manifest){
   if(!method)return '';
   return `\nSTRICT METHOD REVIEW: Read remediation in review-context.json (or context.json for diagnosis), including the complete own Skill and rule references. Return methodChecks for EVERY rule x assigned state: {ruleId,stateKey,status:"pass|fail|needs-evidence|not-applicable",reason,screenshotRefs:[]}. Each status is one enum value. Exact state keys: ${JSON.stringify(methodStateEntries(manifest))}. Do not trust executor assertions. Cite the state's original in each row, including not-applicable; explain applicability. Unseen interactions require needs-evidence, not pass. Check the adopted grid, alignment, gutters, responsive reflow and shared component consumers. Any fail/needs-evidence prevents an overall pass. This covers assigned states only.\n`;
 }
-export function assertMethodChecks(rows,ruleIds,manifest,verdict){
+export function assertMethodChecks(rows,ruleIds,manifest,verdict,{supplementalRefs=[]}={}){
   const states=methodStateEntries(manifest),keys=ruleIds.flatMap(id=>states.map(s=>id+'|'+s.key));
+  const allowed=new Set([...captureEntries(manifest.captures?.after||manifest.captures?.before).map(e=>e.screenshot),...supplementalRefs]);
   if(!Array.isArray(rows))throw Error('Missing per-rule remediation review.');
   exactRows(rows.map(r=>({...r,key:r.ruleId+'|'+r.stateKey})),keys,'key');
   for(const row of rows){
     const state=states.find(s=>s.key===row.stateKey);
-    if(!['pass','fail','needs-evidence','not-applicable'].includes(row.status)||!text(row.reason)||!Array.isArray(row.screenshotRefs)||!row.screenshotRefs.includes(state.screenshot)||row.screenshotRefs.some(ref=>!captureEntries(manifest.captures?.after||manifest.captures?.before).some(e=>e.screenshot===ref)))throw Error('Remediation check needs assigned original evidence and a reason.');
+    if(!['pass','fail','needs-evidence','not-applicable'].includes(row.status)||!text(row.reason)||!Array.isArray(row.screenshotRefs)||!row.screenshotRefs.includes(state.screenshot)||row.screenshotRefs.some(ref=>!allowed.has(ref)))throw Error('Remediation check needs assigned original evidence and a reason.');
     if(verdict==='pass'&&['fail','needs-evidence'].includes(row.status))throw Error('Unresolved remediation check prevents passing QA.');
   }
 }

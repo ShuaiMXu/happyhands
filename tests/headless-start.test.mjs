@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,rm,realpath} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFile} from 'node:child_process';
@@ -12,11 +12,17 @@ import {loadRun} from '../packages/harness-core/store.js';
 import {workflowState} from '../packages/harness-core/workflow.js';
 const exec=promisify(execFile),cli=fileURLToPath(new URL('../skills/happyhands/bin/happyhands.mjs',import.meta.url));
 test('lightweight start creates the first existing ledger, snapshots real project rules, and still requires capture',async t=>{
- const root=await mkdtemp(join(tmpdir(),'hh-start-'));t.after(()=>rm(root,{recursive:true,force:true}));const repo=join(root,'product');await mkdir(repo);
+ const root=await realpath(await mkdtemp(join(tmpdir(),'hh-start-')));t.after(()=>rm(root,{recursive:true,force:true}));const repo=join(root,'product');await mkdir(repo);
  const git=(...args)=>exec('git',args,{cwd:repo});await git('init','-q');await git('config','user.name','Test');await git('config','user.email','test@example.invalid');await writeFile(join(repo,'DESIGN.md'),'# Existing project rules\nPreserve field input.\n');await git('add','.');await git('commit','-qm','Fixture');
  const server=createServer((req,res)=>res.end('<h1>Existing product</h1>'));await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>server.close());
  await writeFile(join(root,'experience.json'),JSON.stringify(sample));await writeFile(join(root,'project.json'),JSON.stringify({version:'0.1',spec:'experience.json',repo:'product',mode:'review',url:`http://127.0.0.1:${server.address().port}/`,designSourcePaths:['DESIGN.md']}));
- const {stdout}=await exec(process.execPath,[cli,'start','--config',join(root,'project.json')],{cwd:root});
+ const {stdout}=await exec(process.execPath,[cli,'start','--config',join(root,'project.json')],{cwd:repo,env:{...process.env,HAPPYHANDS_RUNS_DIR:join(root,'user-runs')}});
+ assert.equal((await git('status','--porcelain')).stdout,'','run state must not dirty an otherwise clean target without an ignore file');
+ assert.ok(stdout.trim().startsWith(join(root,'user-runs')));
  const run=await loadRun(stdout.trim());assert.equal(run.manifest.onboarding.repository.dirty,false);assert.equal(run.manifest.onboarding.config.designSources[0].path,'DESIGN.md');assert.equal(run.manifest.captures.before,null);assert.notEqual(workflowState(run.manifest).stage,'accepted');assert.equal(run.manifest.foundationInventory,null);
- assert.ok(stdout.includes('.harness'));assert.ok(!stdout.includes('/apps/designer/'));
+ assert.ok(!stdout.trim().startsWith(repo));assert.ok(!stdout.includes('/apps/designer/'));
+ const explicit=join(root,'explicit-runs');const initArgs=['init','--spec',join(root,'experience.json'),'--url',`http://127.0.0.1:${server.address().port}/`];
+ const overridden=await exec(process.execPath,[cli,...initArgs,'--out',explicit],{cwd:repo,env:{...process.env,HAPPYHANDS_RUNS_DIR:join(root,'unused-cache')}});assert.ok(overridden.stdout.trim().startsWith(explicit));
+ const source=fileURLToPath(new URL('../scripts/harness.mjs',import.meta.url));const legacy=await exec(process.execPath,[source,...initArgs],{cwd:root,env:{...process.env,PD_HARNESS_HEADLESS:'',HAPPYHANDS_RUNS_DIR:join(root,'unused-cache')}});assert.ok(legacy.stdout.trim().startsWith(join(root,'.harness','runs')),'source CLI retains its existing output location');
+ assert.equal((await git('status','--porcelain')).stdout,'');
 });

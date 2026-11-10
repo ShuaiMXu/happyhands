@@ -7,7 +7,8 @@ import {saveRunMemoryException} from '../packages/harness-core/store.js';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { mkdir, readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { homedir } from 'node:os';
 import { createRun, loadRun, runFilePath, saveCapture, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveOnboarding, saveDiagnosis, saveVisualReview, recordAbsentBaseline, saveFoundationApproval } from '../packages/harness-core/store.js';
 import { captureBrowser, captureBrowserPlan, DEFAULT_VIEWPORTS } from '../packages/harness-core/browser.js';
 import { evaluateCaptures, evaluateFirstRender } from '../packages/harness-core/evaluate.js';
@@ -39,6 +40,12 @@ function argsOf(values) {
     options[values[i].slice(2)] = values[++i];
   }
   return options;
+}
+
+function runOutputRoot(options) {
+  return resolve(options.out || (process.env.PD_HARNESS_HEADLESS === '1'
+    ? process.env.HAPPYHANDS_RUNS_DIR || join(homedir(), '.happyhands', 'runs')
+    : '.harness/runs'));
 }
 
 function required(options, key) {
@@ -133,7 +140,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
     if(config.mode!=='review'||!config.url)throw Error('Lightweight start requires an existing preview and explicit mode review; use onboard for bootstrap.');
     const repository=await inspectRepository(config.repo);await waitForPreview(config.url,{timeoutMs:10000});
     const spec=JSON.parse(await readFile(config.spec,'utf8'));
-    const outputRoot=resolve(options.out||'.harness/runs');await mkdir(outputRoot,{recursive:true});
+    const outputRoot=runOutputRoot(options);await mkdir(outputRoot,{recursive:true});
     const run=await createRun({spec,url:config.url,outputRoot,mode:'review'});
     await saveOnboarding(run.directory,{status:'ready',mode:'review',config:publicProjectConfig(config),repository,preview:{url:config.url,managed:false},viewports:DEFAULT_VIEWPORTS,completedAt:new Date().toISOString()});
     console.log(run.directory);return;
@@ -165,7 +172,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
   }
   if (command === 'init') {
     const spec = JSON.parse(await readFile(resolve(required(options, 'spec')), 'utf8'));
-    const outputRoot = resolve(options.out || '.harness/runs');
+    const outputRoot = runOutputRoot(options);
     const mode = options.mode || (options.url ? 'review' : 'bootstrap');
     if (mode === 'review' && !options.url) throw new Error('Missing --url; a review run needs a baseline to capture.');
     await mkdir(outputRoot, { recursive: true });
@@ -178,7 +185,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const config = await loadProjectConfig(required(options, 'config'));
     const spec = JSON.parse(await readFile(config.spec, 'utf8'));
     const repository = await inspectRepository(config.repo);
-    const outputRoot = resolve(options.out || '.harness/runs');
+    const outputRoot = runOutputRoot(options);
     await mkdir(outputRoot, { recursive: true });
     let preview = null;
     let child = null;
