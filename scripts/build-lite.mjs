@@ -11,7 +11,7 @@ export async function buildLite(output){
  const directories=['packages/harness-core','packages/skill-core','packages/experience-core','packages/workbench','skills','.agents','regression'];
  for(const directory of directories)for(const path of await filesUnder(join(root,directory)))await copy(directory+'/'+path);
  for(const path of await filesUnder(join(root,'skills/happyhands')))await copy('skills/happyhands/'+path,path);
- for(const path of ['scripts/harness.mjs','LICENSE','THIRD_PARTY_NOTICES.md','docs/harness.md','docs/finding-admission-policy.md','docs/dsh.md','docs/dsh.zh-CN.md'])await copy(path);
+ for(const path of ['scripts/harness.mjs','LICENSE','THIRD_PARTY_NOTICES.md','docs/harness.md','docs/lightweight.md','docs/finding-admission-policy.md','docs/dsh.md','docs/dsh.zh-CN.md'])await copy(path);
  await copy('pnpm-lock.yaml','engine-lock.yaml');
  for(const entry of await readdir(root,{withFileTypes:true}))if(entry.isFile()&&entry.name.endsWith('.schema.json'))await copy(entry.name);
  await copy('distribution/lite/package.json','package.json');await copy('distribution/lite/package-lock.json','npm-shrinkwrap.json');

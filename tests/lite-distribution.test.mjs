@@ -14,6 +14,7 @@ async function fixture(t){const root=await realpath(await mkdtemp(join(tmpdir(),
 test('portable bundle works from a different project and contains complete methods without UI dependencies',async t=>{
  const f=await fixture(t),manifest=await verifyBundle(f.output),pkg=JSON.parse(await readFile(join(f.output,'package.json')));
  assert.ok(manifest.files.some(row=>row.path==='skills/vendor/ojo/upstream/references/component-recipe.md'));
+ assert.ok(manifest.files.some(row=>row.path==='docs/lightweight.md'),'the installed Harness guide must retain its lightweight setup reference');
  assert.ok(!manifest.files.some(row=>row.path.startsWith('apps/')||row.path.startsWith('public/')||row.path.includes('node_modules/')));
  assert.ok(!pkg.dependencies.react&&!pkg.dependencies.tldraw&&!pkg.dependencies.vite);
  const packed=JSON.parse((await exec(process.platform==='win32'?'npm.cmd':'npm',['pack',f.output,'--pack-destination',f.root,'--json'],{shell:process.platform==='win32'})).stdout)[0];
