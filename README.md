@@ -5,21 +5,22 @@
   </picture>
 </p>
 
-<h3 align="center">Give every UI change a reason.</h3>
+<h3 align="center">UI review and product experience improvements for coding agents.</h3>
 
-<p align="center">A local workbench to find UI problems, repair them with coding agents, and review the result.</p>
+<p align="center">Start with real pages and user tasks. Apply design rules, make isolated changes, and compare the results.</p>
 
 <p align="center">
   <a href="https://happyhands.cc"><img alt="Website" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
   <a href="docs/next-steps.md"><img alt="Local Web Alpha" src="https://img.shields.io/badge/status-Local_Web_Alpha-F79B60?style=flat"></a>
+  <a href="https://github.com/ShuaiMXu/happyhands/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&amp;label=Stars&amp;color=202020"></a>
   <a href="docs/harness.md"><img alt="Harness guide" src="https://img.shields.io/badge/docs-Harness_guide-202020?style=flat"></a>
 </p>
 
 <p align="center">
-  <a href="#get-started">Get started</a> / <a href="#how-it-works">How it works</a> / <a href="https://happyhands.cc">Website</a> / <a href="README.zh-CN.md">简体中文</a>
+  <a href="#get-started">Get started</a> / <a href="#how-it-works">How it works</a> / <a href="#star-growth">Star growth</a> / <a href="https://happyhands.cc">Website</a> / <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-HappyHands brings UI diagnosis, agent-assisted repairs and before/after review into one local workbench. Inspect pages and interaction states, start a scoped repair, then decide whether to accept the result and submit a draft pull request.
+HappyHands helps coding agents review interface design, information hierarchy, interaction feedback and user-task flows. Use the local Harness to capture real pages, make scoped changes in an isolated worktree, and assess before/after evidence. Operate it from the command line or through the local workbench.
 
 ## Product demo
 
@@ -28,6 +29,8 @@ HappyHands brings UI diagnosis, agent-assisted repairs and before/after review i
 https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## Get started
+
+For command-line use without starting the workbench, follow the [Harness guide](docs/harness.md). The steps below launch the local workbench. A [lightweight Skill and unified design-resource entry](https://github.com/ShuaiMXu/happyhands/issues/7) is planned; the one-line installation is not released yet.
 
 You need Git, Node.js **22.15+**, pnpm **11.19**, and an installed Chrome or Edge for browser capture. This source distribution provides the local workbench and Harness. Configure and sign in to **Codex CLI** to use the workbench’s built-in model diagnosis and visual review; implementation CLI setup depends on the executor you choose. See [Use your coding agent](#use-your-coding-agent) for the distinction.
 
@@ -73,7 +76,7 @@ The [HappyClaw review record](docs/counter-evidence-review-2026-10-21.md) shows 
 
 ### Design resources
 
-The [website](https://happyhands.cc) provides Design.md references, design systems, components and Theme Studio. Use them to choose a direction, preview a theme and prepare design files for your project. They are optional inputs to the review; browsing a reference does not approve it as your project's design system.
+The [website](https://happyhands.cc) provides Design.md references, design systems and components. Select references for the task and inspect their source, usage and licensing. Browsing a resource does not approve it as your project's design system; unified retrieval through the lightweight entry is tracked in [#7](https://github.com/ShuaiMXu/happyhands/issues/7).
 
 ## Use your coding agent
 
@@ -111,13 +114,34 @@ Before contributing, read [AGENTS.md](AGENTS.md), [DESIGN.md](DESIGN.md) and the
 
 </details>
 
+## Star growth
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/star-history-dark.svg">
+  <img src="assets/readme/star-history-light.svg" width="100%" alt="HappyHands cumulative GitHub star growth, with stars added in the last seven days and the snapshot date">
+</picture>
+
+The chart groups GitHub's current stargazers by their actual star dates; it cannot reconstruct historical counts before unstars. The snapshot date is shown in the chart, while the top badge reports GitHub's current total.
+
+<details>
+<summary>Refresh the growth chart</summary>
+
+With GitHub CLI configured and signed in, run from the repository root:
+
+```sh
+node scripts/update-star-history.mjs
+```
+
+The script saves daily aggregates and charts, without account names or credentials. Authentication, data or count-check failures retain the existing charts rather than replacing them with zeroes. Source data: [star-history.json](assets/readme/star-history.json).
+
+</details>
+
 ## Project links
 
 [Website](https://happyhands.cc) / [Harness guide](docs/harness.md) / [Roadmap](docs/next-steps.md) / [Issues](https://github.com/ShuaiMXu/happyhands/issues)
 
 Follow the core project:
 
-[![Stars](https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&label=Stars)](https://github.com/ShuaiMXu/happyhands/stargazers)
 [![Forks](https://img.shields.io/github/forks/ShuaiMXu/happyhands?style=flat&label=Forks)](https://github.com/ShuaiMXu/happyhands/forks)
 [Star history](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands&type=date)
 
