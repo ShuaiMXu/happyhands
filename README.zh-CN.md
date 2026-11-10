@@ -5,21 +5,22 @@
   </picture>
 </p>
 
-<h3 align="center">让每一次界面修改都有依据。</h3>
+<h3 align="center">为编码 Agent 补上 UI 评审与产品体验优化流程。</h3>
 
-<p align="center">在本地发现界面问题、调用编码 Agent 修复，再核对修改结果。</p>
+<p align="center">从真实页面和用户任务出发，结合设计规范、隔离修改和前后对比改进体验。</p>
 
 <p align="center">
   <a href="https://happyhands.cc"><img alt="官网" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
   <a href="docs/next-steps.md"><img alt="Local Web Alpha" src="https://img.shields.io/badge/status-Local_Web_Alpha-F79B60?style=flat"></a>
+  <a href="https://github.com/ShuaiMXu/happyhands/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&amp;label=Stars&amp;color=202020"></a>
   <a href="docs/harness.md"><img alt="Harness 指南" src="https://img.shields.io/badge/docs-Harness_guide-202020?style=flat"></a>
 </p>
 
 <p align="center">
-  <a href="#开始使用">开始使用</a> / <a href="#一次审阅怎么进行">审阅流程</a> / <a href="https://happyhands.cc">官网</a> / <a href="README.md">English</a>
+  <a href="#开始使用">开始使用</a> / <a href="#一次审阅怎么进行">审阅流程</a> / <a href="#star-增长">Star 增长</a> / <a href="https://happyhands.cc">官网</a> / <a href="README.md">English</a>
 </p>
 
-HappyHands 将界面诊断、Agent 修复和前后对比放在同一个本地工作台中。查看页面与交互状态，发起一次范围明确的修复，再决定是否采纳并提交草稿 PR。
+HappyHands 帮助编码 Agent 检查界面设计、信息层级、交互反馈和任务流程。使用本地 Harness 采集真实页面，在隔离工作副本中修改，再对照前后证据判断结果。可通过命令行操作，也可使用本地工作台。
 
 ## 产品演示
 
@@ -28,6 +29,8 @@ HappyHands 将界面诊断、Agent 修复和前后对比放在同一个本地工
 https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## 开始使用
+
+可直接按照 [Harness 指南](docs/harness.md)使用命令行，无需启动工作台。下方步骤提供本地工作台入口。[轻量 Skill 与设计资源接入](https://github.com/ShuaiMXu/happyhands/issues/7)正在规划，尚未发布一行安装版本。
 
 准备 Git、Node.js **22.15+**、pnpm **11.19**，以及用于浏览器采集的已安装 Chrome 或 Edge。本仓库提供本地工作台与 Harness 源码。工作台内置模型诊断和视觉复核需要已配置、已登录的 **Codex CLI**；代码实现所需的 CLI 配置取决于所选执行器。区别见[配合你的编码工具](#配合你的编码工具)。
 
@@ -73,7 +76,7 @@ pnpm workbench
 
 ### 设计资源
 
-[官网](https://happyhands.cc) 提供 Design.md 参考、设计系统、组件和主题工作室，可用于选择设计方向、预览主题和准备项目设计文件。这些是审阅时的可选输入，浏览某个参考不会自动把它批准为项目规范。
+[官网](https://happyhands.cc) 提供 Design.md 参考、设计系统和组件资源，可结合任务选择设计来源，并核对源码、使用方式与许可。这些是审阅时的可选参考，浏览资源不会自动将其批准为项目规范；轻量入口的统一检索与调用见 [#7](https://github.com/ShuaiMXu/happyhands/issues/7)。
 
 ## 配合你的编码工具
 
@@ -111,13 +114,34 @@ pnpm harness skills # 已注册方法及其成熟度
 
 </details>
 
+## Star 增长
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/star-history-dark.svg">
+  <img src="assets/readme/star-history-light.svg" width="100%" alt="HappyHands Star 累计增长曲线，包含最近 7 天加星数量和数据更新时间">
+</picture>
+
+曲线来自 GitHub 当前 Star 用户的真实加星时间，按日期累计；取消 Star 前的历史数量无法据此还原。图中标明更新时间，顶部徽章显示 GitHub 当前总量。
+
+<details>
+<summary>刷新增长图表</summary>
+
+配置并登录 GitHub CLI 后，在仓库根目录运行：
+
+```sh
+node scripts/update-star-history.mjs
+```
+
+脚本仅保存每日汇总与图表，不保存用户名或凭据。认证、数据或数量校验失败时保留原图，不将失败结果写成零。数据文件：[star-history.json](assets/readme/star-history.json)。
+
+</details>
+
 ## 项目链接
 
 [官网](https://happyhands.cc) / [Harness 指南](docs/harness.md) / [待办](docs/next-steps.md) / [问题反馈](https://github.com/ShuaiMXu/happyhands/issues)
 
 关注核心项目：
 
-[![Stars](https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&label=Stars)](https://github.com/ShuaiMXu/happyhands/stargazers)
 [![Forks](https://img.shields.io/github/forks/ShuaiMXu/happyhands?style=flat&label=Forks)](https://github.com/ShuaiMXu/happyhands/forks)
 [Star history](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands&type=date)
 
