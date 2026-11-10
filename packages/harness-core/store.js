@@ -1,7 +1,7 @@
 import {collectExperienceCase,admitExperienceCase,experienceCaseBrief} from './experience-cases.js';
 import {stageRemediation,readRemediation} from './remediation.js';
 import {isReportableFinding} from './finding-admission.js';
-import {designSourceBrief,designSourcesDigest} from './design-sources.js';
+import {designSourceBrief,designSourcesDigest,designSourceRefs,designSourceContext} from './design-sources.js';
 import {verifyBaselineDiagnosis} from './baseline-diagnosis-record.js';
 import {foundationRuleFields,foundationWithPatternAdmissions} from '../experience-core/foundation.js';
 import {judgmentHash,readJudgmentWithdrawal,JUDGMENT_WITHDRAWAL} from './judgment-withdrawal.js';
@@ -184,7 +184,10 @@ export async function loadRun(directory) {
     if(!executionContext||!manifest.plan||executionContext.schemaVersion!=='0.1'||executionContext.runId!==manifest.id||executionContext.planHash!==projectMemoryDigest(manifest.plan)||!Number.isFinite(Date.parse(executionContext.recordedAt)))throw Error('Execution context changed or its plan is no longer available.');
     manifest.executionContext={...executionContext,path:'execution-context.json'};
   }else if(manifest.executionContext)throw Error('Execution context artifact is missing.');
-  return { directory: root, manifest, spec };
+  const run={directory:root,manifest,spec};
+  if(manifest.plan?.designSourcesDigest&&manifest.plan.designSourcesDigest!==designSourcesDigest(designSourceRefs(run)))throw Error('Selected design sources changed after planning.');
+  if(manifest.selectedReferences?.length)await designSourceContext(run);
+  return run;
 }
 
 // A bootstrap run has no baseline because the surface does not exist. The absence is
@@ -460,7 +463,7 @@ export async function savePlan(directory, findingId) {
       const brief = bootstrapBrief(run.spec, { entries: run.manifest.baseline.entries || [], reason: run.manifest.baseline.reason, approval: run.manifest.foundationApproval })+projectMemoryBrief(memory)+await experienceCaseBrief(run)+selectedDesignSources;
       await writeFile(join(run.directory, 'codex-brief.md'), brief, 'utf8');
       run.manifest.plan = { path: 'codex-brief.md', kind: 'bootstrap', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), foundationVersion: run.manifest.foundationApproval.foundationVersion, createdAt: new Date().toISOString() };
-      if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(run.manifest.onboarding.config.designSources);
+      if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(designSourceRefs(run));
       if(memory)run.manifest.plan.projectMemory=memory;
       await writeJson(join(run.directory, MANIFEST), run.manifest);
       return run.manifest;
@@ -489,7 +492,7 @@ export async function savePlan(directory, findingId) {
     run.manifest.findingId = findingId;
     run.manifest.plan = { path: 'codex-brief.md', kind: 'fix', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), confirmationHash: projectMemoryDigest(run.manifest.confirmation), componentReuse: {path: reusePath, findingId, status: reuse.status}, createdAt: new Date().toISOString() };
     if(run.manifest.repair)run.manifest.plan.repairRequestHash=run.manifest.repair.hash;
-    if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(run.manifest.onboarding.config.designSources);
+    if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(designSourceRefs(run));
     if(incrementalCapture)run.manifest.plan.incrementalCapturePlan=run.manifest.onboarding.incrementalCapturePlan;
     if(memory)run.manifest.plan.projectMemory=memory;
     await writeJson(join(run.directory, MANIFEST), run.manifest);
@@ -529,7 +532,7 @@ export async function saveRunMemoryException(directory,input) {
 
 export async function verifiedExecutionBrief(run) {
   if(run.manifest.repair){await repairRequestContext(run);if(run.manifest.plan?.repairRequestHash!==run.manifest.repair.hash)throw Error('Repair plan no longer matches its request.');}
-  const refs=run.manifest.onboarding?.config?.designSources||[];
+  const refs=designSourceRefs(run);
   if((refs.length||run.manifest.plan.designSourcesDigest)&&run.manifest.plan.designSourcesDigest!==designSourcesDigest(refs))throw Error('Selected design sources changed after planning. Regenerate and confirm the plan.');
   const brief = await readFile(runFilePath(run.directory, run.manifest.plan.path), 'utf8');
   if (!run.manifest.plan.briefHash || createHash('sha256').update(brief).digest('hex') !== run.manifest.plan.briefHash) throw Error('Execution brief changed or lacks an integrity binding. Regenerate the plan and confirm its scope.');

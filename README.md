@@ -30,7 +30,19 @@ https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## Get started
 
-For command-line use without starting the workbench, follow the [Harness guide](docs/harness.md). The steps below launch the local workbench. A [lightweight Skill and unified design-resource entry](https://github.com/ShuaiMXu/happyhands/issues/7) is planned; the one-line installation is not released yet.
+Install the **lightweight Alpha Skill** from your product repository. It uses the existing Harness without starting the workbench:
+
+```sh
+npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.2/happyhands-lite-0.1.0-alpha.2.tgz happyhands install
+```
+
+The default destination is your Codex user Skill directory (`~/.codex/skills/happyhands`, or under `CODEX_HOME`), so product source stays untouched. `--scope project` selects `.agents/skills/happyhands`; commit or ignore that project-local installation before a clean isolated repair. It includes the runtime, complete pinned methods and six runtime dependencies; the installer never overwrites an existing Skill. Use `$happyhands` in Codex with your preview and one user task, or follow the [lightweight guide](docs/lightweight.md). Claude Code discovery is available with `install --agent claude-code`; its full execution loop remains unverified. DSH can operate the portable instructions as an external coordinator.
+
+Requires Node.js 22.15+ with npm, Git, Chrome/Edge and a configured agent. Model diagnosis/review use Codex; newer models require a Codex version that supports them. Runtime installation and reference selection do not establish a verified product repair. See the [release](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.2) for actual validation and open limits.
+
+### Optional local workbench
+
+For the original source checkout and optional visual workbench, use the steps below. The [Harness guide](docs/harness.md) also documents the full CLI.
 
 You need Git, Node.js **22.15+**, pnpm **11.19**, and an installed Chrome or Edge for browser capture. This source distribution provides the local workbench and Harness. Configure and sign in to **Codex CLI** to use the workbench’s built-in model diagnosis and visual review; implementation CLI setup depends on the executor you choose. See [Use your coding agent](#use-your-coding-agent) for the distinction.
 
@@ -76,7 +88,7 @@ The [HappyClaw review record](docs/counter-evidence-review-2026-10-21.md) shows 
 
 ### Design resources
 
-The [website](https://happyhands.cc) provides Design.md references, design systems and components. Select references for the task and inspect their source, usage and licensing. Browsing a resource does not approve it as your project's design system; unified retrieval through the lightweight entry is tracked in [#7](https://github.com/ShuaiMXu/happyhands/issues/7).
+The [website](https://happyhands.cc) provides Design.md references, design systems and components. Select references for the task and inspect their source, usage and licensing. Browsing a resource does not approve it as your project's design system; the lightweight entry can search indexes and snapshot selected full references into the same run. Selection does not install components or approve a new design system. Further real-case acceptance is tracked in [#7](https://github.com/ShuaiMXu/happyhands/issues/7).
 
 ## Use your coding agent
 
@@ -95,7 +107,7 @@ Run `pnpm harness agents` to inspect registered executors. Select one with `harn
 
 HappyHands is a **free Local Web Alpha**. External model and CLI services may require their own accounts, subscriptions or usage fees. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, real-user acceptance and other gaps are tracked in the [backlog](docs/next-steps.md).
 
-Run records stay under `.harness/`. Model-assisted steps send selected source context and images to the configured model service through the CLI. Worktrees and repository checks are workflow safeguards, not a security sandbox. Review shared exports for sensitive material. See [data and execution details](docs/local-workbench.md).
+Lightweight runs default to `~/.happyhands/runs`; the source CLI/workbench retains `.harness/`. An explicit output path can override these locations. Model-assisted steps send selected source context and images to the configured model service through the CLI. Worktrees and repository checks are workflow safeguards, not a security sandbox. Review shared exports for sensitive material. See [data and execution details](docs/local-workbench.md).
 
 <details>
 <summary>Development and repository guide</summary>

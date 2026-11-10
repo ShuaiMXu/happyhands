@@ -201,3 +201,28 @@ test('shared CLI/workbench capture boundary records both original hashes and pre
   } else await symlink('index.html',join(repo,'linked.html'));
   const result=await captureWithDesignSystem({directory:ordinary.directory,repo,phase:'before',scan:async()=>snapshot,capture:async()=>({states:[]})});assert.equal(result.verificationSource,undefined);
 });
+
+
+test('narrow capture verification uses the complete source digest without inventing design extraction',async t=>{
+ const {run,binding}=await fixture(t),path=join(run.directory,'run.json'),manifest=JSON.parse(await readFile(path));
+ manifest.captures.after.designSystemSource={status:'not-extracted',reason:'Explicit bounded task; full source digest retained.'};await writeFile(path,JSON.stringify(manifest));
+ const options={directory:run.directory,repo:'/fixture',url:'http://localhost',checks:[check],inspect:async()=>({commit:binding.repository.commit,dirty:false}),scan:async()=>{throw Error('Narrow verification must not scan the whole design system.');},fingerprint:async()=> 'preview',fingerprintSource:async()=>binding.repository,execute:async(_cmd,args)=>{await writeFile(join(args[2],'result.json'),JSON.stringify({status:'pass'}));await writeFile(join(args[2],'menu.png'),png);}};
+ await runVerificationChecks(options);const bundle=await readVerificationEvidence(run.directory,(await loadRun(run.directory)).manifest);assert.equal(bundle.binding.source.status,'not-extracted');assert.equal(bundle.records[0].status,'pass');
+ await assert.rejects(runVerificationChecks({...options,fingerprintSource:async()=>({...binding.repository,contentHash:'c'.repeat(64)})}),/repository inputs changed/);
+ const invalid=(await loadRun(run.directory)).manifest;delete invalid.captures.after.verificationSource;await assert.rejects(verificationBinding(run.directory,invalid),/source-bound/);
+});
+
+test('per-rule QA can cite verified specialist originals without replacing its assigned state',async t=>{
+ const {run,binding}=await fixture(t);await saveVerificationEvidence(run.directory,{binding,records:[record()]});
+ const current=await loadRun(run.directory),verified=await readVerificationEvidence(run.directory,current.manifest);
+ const {methodStateEntries,assertMethodChecks}=await import('../packages/harness-core/remediation.js');const {assertVisualReview}=await import('../packages/harness-core/visual-review.js');
+ const image=verified.records[0].images[0].path,state=methodStateEntries(current.manifest)[0],methodHash='d'.repeat(64);
+ const row={ruleId:'UX-task',stateKey:state.key,status:'pass',reason:'Synthetic verified specialist state supplements the required captured original.',screenshotRefs:[state.screenshot,image]};
+ assert.throws(()=>assertMethodChecks([row],['UX-task'],current.manifest,'pass'),/assigned original/);
+ const manifest={...current.manifest,plan:{remediation:{hash:methodHash,ruleIds:['UX-task']}},verificationRecords:verified.records};
+ const review={schemaVersion:'0.1',skillId:'visual-qa-evaluator',reviewer:{type:'model',name:'Synthetic protocol fixture, not actual visual acceptance',version:'test'},reviewedAt:new Date().toISOString(),verdict:'pass',screenshotRefs:['before/menu--mobile.png','after/menu--mobile.png',image],findings:[],rationale:'Synthetic bound-reference protocol check only',limitations:['Synthetic test, not a real product review'],verificationDigest:verified.digest,verificationRefs:['menu'],remediationHash:methodHash,methodChecks:[row]};
+ assertVisualReview(review,manifest);
+ assert.throws(()=>assertVisualReview({...review,methodChecks:[{...row,screenshotRefs:[image]}]},manifest),/assigned original/);
+ assert.throws(()=>assertVisualReview({...review,methodChecks:[{...row,screenshotRefs:[state.screenshot,'verification/not-assigned/image-0.png']}]},manifest),/assigned original/);
+ await writeFile(join(run.directory,image),'tampered');await assert.rejects(readVerificationEvidence(run.directory,current.manifest),/changed/);
+});

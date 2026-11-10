@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ROLES = new Set(['foundation', 'diagnose', 'plan', 'review', 'learn']);
@@ -16,7 +17,7 @@ function validateManifest(value, directory) {
   return Object.freeze({ ...value, directory });
 }
 
-export async function loadRegistry(root = resolve('skills/product-design')) {
+export async function loadRegistry(root = fileURLToPath(new URL('../../skills/product-design/',import.meta.url))) {
   const entries = await readdir(root, { withFileTypes: true });
   const manifests = [];
   for (const entry of entries.filter(item => item.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {

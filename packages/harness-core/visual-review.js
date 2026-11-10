@@ -20,7 +20,10 @@ export function assertVisualReview(review, manifest) {
   const available = availableScreenshots(manifest);
   if(review.skillId==='visual-qa-evaluator'&&manifest.plan?.remediation){
     if(review.remediationHash!==manifest.plan.remediation.hash)throw Error('Review remediation contract changed.');
-    assertMethodChecks(review.methodChecks,manifest.plan.remediation.ruleIds,manifest,review.verdict);
+    // Production callers populate these records only after checking the bound
+    // verification bundle and every original hash. They supplement each state's
+    // required after original; arbitrary paths and replacement anchors still fail.
+    assertMethodChecks(review.methodChecks,manifest.plan.remediation.ruleIds,manifest,review.verdict,{supplementalRefs:(manifest.verificationRecords||[]).flatMap(record=>record.images.map(image=>image.path))});
   }
   if(review.verificationDigest && review.verificationDigest!==manifest.verificationEvidence?.digest)throw Error('Review verification evidence changed.');
   const records=manifest.verificationRecords||[];

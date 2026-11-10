@@ -30,7 +30,19 @@ https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## 开始使用
 
-可直接按照 [Harness 指南](docs/harness.md)使用命令行，无需启动工作台。下方步骤提供本地工作台入口。[轻量 Skill 与设计资源接入](https://github.com/ShuaiMXu/happyhands/issues/7)正在规划，尚未发布一行安装版本。
+在你的产品仓库中，一行安装 **轻量 Alpha Skill**，无需启动工作台：
+
+```sh
+npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.2/happyhands-lite-0.1.0-alpha.2.tgz happyhands install
+```
+
+默认安装到 Codex 用户技能目录（`~/.codex/skills/happyhands`，或 `CODEX_HOME` 下），不改产品源码。`--scope project` 可安装到项目内的 `.agents/skills/happyhands`，隔离修复前需要先提交或忽略这些安装文件。包内包含运行核心、完整的固定版本方法文件和六项运行依赖；已有 Skill 不会被覆盖。在 Codex 中使用 `$happyhands`，提供预览与一个具体用户任务，或按[轻量版指南](docs/lightweight.md)调用。`install --agent claude-code` 可安装到 Claude Code 的发现目录，其完整执行闭环仍未验证。DSH 可作为外部操作端读取和调用。
+
+需要 Node.js 22.15+（含 npm）、Git、Chrome/Edge 和已配置的 Agent。内置模型诊断与复核使用 Codex，新模型需使用支持它的 Codex 版本。安装和选取参考资料不代表真实产品修复已通过验收；本次实际验证与限制见[发布说明](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.2)。
+
+### 可选的本地工作台
+
+下方保留源码工程与可视化工作台的使用方式；完整命令见 [Harness 指南](docs/harness.md)。
 
 准备 Git、Node.js **22.15+**、pnpm **11.19**，以及用于浏览器采集的已安装 Chrome 或 Edge。本仓库提供本地工作台与 Harness 源码。工作台内置模型诊断和视觉复核需要已配置、已登录的 **Codex CLI**；代码实现所需的 CLI 配置取决于所选执行器。区别见[配合你的编码工具](#配合你的编码工具)。
 
@@ -95,7 +107,7 @@ HappyHands 支持任意 AI CLI 参与开放的编码 Agent 工作流。外部 Ag
 
 HappyHands 目前是**免费的本地 Web Alpha**。外部模型和 CLI 服务可能需要单独的账号、订阅或按量付费。结论以采集计划和已完成检查为准，未查看的页面、未测试的交互仍属未审阅范围。专业校准、真实用户验收等缺口见[当前待办](docs/next-steps.md)。
 
-运行记录存放在 `.harness/`。模型辅助步骤会通过 CLI 将所选源码上下文和图片发送给配置的模型服务。工作副本与仓库检查属于流程保护，不是安全沙箱。分享导出记录前应检查敏感内容，详见[数据与执行说明](docs/local-workbench.md)。
+轻量入口的运行记录默认存放在 `~/.happyhands/runs`，源码 CLI / 工作台仍使用 `.harness/`；也可显式指定输出路径。模型辅助步骤会通过 CLI 将所选源码上下文和图片发送给配置的模型服务。工作副本与仓库检查属于流程保护，不是安全沙箱。分享导出记录前应检查敏感内容，详见[数据与执行说明](docs/local-workbench.md)。
 
 <details>
 <summary>开发与仓库说明</summary>

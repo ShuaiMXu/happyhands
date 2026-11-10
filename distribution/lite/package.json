@@ -1,0 +1,25 @@
+{
+  "name": "happyhands-lite",
+  "version": "0.1.0-alpha.2",
+  "description": "Evidence-backed UI and product experience review for coding agents, without the workbench.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ShuaiMXu/happyhands.git"
+  },
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "bin": {
+    "happyhands": "bin/happyhands.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "axe-core": "4.13.0",
+    "playwright-core": "1.63.0",
+    "pngjs": "7.0.0",
+    "postcss": "8.5.29",
+    "typescript": "6.0.3"
+  }
+}

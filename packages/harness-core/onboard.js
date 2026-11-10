@@ -1,4 +1,5 @@
 import {validateVerificationChecks} from './verification.js';
+import {collectDesignSources} from './design-sources.js';
 import {designGuidanceProfile} from '../skill-core/design-guidance.js';
 import { createHash } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
@@ -50,6 +51,8 @@ export async function loadProjectConfig(path) {
   const config = JSON.parse(await readFile(configPath, 'utf8'));
   if (config.version !== '0.1') throw new Error('Project config version must be 0.1.');
   for (const key of ['spec', 'repo']) if (!config[key]?.trim()) throw new Error(`Project config requires ${key}.`);
+  // CLI onboarding must calculate the same source snapshot as workbench configuration.
+  if(config.designSourcePaths!==undefined)config.designSources=await collectDesignSources(resolveFrom(base,config.repo),config.designSourcePaths);
   validateVerificationChecks(config.verificationChecks);
   const mode = config.mode || 'auto';
   if (!['auto', 'review', 'bootstrap'].includes(mode)) throw new Error('Project mode must be auto, review or bootstrap.');

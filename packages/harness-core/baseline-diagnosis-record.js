@@ -7,10 +7,10 @@ async function readVerificationFile(root,path,maxBytes){
  const info=await lstat(current);if(!info.isFile()||info.size>maxBytes)throw Error('Diagnosis evidence exceeds its limit.');const bytes=await readFile(current);if(bytes.length>maxBytes)throw Error('Diagnosis evidence exceeds its limit.');return bytes;
 }
 export const baselineHash=bytes=>createHash('sha256').update(bytes).digest('hex');
-export const baselineSourceHash=run=>baselineHash(JSON.stringify({id:run.manifest.id,source:run.manifest.source,project:run.spec.project,onboarding:run.manifest.onboarding}));
-export const baselineFoundationHash=run=>baselineHash(JSON.stringify(run.spec.designFoundation));
+export const baselineSourceHash=run=>baselineHash(JSON.stringify({id:run.manifest.id,source:run.manifest.source,project:run.spec.project,onboarding:run.manifest.onboarding,selectedReferences:run.manifest.selectedReferences}));
+export const baselineFoundationHash=run=>baselineHash(JSON.stringify(run.spec.designFoundation??null));
 export const baselineCaptureHash=run=>baselineHash(JSON.stringify(run.manifest.captures.before));
-export const baselineBinding=run=>baselineHash(JSON.stringify({id:run.manifest.id,source:run.manifest.source,project:run.spec.project,foundation:run.spec.designFoundation,onboarding:run.manifest.onboarding,capture:run.manifest.captures.before,confirmation:run.manifest.confirmation,plan:run.manifest.plan,execution:run.manifest.execution},null,2)+'\n');
+export const baselineBinding=run=>baselineHash(JSON.stringify({id:run.manifest.id,source:run.manifest.source,project:run.spec.project,foundation:run.spec.designFoundation,onboarding:run.manifest.onboarding,capture:run.manifest.captures.before,confirmation:run.manifest.confirmation,plan:run.manifest.plan,execution:run.manifest.execution,selectedReferences:run.manifest.selectedReferences},null,2)+'\n');
 export async function verifyBaselineDiagnosis(run,diagnosis,{current=true}={}){
  const reference=diagnosis?.modelDiagnosis;if(!reference?.path){if(diagnosis?.findings.some(item=>(item.sources||[]).some(source=>source.id==='baseline-model-diagnosis')))throw Error('Model diagnosis provenance is missing.');return null;}
  if(!/^[a-f0-9]{64}$/.test(reference.sha256)||reference.path!==`baseline-diagnosis/${reference.sha256}.json`)throw Error('Invalid baseline diagnosis reference.');

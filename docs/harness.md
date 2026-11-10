@@ -2,6 +2,8 @@
 
 The local Harness turns one evidence-backed finding into a reviewable change. It captures desktop and mobile evidence, checks that the finding still applies, prepares a scoped brief for a coding agent, optionally edits an isolated Git worktree, compares the result, and records a human decision. It does not claim that structural checks measure design quality.
 
+For the installed lightweight Skill, see [lightweight setup](lightweight.md). In the source-checkout command examples below, replace `pnpm harness` with `node /actual/installed/skill/bin/happyhands.mjs` when using that package from your product directory. The narrow entry uses `start --config`, selected references and explicitly source-bound captures, with the same execution and acceptance ledger.
+
 ## Workbench automatic repair
 
 For an existing-page review, the primary workflow is **Diagnose → Repair → Verify → Final review**. After diagnosis, **Fix automatically** delegates the current evidence-backed candidates to the agent. A candidate-specific action repairs that candidate; the main action includes all eligible candidates. There is no intermediate issue-confirmation or plan-approval dialog. Existing CLI/manual commands below remain available for explicit scoped integrations.
@@ -272,7 +274,7 @@ OJO、Taste、Impeccable 完整上游包、适配层与引用仍保留；这里�
 
 执行前后校验源码提交、工作区修改状态、源文件扫描指纹和预览入口响应指纹。工作台保留的未提交修改以 capture 时所有 Git 跟踪及非忽略文件的完整内容指纹绑定（包括 JSON、MJS、图片，不使用设计系统扫描子集代替源码），并记录 dirty 状态；不要求代理自行提交，也不把未提交内容说成提交版本。该响应指纹证明入口响应一致，不等于所有资源或物理设备认证。旧 capture 缺少完整仓库指纹、采集时的原图 hash 或预览响应指纹时，必须重新采集，不能追溯生成绑定。历史结果保持原样。模拟 Clipboard API 拒绝、200% 根字号模拟必须在 method/limitations 中说明，不能被描述成真实系统权限拒绝或浏览器缩放。
 
-最多8份专项 JSON，总计256 KiB，以及12张、每张不超过12 MiB的原始 PNG；超限会报错，不截断或挑选通过记录。索引、结果和原图复制到 Run 的 `verification/`，逐文件保存 hash，并绑定 before/after 原始截图字节；受管理采集在 before 和 after 生成截图时均固化原图 hash，防止事后替换。拒绝路径穿越和符号链接。脚本退出成功但报告缺失、JSON 损坏、PNG 缺失或超限，同样登记为新的缺证版本，使旧通过结论失效。完整仓库指纹不静默截断：单文件超过64 MiB、总输入超过512 MiB，或包含未显式支持的符号链接/子模块时拒绝绑定。独立区域审阅收到对应状态的专项记录，跨区域和小范围单会话收到完整记录；模型必须返回 `verificationRefs` 并引用每张专项原图。正常检查失败或缺证会阻止 pass；辅助记录仍会交给审阅者，但不会自动要求改坏正常布局。专项执行记录不替代视觉审阅或人工判断。
+最多8份专项 JSON，总计256 KiB，以及12张、每张不超过12 MiB的原始 PNG；超限会报错，不截断或挑选通过记录。索引、结果和原图复制到 Run 的 `verification/`，逐文件保存 hash，并绑定 before/after 原始截图字节；受管理采集在 before 和 after 生成截图时均固化原图 hash，防止事后替换。拒绝路径穿越和符号链接。脚本退出成功但报告缺失、JSON 损坏、PNG 缺失或超限，同样登记为新的缺证版本，使旧通过结论失效。完整仓库指纹不静默截断：单文件超过64 MiB、总输入超过1 GiB，或包含未显式支持的符号链接/子模块时拒绝绑定。独立区域审阅收到对应状态的专项记录，跨区域和小范围单会话收到完整记录；模型必须返回 `verificationRefs` 并引用每张专项原图。正常检查失败或缺证会阻止 pass；辅助记录仍会交给审阅者，但不会自动要求改坏正常布局。专项执行记录不替代视觉审阅或人工判断。
 
 已有符合上述绑定要求的 Run 可以对同一源码补跑配置（预览需已经可用）：
 

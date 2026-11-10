@@ -99,7 +99,8 @@ export function describeBreach(before, after, branch) {
   return problems;
 }
 
-export async function executeWithAgent({ directory, repo, agent, commandOverride, signal }) {
+export async function executeWithAgent({ directory, repo, agent, commandOverride, model, signal }) {
+  if(model!==undefined&&(!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}$/.test(model)||agent&&agent!=='codex'))throw Error('Explicit --model currently supports a Codex model ID only.');
   signal?.throwIfAborted();
   const run = await loadRun(directory);
   if(run.manifest.patternAdmissions?.length&&!run.manifest.foundationApproval)throw Error('Staged patterns need Foundation approval before execution.');
@@ -155,7 +156,7 @@ export async function executeWithAgent({ directory, repo, agent, commandOverride
   await writeFile(join(run.directory, 'execution-prompt.txt'), prompt);
   const promptHash = createHash('sha256').update(prompt).digest('hex');
   const lastMessagePath = adapter.lastMessageFile ? join(run.directory, adapter.lastMessageFile) : null;
-  const argv = adapter.argv({ worktree, lastMessagePath, runId: run.manifest.id });
+  const argv = adapter.argv({ worktree, lastMessagePath, runId: run.manifest.id, model });
   let result = null;
   try {
     const currentRun = await loadRun(directory);

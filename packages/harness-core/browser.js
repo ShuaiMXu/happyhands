@@ -227,6 +227,13 @@ export async function captureDom(page) {
     h1: [...document.querySelectorAll('h1')].map(item => (item.innerText ?? item.textContent ?? "").trim()).filter(Boolean),
     headings: [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].map(item => ({ level: Number(item.tagName.slice(1)), text: (item.innerText ?? item.textContent ?? "").trim() })).filter(item => item.text),
     language: document.documentElement.lang || null,
+    activeElement: (() => {
+      const element=document.activeElement;if(!element)return null;
+      const rect=element.getBoundingClientRect();
+      return {tag:element.tagName.toLowerCase(),id:element.id||null,role:element.getAttribute('role'),tabIndex:element.tabIndex,
+        name:(element.getAttribute('aria-label')||[...(element.labels||[])].map(label=>label.textContent).join(' ')||element.innerText||element.getAttribute('title')||'').trim().slice(0,180),
+        focusVisible:element.matches(':focus-visible'),bounds:{x:Math.round(rect.x),y:Math.round(rect.y),width:Math.round(rect.width),height:Math.round(rect.height)}};
+    })(),
     landmarks: { main: document.querySelectorAll('main,[role="main"]').length, navigation: document.querySelectorAll('nav,[role="navigation"]').length },
     images: { count: document.querySelectorAll('img').length, missingAlt: [...document.querySelectorAll('img')].filter(item => !item.hasAttribute('alt')).map(item => item.getAttribute('src') || '').slice(0, 20) },
     unlabeledInputs: [...document.querySelectorAll('input,select,textarea')].filter(item => {

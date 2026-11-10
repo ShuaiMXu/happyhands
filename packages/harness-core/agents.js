@@ -46,9 +46,9 @@ const AGENTS = {
     promptVia: 'stdin',
     logFile: 'agent-events.jsonl',
     lastMessageFile: 'agent-last-message.md',
-    argv: ({ worktree, lastMessagePath }) => [
+    argv: ({ worktree, lastMessagePath, model }) => [
       'exec', '-C', worktree, '-s', 'workspace-write', '--json',
-      '-o', lastMessagePath, '-'
+      ...(model?['-m',model]:[]), '-o', lastMessagePath, '-'
     ],
     satisfies: {
       nonInteractive: '`exec` is the non-interactive subcommand and the prompt arrives on stdin.',
