@@ -107,7 +107,7 @@ Run `pnpm harness agents` to inspect registered executors. Select one with `harn
 
 HappyHands is a **free Local Web Alpha**. External model and CLI services may require their own accounts, subscriptions or usage fees. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, real-user acceptance and other gaps are tracked in the [backlog](docs/next-steps.md).
 
-Run records stay under `.harness/`. Model-assisted steps send selected source context and images to the configured model service through the CLI. Worktrees and repository checks are workflow safeguards, not a security sandbox. Review shared exports for sensitive material. See [data and execution details](docs/local-workbench.md).
+Lightweight runs default to `~/.happyhands/runs`; the source CLI/workbench retains `.harness/`. An explicit output path can override these locations. Model-assisted steps send selected source context and images to the configured model service through the CLI. Worktrees and repository checks are workflow safeguards, not a security sandbox. Review shared exports for sensitive material. See [data and execution details](docs/local-workbench.md).
 
 <details>
 <summary>Development and repository guide</summary>
