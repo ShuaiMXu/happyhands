@@ -201,3 +201,13 @@ test('shared CLI/workbench capture boundary records both original hashes and pre
   } else await symlink('index.html',join(repo,'linked.html'));
   const result=await captureWithDesignSystem({directory:ordinary.directory,repo,phase:'before',scan:async()=>snapshot,capture:async()=>({states:[]})});assert.equal(result.verificationSource,undefined);
 });
+
+
+test('narrow capture verification uses the complete source digest without inventing design extraction',async t=>{
+ const {run,binding}=await fixture(t),path=join(run.directory,'run.json'),manifest=JSON.parse(await readFile(path));
+ manifest.captures.after.designSystemSource={status:'not-extracted',reason:'Explicit bounded task; full source digest retained.'};await writeFile(path,JSON.stringify(manifest));
+ const options={directory:run.directory,repo:'/fixture',url:'http://localhost',checks:[check],inspect:async()=>({commit:binding.repository.commit,dirty:false}),scan:async()=>{throw Error('Narrow verification must not scan the whole design system.');},fingerprint:async()=> 'preview',fingerprintSource:async()=>binding.repository,execute:async(_cmd,args)=>{await writeFile(join(args[2],'result.json'),JSON.stringify({status:'pass'}));await writeFile(join(args[2],'menu.png'),png);}};
+ await runVerificationChecks(options);const bundle=await readVerificationEvidence(run.directory,(await loadRun(run.directory)).manifest);assert.equal(bundle.binding.source.status,'not-extracted');assert.equal(bundle.records[0].status,'pass');
+ await assert.rejects(runVerificationChecks({...options,fingerprintSource:async()=>({...binding.repository,contentHash:'c'.repeat(64)})}),/repository inputs changed/);
+ const invalid=(await loadRun(run.directory)).manifest;delete invalid.captures.after.verificationSource;await assert.rejects(verificationBinding(run.directory,invalid),/source-bound/);
+});

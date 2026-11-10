@@ -8,7 +8,7 @@ async function readVerificationFile(root,path,maxBytes){
 }
 export const baselineHash=bytes=>createHash('sha256').update(bytes).digest('hex');
 export const baselineSourceHash=run=>baselineHash(JSON.stringify({id:run.manifest.id,source:run.manifest.source,project:run.spec.project,onboarding:run.manifest.onboarding,selectedReferences:run.manifest.selectedReferences}));
-export const baselineFoundationHash=run=>baselineHash(JSON.stringify(run.spec.designFoundation));
+export const baselineFoundationHash=run=>baselineHash(JSON.stringify(run.spec.designFoundation??null));
 export const baselineCaptureHash=run=>baselineHash(JSON.stringify(run.manifest.captures.before));
 export const baselineBinding=run=>baselineHash(JSON.stringify({id:run.manifest.id,source:run.manifest.source,project:run.spec.project,foundation:run.spec.designFoundation,onboarding:run.manifest.onboarding,capture:run.manifest.captures.before,confirmation:run.manifest.confirmation,plan:run.manifest.plan,execution:run.manifest.execution,selectedReferences:run.manifest.selectedReferences},null,2)+'\n');
 export async function verifyBaselineDiagnosis(run,diagnosis,{current=true}={}){

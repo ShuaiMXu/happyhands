@@ -37,8 +37,11 @@ export async function readVerificationFile(root,path,maxBytes) {
   return bytes;
 }
 export async function verificationBinding(directory,manifest) {
-  const capture=manifest.captures.after,source=capture?.designSystemSource;
-  if(!source?.repositoryCommit||typeof source.dirty!=='boolean'||source.status!=='capture-scan-match')throw Error('Verification requires a source-bound after capture with known worktree state.');
+  const capture=manifest.captures.after,observed=capture?.designSystemSource;
+  // A narrow capture intentionally has no extracted design-system snapshot.
+  // Its complete capture-time repository digest still binds the actual source.
+  const source=observed?.status==='not-extracted'?{...observed,repositoryCommit:capture.verificationSource?.commit,dirty:capture.verificationSource?.dirty}:observed;
+  if(!source?.repositoryCommit||typeof source.dirty!=='boolean'||!['capture-scan-match','not-extracted'].includes(source.status))throw Error('Verification requires a source-bound after capture with known worktree state.');
   const repository=capture.verificationSource;
   if(!repository||(repository.version!==1||repository.commit!==source.repositoryCommit||repository.dirty!==source.dirty||! /^[a-f0-9]{64}$/.test(repository.contentHash)||!Number.isInteger(repository.fileCount)||repository.fileCount<0))throw Error('Invalid complete repository fingerprint.');
   if(!capture.verificationPreviewFingerprint)throw Error('Verification requires capture-time preview binding; collect fresh captures.');

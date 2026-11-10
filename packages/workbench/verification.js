@@ -20,7 +20,8 @@ export async function runVerificationChecks({directory,repo,url,checks,signal,ex
   const assertSource=async()=>{
     if(binding.repository&&JSON.stringify(await fingerprintSource(repo))!==JSON.stringify(binding.repository))throw Error('Specialist verification repository inputs changed.');
     const identity=await inspect(repo);
-    if(identity.dirty!==binding.source.dirty||identity.commit!==binding.source.repositoryCommit||snapshotHash(await scan(repo,{includeDesignDocs:true}))!==binding.source.snapshotHash)throw Error('Specialist verification source does not match after capture.');
+    if(identity.dirty!==binding.source.dirty||identity.commit!==binding.source.repositoryCommit)throw Error('Specialist verification source does not match after capture.');
+    if(binding.source.status!=='not-extracted'&&snapshotHash(await scan(repo,{includeDesignDocs:true}))!==binding.source.snapshotHash)throw Error('Specialist verification source does not match after capture.');
   };
   await assertSource();
   const preview=await fingerprint(url),captured=run.manifest.captures.after.verificationPreviewFingerprint;

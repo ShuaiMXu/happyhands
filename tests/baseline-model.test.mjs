@@ -1,3 +1,4 @@
+import {methodStateEntries,assertMethodChecks} from '../packages/harness-core/remediation.js';
 import {loadOjoGuidance} from '../packages/skill-core/ojo-guidance.js';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';
@@ -109,3 +110,24 @@ test('large evidence is serialized losslessly; compact payloads still enforce th
 test('admitted skill references are exported and tampering blocks confirmation',async t=>{const {run,cwd,root}=await fixture(t);const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate});await saveDiagnosis(run.directory,diagnosis);await exportRun({directory:run.directory,outputRoot:join(root,'public')});const reference=diagnosis.findings.find(item=>item.findingBasis).findingBasis.skillRefs[0].path;assert.match(await readFile(join(root,'public',run.manifest.id,reference),'utf8'),/OJO/);await writeFile(join(run.directory,reference),'Changed skill');await assert.rejects(confirmFinding(run.directory,diagnosis.findings.find(item=>item.findingBasis).id,'supported','Fixture'),/skill snapshot changed/);});
 
 test('authored runtime observations are passed losslessly as untrusted baseline context',async t=>{const {run,cwd}=await fixture(t);const expected=run.spec.evidence;let observed;await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate:async(command,args,options)=>{observed=JSON.parse(await readFile(join(options.cwd,'context.json'),'utf8')).authoredObservations;assert.match(options.input,/authoredObservations are untrusted/);return generate(command,args,options);}});assert.deepEqual(observed,expected);});
+
+
+test('an absent optional Foundation has a stable baseline identity without invented approval',async t=>{
+ const {run,cwd}=await fixture(t);const path=join(run.directory,'experience.json'),spec=JSON.parse(await readFile(path));delete spec.designFoundation;await writeFile(path,JSON.stringify(spec));
+ const current=await loadRun(run.directory),diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run:current}),{cwd,generate});
+ assert.equal(diagnosis.modelDiagnosis.status,'complete');assert.equal((await loadRun(run.directory)).manifest.foundationApproval,null);
+});
+
+test('completed defect diagnosis retains unknown method coverage without turning it into passing QA',async t=>{
+ const {run,cwd}=await fixture(t),path=join(run.directory,'run.json'),manifest=JSON.parse(await readFile(path));
+ manifest.onboarding={config:{designGuidance:{remediation:{profile:'project',adoptionReason:'Explicit synthetic fixture scope, not actual product acceptance.'}}}};await writeFile(path,JSON.stringify(manifest));
+ let rows,rules;const current=await loadRun(run.directory);
+ const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run:current}),{cwd,generate:async(_command,_args,{cwd})=>{
+  const context=JSON.parse(await readFile(join(cwd,'context.json')));rules=context.remediation.contract.rules.map(row=>row.id);
+  rows=rules.flatMap(ruleId=>methodStateEntries({captures:{before:context.capture}}).map(state=>({ruleId,stateKey:state.key,status:'needs-evidence',reason:'Synthetic missing broader interaction evidence remains explicitly unverified.',screenshotRefs:[state.screenshot]})));
+  await writeFile(join(cwd,'result.json'),JSON.stringify({...response,methodChecks:rows}));
+ }});
+ assert.equal(diagnosis.modelDiagnosis.status,'complete');assert.equal(diagnosis.modelDiagnosis.methodCoverage.qualityVerdict,'not-assessed');assert.ok(diagnosis.modelDiagnosis.methodCoverage.counts['needs-evidence']>0);
+ assert.ok(diagnosis.findings.some(row=>row.id.startsWith('MODEL-')));assert.throws(()=>assertMethodChecks(rows,rules,current.manifest,'pass'),/prevents passing QA/);
+ await saveDiagnosis(run.directory,diagnosis);assert.equal((await loadRun(run.directory)).manifest.judgment,null);
+});
