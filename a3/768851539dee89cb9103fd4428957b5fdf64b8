@@ -1,0 +1,34 @@
+packages/workbench/verification.js
+  s_c3a809bd8a1ec1::t_fc7439349f5f9c 23-24
+packages/harness-core/verification.js
+  s_c3a809bd8a1ec1::t_fc7439349f5f9c 40-44
+packages/harness-core/baseline-diagnosis-record.js
+  s_c3a809bd8a1ec1::t_7a90a57e3d7ffe 11
+packages/workbench/baseline-diagnosis.js
+  s_c3a809bd8a1ec1::t_7a90a57e3d7ffe 82-85,135
+  s_c3a809bd8a1ec1::t_5156e6e35476cd 67
+docs/harness.md
+  s_c3a809bd8a1ec1::t_a05f0db8775018 277
+tests/baseline-model.test.mjs
+  s_c3a809bd8a1ec1::t_e3fd6df84d6b28 1,113-133
+tests/remediation-regressions.test.mjs
+  s_c3a809bd8a1ec1::t_415206eb57c6b6 25,31-33
+tests/verification.test.mjs
+  s_c3a809bd8a1ec1::t_080ba788ba002a 204-213
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "a3768851539dee89cb9103fd4428957b5fdf64b8",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
