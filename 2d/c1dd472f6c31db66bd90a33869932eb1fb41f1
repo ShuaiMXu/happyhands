@@ -1,0 +1,31 @@
+scripts/update-star-history.mjs
+  s_c3a809bd8a1ec1::t_a500e6e958a473 1-75
+README.md
+  s_c3a809bd8a1ec1::t_e7b13565cda675 8,10,15,20,23,33-34,79,117-135
+  s_c3a809bd8a1ec1::t_948de0ae0bb28a 136-138
+assets/readme/star-history-dark.svg
+  s_c3a809bd8a1ec1::t_a5087ec6dabfdd 1-15
+assets/readme/star-history.json
+  s_c3a809bd8a1ec1::t_a5087ec6dabfdd 1-77
+README.zh-CN.md
+  s_c3a809bd8a1ec1::t_e7b13565cda675 8,10,15,20,23,33-34,79,117-135
+  s_c3a809bd8a1ec1::t_566c06aae5198e 136-138
+assets/readme/star-history-light.svg
+  s_c3a809bd8a1ec1::t_a5087ec6dabfdd 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "2dc1dd472f6c31db66bd90a33869932eb1fb41f1",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
