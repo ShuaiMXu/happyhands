@@ -87,6 +87,7 @@ HappyHands supports working with any AI CLI as part of an open coding-agent work
 | Codex CLI | Built-in model diagnosis and screenshot-aware review; also the default implementation adapter. Its execution path has shipped, but this is not full-loop validation of every feature. |
 | Claude Code | Implementation adapter for confirmed tasks. Configure it before execution; complete end-to-end validation remains open. |
 | Cursor, Kimi Code, WorkBuddy | Can guide and operate the Harness when the tool has local browser, terminal and repository access. They do not have dedicated implementation adapters here. |
+| DeepSeek Harness (DSH) | Can coordinate the existing CLI from a DSH conversation. No dedicated execution adapter; built-in model diagnosis and review still need Codex. See the [DSH workflow](docs/dsh.md), including headless authentication limits. |
 
 Run `pnpm harness agents` to inspect registered executors. Select one with `harness execute --agent ID`; `--command PATH` only changes that adapter’s binary location, not its CLI protocol. Other CLIs need an adapter for direct execution. External changes have no Harness agent-execution record and must be identified separately during review. Agent-specific behavior and limits are described in the [adapter documentation](docs/architecture.md#agent-adapters-and-the-permission-boundary).
 
