@@ -87,6 +87,7 @@ HappyHands 支持任意 AI CLI 参与开放的编码 Agent 工作流。外部 Ag
 | Codex CLI | 内置模型诊断、截图视觉复核，也是默认代码执行适配器；执行路径已有使用记录，不等于所有功能均已完成全流程验证。 |
 | Claude Code | 对已确认任务提供代码执行适配器；需先完成配置，完整端到端验证仍待完成。 |
 | Cursor、Kimi Code、WorkBuddy | 工具具备本地浏览器、终端和仓库访问能力时，可以指导和操作 Harness；目前没有各自的代码执行适配器。 |
+| DeepSeek Harness（DSH） | 可在 DSH 对话中调度已有 CLI；尚无专用执行适配器，内置模型诊断与复核仍需 Codex。见 [DSH 调用流程](docs/dsh.zh-CN.md)，包含 headless 的认证限制。 |
 
 运行 `pnpm harness agents` 查看已注册执行器，通过 `harness execute --agent ID` 选择；`--command PATH` 只更改该适配器的二进制路径，不改变 CLI 协议。其他 CLI 若要直接执行，需要添加适配器。外部修改没有 Harness Agent 执行记录，审阅时需单独说明。具体行为和限制见[适配器说明](docs/architecture.md#agent-adapters-and-the-permission-boundary)。
 
