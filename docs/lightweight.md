@@ -12,6 +12,8 @@ npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.
 
 Git, Chrome/Edge and an authenticated coding agent are also needed for the repair loop. The package is distributed as a public GitHub Release asset, so installing it does not require GitHub Packages authentication. The install command downloads the package and npm runtime dependencies; it runs `npm ci --ignore-scripts` using the bundled shrinkwrap. Existing installations and linked destination directories are rejected. For an upgrade, select a separate `--destination PATH`, review it, then switch your agent to the chosen installation; this Alpha does not replace existing drafts or Skills automatically.
 
+The current real-case validation uses macOS, Node.js 22.19, Chrome and Codex CLI 0.167.0 with `gpt-6-astra`. The older local Codex CLI 0.141.0 rejected that model configuration. `doctor` only reports the detected executable; verify actual model access before starting a repair. These observations are not a compatibility claim for every newer CLI, model or platform.
+
 The default Codex discovery path is `~/.codex/skills/happyhands` (or under `CODEX_HOME`); `install --agent claude-code` selects the Claude user Skill directory. `--scope project` selects `.agents/skills/happyhands` or `.claude/skills/happyhands` in the current project. Project-local installations must be committed or explicitly ignored before the core can require a clean repair checkout; the installer never edits your Git ignore rules. Only the environment actually validated in the release is claimed as tested. DSH is an external operator, not a registered executor or a replacement for Codex model access.
 
 Ask the selected agent:
