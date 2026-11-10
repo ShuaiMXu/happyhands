@@ -29,6 +29,8 @@ Current-page AI slop and detail review → shared-component correction and curre
 
 The reviewer does not edit. Inspect originals and supplied verification records, not only the executor's account. Check every rule on every assigned state, including layout/grid relationships and shared consumers. A pass requires complete coverage with no unresolved failures or missing evidence. Record limitations and exceptions; never infer unseen interaction behavior from screenshots. Preserve existing source/hash, visual QA and human-judgment gates.
 
+The optional `harness compare` export presents eligible viewport originals at 1:1 with provenance. Reviewers must still inspect the original images, task and actual interaction evidence. An exported image cannot turn a failed or missing review into a pass. Missing capture-time binding requires fresh capture, not retrofitted hashes or edited records; a DSH final event is likewise not independent acceptance.
+
 ## Evolving these methods
 
 Keep project preferences scoped to that project. New general rules require an accepted real case, applicability and exceptions, a regression example and an independently reviewed version. Never rewrite historical contracts when updating this Skill.

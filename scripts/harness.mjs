@@ -15,6 +15,7 @@ import { resolveMode } from '../packages/harness-core/entry.js';
 import { executeWithAgent } from '../packages/harness-core/runner.js';
 import { listAgents, DEFAULT_AGENT } from '../packages/harness-core/agents.js';
 import { exportRun, reindex } from '../packages/harness-core/export.js';
+import {exportComparison} from '../packages/harness-core/comparison.js';
 import { inspectRepository, loadProjectConfig, publicProjectConfig, spawnPreview, stopPreview, waitForPreview } from '../packages/harness-core/onboard.js';
 import { diagnoseRun, overridePriority } from '../packages/harness-core/diagnosis.js';
 import { workflowState } from '../packages/harness-core/workflow.js';
@@ -82,7 +83,7 @@ pnpm harness init --spec FILE [--url URL] [--mode review|bootstrap] [--out DIREC
 pnpm harness onboard --config FILE [--out DIRECTORY]
 pnpm harness baseline --run DIRECTORY --reason TEXT
 pnpm harness foundation-approve --run DIRECTORY --input FILE
-pnpm harness capture --run DIRECTORY --phase before|after [--url URL] [--plan FILE] [--repo DIRECTORY] [--browser chrome|msedge]
+pnpm harness capture --run DIRECTORY --phase before|after [--url URL] [--plan FILE] [--repo DIRECTORY] [--bind-evidence true] [--browser chrome|msedge]
 pnpm harness skills
 pnpm harness agents
 pnpm harness skill --run DIRECTORY --skill ID [--repo DIRECTORY]
@@ -103,6 +104,7 @@ pnpm harness memory-exception --run DIRECTORY --principle ID --hash CONTENT_HASH
 pnpm harness status --run DIRECTORY
 pnpm harness next --run DIRECTORY
 pnpm harness export --run DIRECTORY [--out DIRECTORY]
+pnpm harness compare --run DIRECTORY --state ID --configuration ID [--out DIRECTORY]
 pnpm harness reindex [--out DIRECTORY]
 
 Every --option takes the next value (--run DIR); --option=value also works, for values that
@@ -268,7 +270,9 @@ finding, and evaluate reports deterministic render checks without claiming an im
     if (!options.plan && !options.url && !run.manifest.url) throw new Error('Missing --url or --plan; this run has no recorded start point.');
     const repo=options.repo ? resolve(options.repo) : phase==='after' ? run.manifest.execution?.worktree : run.manifest.onboarding?.repository?.root;
     const plan=options.plan?JSON.parse(await readFile(resolve(options.plan),'utf8')):null;
-    const bound=Boolean(run.manifest.onboarding?.config?.verificationChecks?.length);
+    if(options['bind-evidence']!==undefined&&!['true','false'].includes(options['bind-evidence']))throw Error('--bind-evidence must be true or false.');
+    const bound=options['bind-evidence']==='true'||Boolean(run.manifest.onboarding?.config?.verificationChecks?.length);
+    if(bound&&!repo)throw Error('Bound evidence capture requires --repo DIRECTORY.');
     const verificationUrl=plan?.states?.[0]?.start?.url||options.url||run.manifest.url;
     if(bound&&plan){const origin=new URL(verificationUrl).origin;if(plan.states.some(state=>new URL(state.start.url).origin!==origin||state.actions.some(action=>action.type==='navigate'&&new URL(action.url).origin!==origin)))throw Error('Specialist capture requires one preview origin.');}
     const takeCapture=async()=>plan
@@ -307,6 +311,8 @@ finding, and evaluate reports deterministic render checks without claiming an im
     await saveEvaluation(directory, evaluation);
     await printWorkbenchLink((await loadRun(directory)).manifest.id);
     process.stdout.write(JSON.stringify(evaluation, null, 2) + '\n');
+  } else if (command === 'compare') {
+    console.log(JSON.stringify(await exportComparison({directory,state:required(options,'state'),configuration:required(options,'configuration'),outputRoot:options.out?resolve(options.out):undefined}),null,2));
   } else if (command === 'export') {
     const result = await exportRun({ directory, outputRoot: resolve(options.out || 'public/runs') });
     process.stdout.write(`Published run ${result.summary.id} to ${result.directory} (${result.files.length} files)

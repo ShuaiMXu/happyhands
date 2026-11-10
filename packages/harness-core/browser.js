@@ -209,6 +209,7 @@ export async function verifyTerminalState(page, assertions) {
 export async function captureDom(page) {
   const dom = await page.evaluate(() => ({
     scroll: { x: window.scrollX, y: window.scrollY },
+    appearance:{theme:document.documentElement.getAttribute('data-theme')||document.documentElement.getAttribute('data-hh-theme')||null,colorScheme:getComputedStyle(document.documentElement).colorScheme},
     designSystem: {
       status:'observed-visible-samples',
       rootVariables:Object.fromEntries([...getComputedStyle(document.documentElement)].filter(name=>name.startsWith('--')).sort().slice(0,128).map(name=>[name,getComputedStyle(document.documentElement).getPropertyValue(name).trim()])),

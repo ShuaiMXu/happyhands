@@ -31,6 +31,7 @@
     "ajv": "8.20.0",
     "axe-core": "4.13.0",
     "playwright-core": "1.63.0",
+    "pngjs": "7.0.0",
     "postcss": "8.5.29",
     "react": "19.2.1",
     "react-dom": "19.2.1",
