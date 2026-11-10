@@ -1,0 +1,44 @@
+docs/next-steps.md
+  s_c3a809bd8a1ec1::t_3dcc58731aa3cc 6-7
+  s_c3a809bd8a1ec1::t_e85205b51a7b13 8
+skills/experience-remediation/SKILL.md
+  s_c3a809bd8a1ec1::t_c690584be2c52d 32-33
+package.json
+  s_c3a809bd8a1ec1::t_b3f1cf09cc3236 34
+packages/harness-core/browser.js
+  s_c3a809bd8a1ec1::t_361f55acc9e17c 212
+THIRD_PARTY_NOTICES.md
+  s_c3a809bd8a1ec1::t_550f48535df4a5 3-6
+skills/review-product/SKILL.md
+  s_c3a809bd8a1ec1::t_c690584be2c52d 18-19
+tests/comparison.test.mjs
+  s_c3a809bd8a1ec1::t_7c66a773de344d 1-6,8-56,58-103,105-109
+  s_c3a809bd8a1ec1::t_b061c2cd52bbe2 7,57,104
+scripts/harness.mjs
+  s_c3a809bd8a1ec1::t_361f55acc9e17c 18,86,107,273-275,314-315
+docs/harness.md
+  s_c3a809bd8a1ec1::t_e9270fa3eb8243 205-223
+  s_c3a809bd8a1ec1::t_4b408cf61b107f 224
+packages/harness-core/comparison.js
+  s_c3a809bd8a1ec1::t_b061c2cd52bbe2 3,16-23,45,92,95,97-98
+  s_c3a809bd8a1ec1::t_361f55acc9e17c 1-2,4,6-12,14-15,24-44,46-91,93-94,96,99-106,108-113
+  s_c3a809bd8a1ec1::t_3dcc58731aa3cc 5,13,107
+pnpm-lock.yaml
+  s_c3a809bd8a1ec1::t_a01873ba0004dd 38-40,1503-1506,3152-3153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "78e1990b610576d71fe2848e0601a5121184fd0c",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
