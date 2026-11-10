@@ -50,6 +50,25 @@ async function fixture(t){
   return {root,repo,run,spec,capture};
 }
 
+test('narrow capture keeps complete source and original hashes without scanning unrelated design-system content',async t=>{
+ const f=await fixture(t);
+ const base={directory:f.run.directory,repo:f.repo,phase:'before',extract:false,verificationUrl:'http://127.0.0.1:4321',fingerprintPreview:async()=> 'a'.repeat(64),scan:async()=>{throw Error('Narrow capture must not invoke the whole-project design scan');}};
+ await assert.rejects(captureWithDesignSystem({...base,capture:async()=>({})}),/requires complete source/);
+ const result=await captureWithDesignSystem({...base,bindVerificationSource:true,capture:async()=>{
+  await mkdir(join(f.run.directory,'before'));await writeFile(join(f.run.directory,'before/desktop.png'),png);
+  return {viewports:{desktop:{screenshot:'before/desktop.png',dom:{h1:['Fixture']}}}};
+ }});
+ assert.ok(result.verificationSource.fileCount>=4);assert.match(result.verificationOriginalHashes['before/desktop.png'],/^[a-f0-9]{64}$/);
+ assert.equal(result.designSystemSource.status,'not-extracted');assert.equal(result.incrementalSource.status,'unavailable');
+ assert.equal(Boolean((await loadRun(f.run.directory)).manifest.designSystemExtractions?.before),false);
+});
+
+test('narrow capture cannot bind a repository that changed during the browser operation',async t=>{
+ const f=await fixture(t);
+ await assert.rejects(captureWithDesignSystem({directory:f.run.directory,repo:f.repo,phase:'before',extract:false,bindVerificationSource:true,verificationUrl:'http://127.0.0.1:4321',fingerprintPreview:async()=> 'a'.repeat(64),capture:async()=>{await writeFile(join(f.repo,'changed.json'),'{}');return {viewports:{}};}}),/source changed|inputs changed/);
+ assert.equal((await loadRun(f.run.directory)).manifest.captures.before,null);
+});
+
 test('capture-bound extraction records documents, exact nested APIs, consumers and rendered samples without altering approval',async t=>{
   const {repo,run,spec,capture}=await fixture(t);await capture('before');
   const saved=await loadRun(run.directory),ctx=await designSystemContext(saved),before=ctx.before;

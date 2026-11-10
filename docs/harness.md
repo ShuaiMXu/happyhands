@@ -2,6 +2,8 @@
 
 The local Harness turns one evidence-backed finding into a reviewable change. It captures desktop and mobile evidence, checks that the finding still applies, prepares a scoped brief for a coding agent, optionally edits an isolated Git worktree, compares the result, and records a human decision. It does not claim that structural checks measure design quality.
 
+For the installed lightweight Skill, see [lightweight setup](lightweight.md). In the source-checkout command examples below, replace `pnpm harness` with `node /actual/installed/skill/bin/happyhands.mjs` when using that package from your product directory. The narrow entry uses `start --config`, selected references and explicitly source-bound captures, with the same execution and acceptance ledger.
+
 ## Workbench automatic repair
 
 For an existing-page review, the primary workflow is **Diagnose → Repair → Verify → Final review**. After diagnosis, **Fix automatically** delegates the current evidence-backed candidates to the agent. A candidate-specific action repairs that candidate; the main action includes all eligible candidates. There is no intermediate issue-confirmation or plan-approval dialog. Existing CLI/manual commands below remain available for explicit scoped integrations.

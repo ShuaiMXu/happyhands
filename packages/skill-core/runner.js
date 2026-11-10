@@ -1,4 +1,5 @@
 import {stageDesignGuidance} from './design-guidance.js';
+import {engineLockfile} from './runtime-root.js';
 import {acceptedPatternHistory} from '../harness-core/pattern-history.js';
 import { stageOjoGuidance } from './ojo-guidance.js';
 import { readFile, readdir } from 'node:fs/promises';
@@ -50,7 +51,7 @@ export async function executeSkill({ id, directory, repo, registryRoot, retry = 
   const files = (await readdir(source)).filter(name=>name.endsWith('.js')).sort();
   const implementation = await Promise.all(files.map(async name=>name+'\n'+await readFile(new URL(name,source),'utf8')));
   if(projectHistory)implementation.push('harness-core/pattern-history.js\n'+await readFile(new URL('../harness-core/pattern-history.js',import.meta.url),'utf8'));
-  implementation.push('pnpm-lock.yaml\n'+await readFile(new URL('../../pnpm-lock.yaml',import.meta.url),'utf8'));
+  implementation.push('pnpm-lock.yaml\n'+await engineLockfile());
   const provenance = {
     schemaVersion: '0.1', skillVersion: skill.version,
     ...(projectHistory?{patternHistoryHash:hash(JSON.stringify(projectHistory))}:{}),

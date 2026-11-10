@@ -20,7 +20,8 @@
     "test:whole-page:browser": "node tests/whole-page-browser.mjs",
     "test:review-actions:browser": "node tests/review-actions-browser.mjs",
     "test:tools:browser": "node tests/tools-browser.mjs",
-    "test:components:browser": "node tests/workbench-components-browser.mjs"
+    "test:components:browser": "node tests/workbench-components-browser.mjs",
+    "lite:build": "node scripts/build-lite.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "1.4.1",

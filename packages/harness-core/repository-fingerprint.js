@@ -1,12 +1,14 @@
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {createHash} from 'node:crypto';
-import {lstat,readFile,realpath} from 'node:fs/promises';
+import {lstat,realpath} from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
 import {join,relative,isAbsolute} from 'node:path';
 const execute=promisify(execFile);
 // Include every tracked and non-ignored input, including binary assets, JSON and
 // verification scripts. Never mistake the bounded design-token scan for source identity.
-export async function repositoryFingerprint(repo,{includeFiles=false}={}) {
+export async function repositoryFingerprint(repo,{includeFiles=false,maxBytes=1024*1024*1024}={}) {
+  if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>1024*1024*1024)throw Error('Repository byte budget must be between 1 byte and 1 GiB.');
   const root=await realpath(repo),options={cwd:root,encoding:'utf8',maxBuffer:16*1024*1024};
   const git=async args=>(await execute('git',args,options)).stdout;
   if(await realpath((await git(['rev-parse','--show-toplevel'])).trim())!==root)throw Error('Complete repository input binding requires the Git root, not a subdirectory.');
@@ -19,10 +21,13 @@ export async function repositoryFingerprint(repo,{includeFiles=false}={}) {
     if(rel.startsWith('..')||isAbsolute(rel))throw Error('Unsafe repository input.');
     let stat;try{stat=await lstat(path);}catch(error){if(error.code!=='ENOENT')throw error;digest.update(JSON.stringify([name,'deleted']));if(includeFiles)files.push({path:name,deleted:true});continue;}
     if(!stat.isFile()||stat.isSymbolicLink())throw Error('Repository fingerprint requires regular files; symlinks and submodules need an explicit verifier.');
-    bytes+=stat.size;if(stat.size>64*1024*1024||bytes>512*1024*1024)throw Error('Repository inputs exceed verification fingerprint limits; no partial binding is allowed.');
+    bytes+=stat.size;if(stat.size>64*1024*1024||bytes>maxBytes)throw Error('Repository inputs exceed verification fingerprint limits; no partial binding is allowed.');
     const resolved=await realpath(path);if(resolved!==path)throw Error('Repository inputs cannot traverse symlinks.');
-    const content=await readFile(path);if(content.length!==stat.size)throw Error('Repository input changed while fingerprinting.');
-    const hash=createHash('sha256').update(content).digest('hex');
+    const fileHash=createHash('sha256');let read=0;
+    for await(const chunk of createReadStream(path)){read+=chunk.length;if(read>stat.size)throw Error('Repository input changed while fingerprinting.');fileHash.update(chunk);}
+    const after=await lstat(path);
+    if(read!==stat.size||after.size!==stat.size||after.mtimeMs!==stat.mtimeMs||after.ino!==stat.ino||after.mode!==stat.mode)throw Error('Repository input changed while fingerprinting.');
+    const hash=fileHash.digest('hex');
     digest.update(JSON.stringify([name,stat.mode,hash]));if(includeFiles)files.push({path:name,mode:stat.mode,hash});
   }
   if((await git(['rev-parse','HEAD'])).trim()!==commit||await git(['status','--porcelain'])!==status)throw Error('Repository changed while fingerprinting.');

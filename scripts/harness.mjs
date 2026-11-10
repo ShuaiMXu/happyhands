@@ -22,6 +22,7 @@ import { workflowState } from '../packages/harness-core/workflow.js';
 import { executeSkill, loadRegistry } from '../packages/skill-core/runner.js';
 import { extractFoundationInventory } from '../packages/skill-core/foundation-inventory.js';
 import {captureWithDesignSystem} from '../packages/harness-core/design-system.js';
+import {saveRepairScope} from '../packages/harness-core/store.js';
 
 function argsOf(values) {
   const options = {};
@@ -52,6 +53,7 @@ function required(options, key) {
 // supporting terminals; falls back to a bare URL.
 const SITE_URL = process.env.PD_SITE_URL || 'http://127.0.0.1:4190';
 async function printWorkbenchLink(runId, stage) {
+  if(process.env.PD_HARNESS_HEADLESS==='1')return;
   const url = `${SITE_URL}/apps/designer/?case=run:${runId}&view=canvas${stage ? `#stage=${stage}` : ''}`;
   let alive = false;
   try {
@@ -80,12 +82,16 @@ async function main() {
     process.stdout.write(`Product Designer Harness v0.1
 
 pnpm harness init --spec FILE [--url URL] [--mode review|bootstrap] [--out DIRECTORY]
+pnpm harness start --config FILE [--out DIRECTORY]
 pnpm harness onboard --config FILE [--out DIRECTORY]
 pnpm harness baseline --run DIRECTORY --reason TEXT
 pnpm harness foundation-approve --run DIRECTORY --input FILE
-pnpm harness capture --run DIRECTORY --phase before|after [--url URL] [--plan FILE] [--repo DIRECTORY] [--bind-evidence true] [--browser chrome|msedge]
+pnpm harness capture --run DIRECTORY --phase before|after [--url URL] [--plan FILE] [--repo DIRECTORY] [--bind-evidence true] [--extract-design-system true|false] [--browser chrome|msedge]
 pnpm harness skills
 pnpm harness agents
+pnpm harness model-diagnose --run DIRECTORY [--model ID] [--language zh|en]
+pnpm harness model-review --run DIRECTORY [--model ID] [--language zh|en]
+pnpm harness repair-scope --run DIRECTORY (--finding ID | --all true)
 pnpm harness skill --run DIRECTORY --skill ID [--repo DIRECTORY]
 pnpm harness diagnose --run DIRECTORY [--rubric FILE]
 pnpm harness prioritize --run DIRECTORY --finding ID --priority NUMBER --reason TEXT
@@ -93,7 +99,7 @@ pnpm harness verify --run DIRECTORY --config FILE [--repo DIRECTORY]
 pnpm harness attest --run DIRECTORY --input FILE
 pnpm harness confirm --run DIRECTORY --finding ID --verdict supported|stale --note TEXT
 pnpm harness plan --run DIRECTORY [--finding ID]
-pnpm harness execute --run DIRECTORY --repo DIRECTORY [--agent ID] [--command PATH]
+pnpm harness execute --run DIRECTORY --repo DIRECTORY [--agent ID] [--command PATH] [--model CODEX_MODEL]
 pnpm harness evaluate --run DIRECTORY
 pnpm harness judge --run DIRECTORY --decision accept|reject [--reason TEXT] (required for reject)
 pnpm harness withdraw-judgment --run DIRECTORY --reason TEXT
@@ -121,6 +127,26 @@ finding, and evaluate reports deterministic render checks without claiming an im
     return;
   }
   const options = argsOf(rest);
+  if(command==='start'){
+    if(Object.keys(options).some(key=>!['config','out'].includes(key)))throw Error('Start supports --config and --out.');
+    const config=await loadProjectConfig(required(options,'config'));
+    if(config.mode!=='review'||!config.url)throw Error('Lightweight start requires an existing preview and explicit mode review; use onboard for bootstrap.');
+    const repository=await inspectRepository(config.repo);await waitForPreview(config.url,{timeoutMs:10000});
+    const spec=JSON.parse(await readFile(config.spec,'utf8'));
+    const outputRoot=resolve(options.out||'.harness/runs');await mkdir(outputRoot,{recursive:true});
+    const run=await createRun({spec,url:config.url,outputRoot,mode:'review'});
+    await saveOnboarding(run.directory,{status:'ready',mode:'review',config:publicProjectConfig(config),repository,preview:{url:config.url,managed:false},viewports:DEFAULT_VIEWPORTS,completedAt:new Date().toISOString()});
+    console.log(run.directory);return;
+  }
+  if(command==='repair-scope'){
+    if(Object.keys(options).some(key=>!['run','finding','all'].includes(key))||Boolean(options.finding)===(options.all==='true')||options.all!==undefined&&options.all!=='true')throw Error('Explicitly choose --finding ID or --all true within the user-authorized repair scope.');
+    console.log(JSON.stringify(await saveRepairScope(required(options,'run'),{findingId:options.finding}),null,2));return;
+  }
+  if(['model-diagnose','model-review'].includes(command)){
+    if(Object.keys(options).some(key=>!['run','model','language'].includes(key)))throw Error('Model commands support --run, --model and --language.');
+    const {headlessModel}=await import('../packages/harness-core/headless-models.js');
+    console.log(JSON.stringify(await headlessModel({directory:required(options,'run'),phase:command==='model-diagnose'?'diagnosis':'review',model:options.model,language:options.language||'zh'}),null,2));return;
+  }
   if (command === 'skills') {
     const skills = await loadRegistry();
     process.stdout.write(JSON.stringify(skills.map(({ directory, ...skill }) => skill), null, 2) + '\n');
@@ -278,7 +304,9 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const takeCapture=async()=>plan
       ? await captureBrowserPlan({ plan, directory, phase, channel: options.browser || 'chrome', sourceRoot: repo || null })
       : await captureBrowser({ url: options.url || run.manifest.url, directory, phase, channel: options.browser || 'chrome' });
-    if(repo)await captureWithDesignSystem({directory,repo,phase,bindVerificationSource:bound,verificationUrl,capture:takeCapture});
+    const extraction=options['extract-design-system']??(process.env.PD_HARNESS_HEADLESS==='1'?'false':'true');
+    if(!['true','false'].includes(extraction))throw Error('--extract-design-system must be true or false.');
+    if(repo)await captureWithDesignSystem({directory,repo,phase,bindVerificationSource:bound,verificationUrl,capture:takeCapture,extract:extraction==='true'});
     else await saveCapture(directory,phase,await takeCapture());
     process.stdout.write(`Saved ${phase} ${options.plan ? 'task-state' : 'desktop/mobile'} captures in ${directory}\n`);
   } else if (command === 'confirm') {
@@ -296,7 +324,8 @@ finding, and evaluate reports deterministic render checks without claiming an im
       directory,
       repo: required(options, 'repo'),
       agent: options.agent || DEFAULT_AGENT,
-      commandOverride: options.command
+      commandOverride: options.command,
+      model: options.model
     });
     await printWorkbenchLink(execution.branch.replace(/^pd\//, ""));
     process.stdout.write(JSON.stringify(execution, null, 2) + '\n');

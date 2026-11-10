@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {execFile} from 'node:child_process';
+import {createServer} from 'node:http';
+import {promisify} from 'node:util';
+import {fileURLToPath} from 'node:url';
+import sample from '../examples/happyclaw-site/experience.json' with {type:'json'};
+import {loadRun} from '../packages/harness-core/store.js';
+import {workflowState} from '../packages/harness-core/workflow.js';
+const exec=promisify(execFile),cli=fileURLToPath(new URL('../skills/happyhands/bin/happyhands.mjs',import.meta.url));
+test('lightweight start creates the first existing ledger, snapshots real project rules, and still requires capture',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'hh-start-'));t.after(()=>rm(root,{recursive:true,force:true}));const repo=join(root,'product');await mkdir(repo);
+ const git=(...args)=>exec('git',args,{cwd:repo});await git('init','-q');await git('config','user.name','Test');await git('config','user.email','test@example.invalid');await writeFile(join(repo,'DESIGN.md'),'# Existing project rules\nPreserve field input.\n');await git('add','.');await git('commit','-qm','Fixture');
+ const server=createServer((req,res)=>res.end('<h1>Existing product</h1>'));await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>server.close());
+ await writeFile(join(root,'experience.json'),JSON.stringify(sample));await writeFile(join(root,'project.json'),JSON.stringify({version:'0.1',spec:'experience.json',repo:'product',mode:'review',url:`http://127.0.0.1:${server.address().port}/`,designSourcePaths:['DESIGN.md']}));
+ const {stdout}=await exec(process.execPath,[cli,'start','--config',join(root,'project.json')],{cwd:root});
+ const run=await loadRun(stdout.trim());assert.equal(run.manifest.onboarding.repository.dirty,false);assert.equal(run.manifest.onboarding.config.designSources[0].path,'DESIGN.md');assert.equal(run.manifest.captures.before,null);assert.notEqual(workflowState(run.manifest).stage,'accepted');assert.equal(run.manifest.foundationInventory,null);
+ assert.ok(stdout.includes('.harness'));assert.ok(!stdout.includes('/apps/designer/'));
+});

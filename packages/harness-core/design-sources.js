@@ -1,10 +1,12 @@
 import {readFile,realpath,readdir,stat} from 'node:fs/promises';
 import {resolve,relative,isAbsolute,extname} from 'node:path';
 import {createHash} from 'node:crypto';
+import {selectedReferenceContext} from './reference-resources.js';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const allowed = new Set(['.md','.css','.scss','.json','.js','.jsx','.ts','.tsx','.astro','.vue','.svelte','.html']);
 export const designSourcesDigest = refs => hash(JSON.stringify(refs || []));
+export const designSourceRefs=run=>[...(run.manifest.onboarding?.config?.designSources||[]),...(run.manifest.selectedReferences||[])];
 export async function collectDesignSources(repo, paths, {maxPaths=12}={}) {
   if (!Array.isArray(paths) || paths.length > maxPaths) throw Error('Select at most 12 design source paths.');
   const root = await realpath(repo), files = new Map(); let total = 0;
@@ -27,14 +29,14 @@ export async function collectDesignSources(repo, paths, {maxPaths=12}={}) {
 }
 export async function designSourceContext(run) {
   const config = run.manifest.onboarding?.config, refs = config?.designSources || [];
-  if (!refs.length) return [];
-  const current = await collectDesignSources(config.repo,config.designSourcePaths||refs.map(ref=>ref.path),{maxPaths:config.designSourcePaths?12:128});
-  if (designSourcesDigest(current) !== designSourcesDigest(refs)) throw Error('Selected design sources changed; start a fresh review.');
-  return Promise.all(refs.map(async ref => {
+  if(refs.length){const current = await collectDesignSources(config.repo,config.designSourcePaths||refs.map(ref=>ref.path),{maxPaths:config.designSourcePaths?12:128});
+  if (designSourcesDigest(current) !== designSourcesDigest(refs)) throw Error('Selected design sources changed; start a fresh review.');}
+  const local=await Promise.all(refs.map(async ref => {
     const bytes = await readFile(resolve(config.repo,ref.path));
     if (hash(bytes) !== ref.sha256) throw Error('Design source changed: '+ref.path);
     return {...ref,content:bytes.toString('utf8')};
   }));
+  return [...local,...await selectedReferenceContext(run)];
 }
 export async function designSourceBrief(run) {
   const sources = await designSourceContext(run);

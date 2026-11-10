@@ -13,6 +13,13 @@ import { workflowState } from '../packages/harness-core/workflow.js';
 
 const execFileAsync = promisify(execFile);
 
+test('Codex model selection stays in the registered protocol and cannot switch the adapter',async()=>{
+ const adapter=resolveAgent('codex');const args=adapter.argv({worktree:'/tmp/product',lastMessagePath:'/tmp/result',model:'gpt-6-astra'});
+ assert.equal(args[args.indexOf('-m')+1],'gpt-6-astra');assert.equal(args[0],'exec');assert.ok(args.includes('workspace-write'));
+ await assert.rejects(executeWithAgent({directory:'not-read',repo:'not-read',agent:'claude-code',model:'gpt-6-astra'}),/Codex model ID/);
+ await assert.rejects(executeWithAgent({directory:'not-read',repo:'not-read',model:'--bad'}),/Codex model ID/);
+});
+
 async function temporaryRepo(t) {
   const root = await mkdtemp(join(tmpdir(), 'pd-agents-test-'));
   t.after(async () => {

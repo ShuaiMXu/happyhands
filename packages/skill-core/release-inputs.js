@@ -3,6 +3,7 @@ import {readdir,readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {loadRegistry} from './registry.js';
+import {engineLockfile} from './runtime-root.js';
 
 export const inputHash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 async function entries(directory,onlyJavaScript=false,prefix=''){
@@ -20,7 +21,7 @@ export async function skillContracts(registryRoot){
 }
 export async function regressionImplementationHash(){
   const sources=await entries(fileURLToPath(new URL('../',import.meta.url)),true);
-  return inputHash([...sources,['pnpm-lock.yaml',await readFile(new URL('../../pnpm-lock.yaml',import.meta.url),'utf8')]]);
+  return inputHash([...sources,['pnpm-lock.yaml',await engineLockfile()]]);
 }
 export function regressionEvidenceHash(report){
   return inputHash({schemaVersion:report.schemaVersion,corpusVersion:report.corpusVersion,corpusHash:report.corpusHash,implementationHash:report.implementationHash,registryHash:report.registryHash,passed:report.passed,cases:report.cases});
