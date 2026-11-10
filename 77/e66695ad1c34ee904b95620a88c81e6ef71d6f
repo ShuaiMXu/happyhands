@@ -1,0 +1,19 @@
+docs/lightweight.md
+  s_c3a809bd8a1ec1::t_1d9d5819976247 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "77e66695ad1c34ee904b95620a88c81e6ef71d6f",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
