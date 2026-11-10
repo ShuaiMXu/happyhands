@@ -1,0 +1,25 @@
+README.md
+  s_c3a809bd8a1ec1::t_51647df40b023f 110
+README.zh-CN.md
+  s_c3a809bd8a1ec1::t_940525740e9815 110
+skills/happyhands/SKILL.md
+  s_c3a809bd8a1ec1::t_b7a55077a8dedb 18
+skills/happyhands/references/workflow.md
+  s_c3a809bd8a1ec1::t_5becd31b09dab0 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "e8161135ebf1d1737726b5d6d1cdd1d988978247",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
