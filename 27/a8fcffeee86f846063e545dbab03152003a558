@@ -1,0 +1,33 @@
+packages/harness-core/browser.js
+  s_c3a809bd8a1ec1::t_a7cf7f2df4ccad 230-236
+packages/harness-core/visual-review.js
+  s_c3a809bd8a1ec1::t_94c1322a4ddbec 23-26
+skills/happyhands/references/workflow.md
+  s_c3a809bd8a1ec1::t_d13feac89134c5 3,8
+docs/lightweight.md
+  s_c3a809bd8a1ec1::t_d13feac89134c5 3
+packages/harness-core/remediation.js
+  s_c3a809bd8a1ec1::t_94c1322a4ddbec 94,96,101
+scripts/harness.mjs
+  s_c3a809bd8a1ec1::t_7d4032c3cd9646 10-11,45-50,143,175,188
+tests/headless-start.test.mjs
+  s_c3a809bd8a1ec1::t_bcc0a7fe62fbc5 3,15,19-21,23-27
+tests/verification.test.mjs
+  s_c3a809bd8a1ec1::t_08c1c3dadaccff 214-228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "27a8fcffeee86f846063e545dbab03152003a558",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
