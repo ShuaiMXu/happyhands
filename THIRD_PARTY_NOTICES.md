@@ -1,5 +1,9 @@
 # Third-party notices
 
+## PNG comparison export
+
+The optional evidence comparison command depends on [pngjs](https://github.com/pngjs/pngjs) 7.0.0, licensed under MIT. Its original copyright and license remain in the installed package. It decodes and encodes viewport PNGs; HappyHands copies their pixels without generative editing, resizing or cropping.
+
 ## OJO Design Skills
 
 This repository redistributes `app-ui-ux-best-practices/SKILL.md` and its nine reference documents from [touchine-ojo/OJO-Design-Skills](https://github.com/touchine-ojo/OJO-Design-Skills), revision `fbd2c2d158e5ebda8930f4bc63ed635a8500d31f`.

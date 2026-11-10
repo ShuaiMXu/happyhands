@@ -35,6 +35,9 @@ importers:
       playwright-core:
         specifier: 1.63.0
         version: 1.63.0
+      pngjs:
+        specifier: 7.0.0
+        version: 7.0.0
       postcss:
         specifier: 8.5.29
         version: 8.5.29
@@ -1496,6 +1499,10 @@ packages:
     resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
     engines: {node: '>=20'}
     hasBin: true
+
+  pngjs@7.0.0:
+    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
+    engines: {node: '>=14.19.0'}
 
   postcss@8.5.29:
     resolution: {integrity: sha512-49cGhUbXj8Qenv0iTMxA1cFBzxXoctpC9Ujd77t1WcbJIr6nF/eI7g/8MgxrYldFRuAXvja7xQRwavoW7kgrxQ==}
@@ -3141,6 +3148,8 @@ snapshots:
   picomatch@4.0.7: {}
 
   playwright-core@1.63.0: {}
+
+  pngjs@7.0.0: {}
 
   postcss@8.5.29:
     dependencies:

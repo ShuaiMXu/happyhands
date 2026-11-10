@@ -202,6 +202,26 @@ Enforcement is two-layer, and the layers are not equally strong.
 
 Adapters record how far they have been verified: `flags` means the invocation was checked against the binary's own `--help`; `shipped` means it predates the registry and has run in practice. Neither means the full loop has been exercised with that agent.
 
+## Export a pixel-preserving comparison
+
+`compare` uses the existing run; it does not create another review or acceptance record. For a selected state/configuration it copies whole viewport originals side by side at **1:1**, before on the left and after on the right. It does not retouch, resize or crop them. The 24-pixel gap is outside the original images.
+
+Capture both phases with source/preview binding enabled. When manually capturing, supply `--repo DIRECTORY --bind-evidence true` to the existing `capture` command. For the after phase, use the changed worktree and its actual preview. Existing specialist verification captures are already bound. Older captures without capture-time image hashes or appearance context need a new run; the exporter will not retrofit provenance onto them.
+
+```sh
+pnpm harness compare --run .harness/runs/RUN_ID --state form-error --configuration desktop
+```
+
+Use actual IDs from your capture plan. Legacy viewport captures use `--state page --configuration desktop` or `mobile`. Output defaults to `RUN_DIRECTORY/comparisons/STATE--CONFIGURATION/CONTENT_HASH/`; `--out DIRECTORY` changes the parent output root. The bundle contains:
+
+- `comparison.png`: unchanged viewport pixels, with before on the left.
+- `comparison.json`: original paths and hashes, recorded source/preview fingerprints, matched-context hash, output hash and explicit limitations.
+- `README.md`: orientation and provenance instructions.
+
+Export is refused for a missing baseline, unreachable or ambiguous pair, changed original, missing source binding, mismatched recorded route/actions/theme/language/scroll, unequal viewport geometry, corrupt PNG or an unsafe path. Version 1 supports 8-bit RGB/RGBA viewport PNGs up to 6 megapixels each. Full-page surfaces, crops, annotations, redaction and proof of identical live data require separate work; they are not silently approximated. Re-exporting identical input is idempotent; an altered existing export is not overwritten.
+
+Matching metadata and fingerprints do not establish that a server rendered the intended source, that live data was identical, or that the change improved the task. Inspect the originals, actual preview and applicable checks, and retain independent review plus explicit human judgment. Sharing is a separate action; image contents are not automatically redacted.
+
 ## Open a saved run in the web workbench
 
 `export` copies a finished run into `public/runs/`, which Vite serves at `/runs`. The review workspace lists every exported run in its case picker beside the two bundled examples, and shows the selected run's before/after screenshots, structural checks, Skill results and recorded decision.

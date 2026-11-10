@@ -15,6 +15,8 @@ Use this when a developer has a working app but needs help choosing and verifyin
 6. Run the app again and visit the same states and viewports. Check the task, hierarchy, interaction, accessibility and regressions. If a comparison cannot be made, report the missing step instead of declaring success.
 7. Present the change and before/after evidence. Capture accept/reject and the developer's reason in the spec. Propose an expertise or evaluator update only after repeated, reviewed judgments; add a regression example.
 
+For a shareable viewport comparison, use `pnpm harness compare --run DIRECTORY --state ID --configuration ID` only when the run contains matching, source-bound originals. The command retains pixels and writes provenance; it never establishes an improvement or acceptance. If capture-time hashes, source binding or context are missing, collect fresh evidence in a new run or report the gap. Never hand-edit a manifest to make an old capture eligible. Preserve originals for independent review; a comparison image does not replace them.
+
 Stop before an external deployment unless it has been authorized. A live site may differ from the supplied repository; verify their relationship before claiming that a repository change is live.
 
 
