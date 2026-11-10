@@ -1,0 +1,27 @@
+docs/harness.md
+  s_c3a809bd8a1ec1::t_d85ef511856b8e 177-178
+README.md
+  s_c3a809bd8a1ec1::t_d7e60fd3ce1f08 90
+docs/dsh.zh-CN.md
+  s_c3a809bd8a1ec1::t_d7e60fd3ce1f08 1-60
+docs/dsh.md
+  s_c3a809bd8a1ec1::t_d7e60fd3ce1f08 1-63
+README.zh-CN.md
+  s_c3a809bd8a1ec1::t_d7e60fd3ce1f08 90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "5e368dcd7439e1224c53f78c4e92c6041a7b7835",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
