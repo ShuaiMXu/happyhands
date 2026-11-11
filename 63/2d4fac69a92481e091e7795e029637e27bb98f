@@ -1,0 +1,175 @@
+tests/agents.test.mjs
+  s_c3a809bd8a1ec1::t_ffa321038417e1 193,195,199,201-224
+  s_c3a809bd8a1ec1::t_fef3af5af2bfd3 4,189-192,194,196-198,200,225
+packages/harness-core/onboard.js
+  s_c3a809bd8a1ec1::t_a27333f8944e27 6,8-9,146,162-163,165-166,168-170,183-186,188-189,191-194,198,201-202,204
+  s_c3a809bd8a1ec1::t_ffa321038417e1 7,145,147-161,164,167,171-182
+tests/lite-distribution.test.mjs
+  s_c3a809bd8a1ec1::t_a836c841942369 18-20
+packages/harness-core/remediation.js
+  s_c3a809bd8a1ec1::t_e3a9931cd894c1 4-5
+apps/designer/main.js
+  s_c3a809bd8a1ec1::t_35a55532899853 99
+tests/doctor.test.mjs
+  s_c3a809bd8a1ec1::t_76b314767f537c 3
+  s_c3a809bd8a1ec1::t_10924fe2894d76 1-2,4-106
+scripts/harness.mjs
+  s_c3a809bd8a1ec1::t_c30ac9cc97b43c 20,22,237-238,240-245,249-255,258,287-293,308-309,363-364
+  s_c3a809bd8a1ec1::t_f02fb03d384ff2 28-30,32-66,68-80,150,178,187,195,378,380-381
+  s_c3a809bd8a1ec1::t_5a65186243a0ef 12,385
+  s_c3a809bd8a1ec1::t_40997dfe966e2d 138,248
+  s_c3a809bd8a1ec1::t_76b314767f537c 31,134,179-183
+  s_c3a809bd8a1ec1::t_040d41ba15bd5a 407
+apps/designer/review-action.js
+  s_c3a809bd8a1ec1::t_35a55532899853 52
+  s_c3a809bd8a1ec1::t_27ea76397ceb35 44,49
+  s_c3a809bd8a1ec1::t_2c4c8ebf707e73 144-145
+tests/workbench-service.test.mjs
+  s_c3a809bd8a1ec1::t_f7566feee3ae53 89,97,105
+  s_c3a809bd8a1ec1::t_f03456a3e6a7f4 96,101-104,106-114
+  s_c3a809bd8a1ec1::t_29e0005275509b 20-38
+packages/harness-core/review-discovery.js
+  s_c3a809bd8a1ec1::t_7d92dcb1153c8e 4,129
+tests/continue-review.test.mjs
+  s_c3a809bd8a1ec1::t_2c9cca81311866 1-91
+docs/lightweight.md
+  s_c3a809bd8a1ec1::t_c9086ce279575f 15,36,55-67
+tests/helpers/isolated-git.mjs
+  s_c3a809bd8a1ec1::t_ad1baeb6c74d81 1-6
+skills/happyhands/bin/happyhands.mjs
+  s_c3a809bd8a1ec1::t_91d41402aa251c 4,6,15-20,24
+packages/experience-core/component-reuse.js
+  s_c3a809bd8a1ec1::t_79d79857f90716 5-6,13
+packages/workbench/service.js
+  s_c3a809bd8a1ec1::t_9b3db28d3d66ab 9-10,29,151-168
+  s_c3a809bd8a1ec1::t_f7566feee3ae53 699
+  s_c3a809bd8a1ec1::t_f03456a3e6a7f4 696,703
+  s_c3a809bd8a1ec1::t_92df8704241c2e 70-71,688-695,697,700-702,704-707,711-717,721-725,731-736
+  s_c3a809bd8a1ec1::t_35a55532899853 782
+  s_c3a809bd8a1ec1::t_58bd575ed58d54 30,125,131,137,248,250,563-564
+  s_c3a809bd8a1ec1::t_fba24aaa665034 737
+tests/export.test.mjs
+  s_c3a809bd8a1ec1::t_b0bb2425b36ed4 49-50
+apps/designer/page-review/index.js
+  s_c3a809bd8a1ec1::t_27ea76397ceb35 214,216,218,229-232
+  s_c3a809bd8a1ec1::t_a63588608b8716 54,235
+tests/component-reuse-plan.test.mjs
+  s_c3a809bd8a1ec1::t_79d79857f90716 15-17,20
+packages/workbench/pull-request.js
+  s_c3a809bd8a1ec1::t_0d3bf12302ab04 4,11-12,14-17,23,36,82,87
+tests/run-integrity.test.mjs
+  s_c3a809bd8a1ec1::t_221da3c0a03528 77-96,124
+  s_c3a809bd8a1ec1::t_cb0501c539981e 7,97-103
+  s_c3a809bd8a1ec1::t_0a5d01b7674705 9
+  s_c3a809bd8a1ec1::t_68776954f084ed 104-105,110-123,125-134
+skills/happyhands/lib/preflight.mjs
+  s_c3a809bd8a1ec1::t_91d41402aa251c 1-5,7-11,13-27,29-51,53-116
+  s_c3a809bd8a1ec1::t_76b314767f537c 6,12,28,52
+packages/harness-core/workflow.js
+  s_c3a809bd8a1ec1::t_0d3bf12302ab04 15-18,20-21,23-24,26-39
+tests/headless-start.test.mjs
+  s_c3a809bd8a1ec1::t_f0f18c9e34bee4 29-37
+packages/harness-core/diagnose-product.js
+  s_c3a809bd8a1ec1::t_9b3db28d3d66ab 1-86
+docs/harness.md
+  s_c3a809bd8a1ec1::t_40997dfe966e2d 255
+  s_c3a809bd8a1ec1::t_c9086ce279575f 300-303
+  s_c3a809bd8a1ec1::t_4ca266743d043e 128
+scripts/build-lite.mjs
+  s_c3a809bd8a1ec1::t_a836c841942369 2,9,25-36,42
+  s_c3a809bd8a1ec1::t_588aa442636365 1,8,12-17,19-24
+docs/engineering-reassessment-2026-11-11.md
+  s_c3a809bd8a1ec1::t_c9086ce279575f 1-16,18-23
+  s_c3a809bd8a1ec1::t_cc9a85724e26e6 17,24-26
+skills/happyhands/references/workflow.md
+  s_c3a809bd8a1ec1::t_c9086ce279575f 14,17
+package.json
+  s_c3a809bd8a1ec1::t_ad1baeb6c74d81 16
+tests/workbench-job-io.test.mjs
+  s_c3a809bd8a1ec1::t_de28657af93e3f 8
+  s_c3a809bd8a1ec1::t_79d79857f90716 9-29
+packages/workbench/jobs.js
+  s_c3a809bd8a1ec1::t_e14b88b25e167f 83-90
+tests/onboard.test.mjs
+  s_c3a809bd8a1ec1::t_ffa321038417e1 5-6,10,135-163
+  s_c3a809bd8a1ec1::t_9c89425f1d8a0a 164-165
+tests/helpers/test-gitconfig
+  s_c3a809bd8a1ec1::t_ad1baeb6c74d81 1
+packages/harness-core/runner.js
+  s_c3a809bd8a1ec1::t_95cbaeeeb568b0 11,13,32-35,37-52,58-68,71,75-76,236,238,252
+  s_c3a809bd8a1ec1::t_bee98f1124184f 82,85,168-169,171-179,200-201
+  s_c3a809bd8a1ec1::t_adf6d42398c8a4 170,256-257
+packages/harness-core/export.js
+  s_c3a809bd8a1ec1::t_76b314767f537c 112
+  s_c3a809bd8a1ec1::t_628299062276b3 22-23
+packages/harness-core/continue-review.js
+  s_c3a809bd8a1ec1::t_098e502629887e 1-2,4,7-36,39-69,80-100
+  s_c3a809bd8a1ec1::t_76b314767f537c 6
+  s_c3a809bd8a1ec1::t_5ad1ee1f5e3dfd 3,5,37-38,70-79
+tests/continuation-integrity.test.mjs
+  s_c3a809bd8a1ec1::t_58317ebb9d17d0 1-90
+tests/whole-page-browser.mjs
+  s_c3a809bd8a1ec1::t_171062d4ada27e 7,9,19-20,33-34
+  s_c3a809bd8a1ec1::t_7d92dcb1153c8e 8,21-22,25,35-36
+packages/harness-core/entry.js
+  s_c3a809bd8a1ec1::t_40997dfe966e2d 57
+  s_c3a809bd8a1ec1::t_3a44544534815e 11,13,56,58-60,107-114,116,121
+packages/harness-core/store.js
+  s_c3a809bd8a1ec1::t_221da3c0a03528 103-111,208
+  s_c3a809bd8a1ec1::t_0d3bf12302ab04 16,497-498,755-756,773
+  s_c3a809bd8a1ec1::t_5a65186243a0ef 117-121,475-481
+  s_c3a809bd8a1ec1::t_cb0501c539981e 82
+  s_c3a809bd8a1ec1::t_2c9cca81311866 197-198
+  s_c3a809bd8a1ec1::t_76b314767f537c 68,71-72,78,91,113-114,193-195,200,210-214,259-262,483,574-576
+  s_c3a809bd8a1ec1::t_0a5d01b7674705 482
+  s_c3a809bd8a1ec1::t_2c58a30e5ec4c7 13,55-56,58,65-67,69-70,73-77,79-81,83-90,92-102,112,115,122-136,139-142,192,196,199,201-207,209,484
+packages/harness-core/design-system.js
+  s_c3a809bd8a1ec1::t_5a65186243a0ef 9,15-45
+packages/harness-core/headless-models.js
+  s_c3a809bd8a1ec1::t_9b3db28d3d66ab 3-4,14
+packages/harness-core/remediation-validation.js
+  s_c3a809bd8a1ec1::t_e3a9931cd894c1 1-40
+packages/harness-core/visual-review.js
+  s_c3a809bd8a1ec1::t_e3a9931cd894c1 1
+  s_c3a809bd8a1ec1::t_4378439fbc87aa 5,58-61,64,70-71
+packages/harness-core/browser.js
+  s_c3a809bd8a1ec1::t_7d92dcb1153c8e 17-21,44,353
+  s_c3a809bd8a1ec1::t_f245c1b1f88075 22-23,30-31,33,36,50,54-56,58,406
+  s_c3a809bd8a1ec1::t_eea43799f14906 330-337,339-340,348-350,399
+docs/architecture.md
+  s_c3a809bd8a1ec1::t_aff1830f26eaa0 75,77,79,94-95,101
+docs/next-steps.md
+  s_c3a809bd8a1ec1::t_30b7bbfa69026b 6
+packages/harness-core/baseline-diagnosis-record.js
+  s_c3a809bd8a1ec1::t_00cbef1d94bd30 20
+tests/baseline-model.test.mjs
+  s_c3a809bd8a1ec1::t_50c47e686c2535 5,54-58
+tests/bootstrap.test.mjs
+  s_c3a809bd8a1ec1::t_7a119978fae183 238-251
+tests/capture-cancellation.test.mjs
+  s_c3a809bd8a1ec1::t_55c69fbf0582cb 4,20
+tests/diagnose-product.test.mjs
+  s_c3a809bd8a1ec1::t_419980a8da3866 1-100
+tests/harness.test.mjs
+  s_c3a809bd8a1ec1::t_4b05fd5d982c97 9,202-229
+tests/pull-request.test.mjs
+  s_c3a809bd8a1ec1::t_d457e369717318 6,63-71
+tests/visual-review.test.mjs
+  s_c3a809bd8a1ec1::t_1d330769f5760c 69-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "632d4fac69a92481e091e7795e029637e27bb98f",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
