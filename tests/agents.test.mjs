@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 import { promisify } from 'node:util';
@@ -184,6 +184,43 @@ test('a missing agent binary rolls the isolation artifacts back so the run stays
     executeWithAgent({ directory: run.directory, repo: root, agent: 'codex', commandOverride: 'git' }),
     /exited \d+/
   );
+});
+
+test('execution preparation failure removes its worktree and leaves the run retryable', async t => {
+  const { root, git, run } = await plannedRun(t, 'preparefail');
+  const promptPath = join(run.directory, 'execution-prompt.txt');
+  await mkdir(promptPath);
+  await assert.rejects(executeWithAgent({ directory: run.directory, repo: root, commandOverride: 'git' }), /EISDIR/);
+  assert.equal((await git('branch', '--list', 'pd/preparefail')).stdout.trim(), '');
+  await assert.rejects(readFile(join(run.directory, 'worktree', '.git')), /ENOENT/);
+
+  await rm(promptPath, { recursive: true });
+  await assert.rejects(executeWithAgent({ directory: run.directory, repo: root, commandOverride: 'git' }), /exited \d+/);
+});
+
+test('an unavailable execution log rejects preparation and cleans its worktree', async t => {
+  const { root, git, run } = await plannedRun(t, 'noagentlog');
+  await mkdir(join(run.directory, 'agent-events.jsonl'));
+  await assert.rejects(executeWithAgent({ directory: run.directory, repo: root, commandOverride: 'git' }), /EISDIR/);
+  assert.equal((await git('branch', '--list', 'pd/noagentlog')).stdout.trim(), '');
+  await assert.rejects(readFile(join(run.directory, 'worktree', '.git')), /ENOENT/);
+});
+
+test('the execution inventory preserves literal paths from Git', { skip: process.platform === 'win32' }, async t => {
+  const { root, run } = await plannedRun(t, 'unicodefiles');
+  const actor = join(run.directory, 'synthetic-agent.mjs');
+  const paths = [' leading.txt', '文案.txt', 'line\nbreak.txt'];
+  await writeFile(actor, `#!/usr/bin/env node
+import {writeFileSync} from 'node:fs';
+for (const path of ${JSON.stringify(paths)}) writeFileSync(path, 'fixture');
+console.log('agent stdout');
+console.error('agent stderr');
+`, { mode: 0o755 });
+  const execution = await executeWithAgent({ directory: run.directory, repo: root, commandOverride: actor });
+  assert.deepEqual(execution.changedFiles.toSorted(), paths.toSorted());
+  const log = await readFile(join(run.directory, execution.log), 'utf8');
+  assert.match(log, /agent stdout/);
+  assert.match(log, /agent stderr/);
 });
 
 test('an agent that ran and failed keeps its worktree and records the execution', async t => {

@@ -41,15 +41,15 @@ export function mountReviewAction(container, run, { onChanged = () => location.r
     }
   }
 
-  async function refresh() {
+  async function refresh(stateRequest) {
     if(disposed||refreshing)return;
     refreshing=true;
     try {
       let next;
-      try { next={...await workbenchApi('state?run='+encodeURIComponent(run.manifest.id)),localAvailable:true}; }
+      try { next={...await (stateRequest??workbenchApi('state?run='+encodeURIComponent(run.manifest.id))),localAvailable:true}; }
       catch(error) {
         if(!pendingId)throw error;
-        next={...exportedReviewState(run),jobs:(await workbenchApi('jobs')).filter(job=>job.id===pendingId)};
+        next={...exportedReviewState(run),jobs:[await workbenchApi('job?id='+encodeURIComponent(pendingId))]};
       }
       if(disposed)return;
       if(pendingId) {
@@ -141,6 +141,6 @@ export function mountReviewAction(container, run, { onChanged = () => location.r
     await submit({},action.stage);
   }
   primary.onclick=()=>open().catch(error=>{status.textContent=error.message;});
-  update(state);refresh();if(poll)timer=setInterval(refresh,1500);
-  return {update,open,destroy(){disposed=true;clearInterval(timer);dialog?.close();container.replaceChildren();}};
+  update(state);if(poll){refresh();timer=setInterval(refresh,1500);}
+  return {refresh,open,destroy(){disposed=true;clearInterval(timer);dialog?.close();container.replaceChildren();}};
 }

@@ -14,16 +14,26 @@ export const DEFAULT_VIEWPORTS = Object.freeze({
   mobile: { width: 390, height: 844 }
 });
 
-export async function captureBrowser({ url, directory, phase, viewports = DEFAULT_VIEWPORTS, channel = 'chrome' }) {
+export async function assertNoPreviewErrorOverlay(page) {
+  const overlay = await page.evaluate(() => document.querySelector('astro-error-overlay, vite-error-overlay')?.localName);
+  if (overlay) throw new Error(`Preview has ${overlay === 'astro-error-overlay' ? 'an Astro' : 'a Vite'} error overlay; fix the app before capturing evidence.`);
+}
+
+export async function captureBrowser({ url, directory, phase, viewports = DEFAULT_VIEWPORTS, channel = 'chrome', signal }) {
+  signal?.throwIfAborted();
   if (!['before', 'after'].includes(phase)) throw new Error('Phase must be before or after.');
   const parsed = new URL(url);
   if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Capture URL must use http or https.');
   const target = join(directory, phase);
   await mkdir(target, { recursive: true });
   const browser = await chromium.launch({ channel, headless: true });
+  const abort = () => { void browser.close().catch(() => {}); };
+  signal?.addEventListener('abort', abort, { once: true });
   try {
+    signal?.throwIfAborted();
     const results = {};
     for (const [name, viewport] of Object.entries(viewports)) {
+      signal?.throwIfAborted();
       const context = await browser.newContext({ viewport, deviceScaleFactor: 1, reducedMotion: 'reduce' });
       const page = await context.newPage();
       // Large background video and long-lived app requests can delay `load`
@@ -31,17 +41,21 @@ export async function captureBrowser({ url, directory, phase, viewports = DEFAUL
       const response = await page.goto(parsed.href, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await settle(page);
       if (!response || response.status() >= 400) throw new Error(`${name} preview returned HTTP ${response?.status() ?? 'no response'}.`);
-      // Astro may return 200 while a later development-build error covers the page.
-      if (await page.locator('astro-error-overlay').count()) throw new Error(`${name} preview has an Astro error overlay; fix the app before capturing evidence.`);
+      await assertNoPreviewErrorOverlay(page);
       const screenshot = `${name}.png`;
       await page.screenshot({ path: join(target, screenshot), animations: 'disabled' });
       results[name] = { ...viewport, status: response?.status() ?? null, finalUrl: page.url(), screenshot: `${phase}/${screenshot}`, dom: await captureDom(page) };
       await context.close();
     }
+    signal?.throwIfAborted();
     const capture = { at: new Date().toISOString(), url: parsed.href, channel, viewports: results };
     await writeFile(join(target, 'capture.json'), JSON.stringify(capture, null, 2) + '\n', 'utf8');
     return capture;
+  } catch (error) {
+    signal?.throwIfAborted();
+    throw error;
   } finally {
+    signal?.removeEventListener('abort', abort);
     await browser.close();
   }
 }
@@ -313,21 +327,30 @@ export async function captureBrowserPlan({ plan, directory, phase, channel = 'ch
         const context = await browser.newContext({ viewport: configuration.viewport, deviceScaleFactor: 1, reducedMotion: 'reduce' });
         const page = await context.newPage();
         const result = { ...(state.sourceEntries?{plannedState:structuredClone(state)}:{}), ...(state.title ? {title:state.title} : {}), ...(state.region ? {plannedRegion:structuredClone(state.region)} : {}), ...(state.scrollSurface ? {plannedScrollSurface:state.scrollSurface} : {}), captureMode: state.captureMode || 'viewport', stateId: state.id, configurationId: configuration.id, start: state.start, actions: state.actions, ...configuration.viewport, reached: false };
+        let response;
+        page.on('response', candidate => {
+          const request = candidate.request();
+          if (!request.isNavigationRequest()) return;
+          let frame;
+          try { frame = request.frame(); } catch { return; }
+          if (frame === page.mainFrame()) response = candidate;
+        });
         try {
-          let response = await page.goto(state.start.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-          if (!response || response.status() >= 400) throw new Error(`Start point returned HTTP ${response?.status() ?? 'no response'}.`);
+          const startResponse = await page.goto(state.start.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          if (!startResponse || startResponse.status() >= 400) throw new Error(`Start point returned HTTP ${startResponse?.status() ?? 'no response'}.`);
           if(state.ready){let ready=page.locator(state.ready.selector);if(state.ready.text)ready=ready.filter({hasText:state.ready.text});await ready.first().waitFor({state:'visible',timeout:state.ready.timeoutMs||30000});}
           for (let index = 0; index < state.actions.length; index++) {
             const actionResponse = await replayAction(page, state.actions[index]);
             if(actionResponse?.captureAction)(result.actionEvidence ||= []).push(actionResponse.captureAction);
-            if (actionResponse?.status) response = actionResponse;
             result.completedActions = index + 1;
           }
-          if (!response || response.status() >= 400) throw new Error(`Final point returned HTTP ${response?.status() ?? 'no response'}.`);
           await settle(page);
+          // Click and keyboard actions can navigate without returning a response.
+          // Fragment navigation keeps the response from the current document.
+          if (!response || response.status() >= 400) throw new Error(`Final point returned HTTP ${response?.status() ?? 'no response'}.`);
           const finalAction = state.actions.filter(action => !['assert-state', 'wait-for'].includes(action.type)).at(-1);
           await settleScrollTarget(page, finalAction);
-          if (await page.locator('astro-error-overlay').count()) throw new Error('Preview has an Astro error overlay.');
+          await assertNoPreviewErrorOverlay(page);
           const scrollSurface=state.scrollSurface?await prepareSurface(page,state.scrollSurface):null;
           // Only terminal assertions describe the final image. Earlier assertions
           // remain action history (e.g. menu open followed by menu close).
@@ -373,13 +396,14 @@ export async function captureBrowserPlan({ plan, directory, phase, channel = 'ch
           if(error.pageSurfaces)result.pageSurfaces=error.pageSurfaces;
           delete result.finalStateEvidence;
           delete result.componentInstance;
-          Object.assign(result, { error: error.message, failedAction: result.completedActions ?? 0, finalUrl: page.url() || state.start.url });
+          Object.assign(result, { error: error.message, status: response?.status() ?? null, failedAction: result.completedActions ?? 0, finalUrl: page.url() || state.start.url });
         } finally {
           states.push(result);
           await context.close().catch(()=>{});
         }
       }
     }
+    signal?.throwIfAborted();
     const capture = { schemaVersion: '0.1', at: new Date().toISOString(), adapter: 'web', channel, states, scrollSurfaceCoverage:scrollSurfaceCoverage(states) };
     await writeFile(join(target, 'capture.json'), JSON.stringify(capture, null, 2) + '\n', 'utf8');
     return capture;

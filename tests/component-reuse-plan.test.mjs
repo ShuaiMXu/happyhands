@@ -12,9 +12,12 @@ import {componentReusePlan} from '../packages/experience-core/component-reuse.js
 test('reuse planning distinguishes approved, observed, deprecated and missing inventory',()=>{
  const spec=structuredClone(sample);
  spec.designFoundation.components=[{name:'Button',source:'ui/button.js',status:'approved'},{name:'Dialog',source:'web/dialog.js',status:'observed'},{name:'Old',source:'old.js',status:'deprecated'}];
- const plan=componentReusePlan(spec,spec.findings[0].id);
+ const plan=componentReusePlan(spec,spec.findings[0].id,{components:[
+  {source:'ui/button.js'},{source:'old.js'},{source:'new.js'}
+ ]});
  assert.deepEqual(plan.components.map(x=>x.name),['Button']);
  assert.deepEqual(plan.observedNeedsReview.map(x=>x.name),['Dialog']);
+ assert.deepEqual(plan.sourceCandidates.map(x=>x.source),['ui/button.js','new.js']);
  delete spec.designFoundation;
  assert.equal(componentReusePlan(spec,spec.findings[0].id).status,'needs-evidence');
  assert.throws(()=>componentReusePlan(spec,'unknown'),/known finding/);

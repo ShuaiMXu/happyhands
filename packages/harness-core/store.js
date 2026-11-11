@@ -10,10 +10,10 @@ import {readVerificationEvidence,verificationHash} from './verification.js';
 import { captureEntries } from './capture-state.js';
 import { assertVisualReview } from './visual-review.js';
 import { randomUUID, createHash } from 'node:crypto';
-import { mkdir, open, readFile, rename, rm, writeFile,realpath } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readdir, readFile, rename, rm, rmdir, unlink, writeFile, realpath } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { assertExperienceSpec, bootstrapBrief, codexBrief, recordJudgment, approvedFoundationFrom, foundationApprovalReference, assertFoundationApproval } from '../experience-core/index.js';
-import { DEFAULT_LIMITS, visualReviewFor } from './workflow.js';
+import { DEFAULT_LIMITS, executionBlock, visualReviewFor } from './workflow.js';
 import { componentReusePlan, componentReuseBrief } from '../experience-core/component-reuse.js';
 import {evidenceHash,designSystemContext,designSystemBrief} from '../skill-core/design-system.js';
 import {readIncrementalCapturePlan} from './incremental-capture.js';
@@ -52,48 +52,94 @@ export function runFilePath(directory, relativePath) {
   return join(directory, value);
 }
 
-// One writer at a time per run. Every save* reads the manifest, mutates it and
-// renames a replacement into place; without a lock, two harness processes
-// working the same run would silently drop each other's stage records. The lock
-// is a file created exclusively, naming the owning pid, and a lock whose pid no
-// longer exists is reclaimed as stale. Like every advisory lock this is
-// best-effort: it covers a single-user CLI, not a shared server.
+// Publish the owner and its unique token in one atomic rename. Removing only
+// that owner's marker and then the empty directory cannot remove a newer lock.
 const LOCK_FILE = 'run.lock';
+const LOCK_OWNER = /^(\d+)-[0-9a-f-]{36}$/;
 
 function processAlive(pid) {
   try { process.kill(pid, 0); return true; }
   catch (error) { return error.code === 'EPERM'; } // exists, but is not ours to signal
 }
 
+async function removeLockMarker(lockPath, marker) {
+  if (marker) await unlink(join(lockPath, marker)).catch(error => {
+    if (error.code !== 'ENOENT') throw error;
+  });
+  await rmdir(lockPath).catch(error => {
+    if (!['ENOENT', 'ENOTEMPTY', 'EEXIST', 'ENOTDIR'].includes(error.code)) throw error;
+  });
+}
+
+async function lockOwner(lockPath) {
+  const stat = await lstat(lockPath).catch(error => {
+    if (error.code !== 'ENOENT') throw error;
+    return null;
+  });
+  if (!stat) return null;
+  if (stat.isDirectory()) {
+    const entries = await readdir(lockPath).catch(error => {
+      if (!['ENOENT', 'ENOTDIR'].includes(error.code)) throw error;
+      return [];
+    });
+    const match = entries.length === 1 && entries[0].match(LOCK_OWNER);
+    if (entries.length && !match) throw new Error('Unrecognized run lock contents.');
+    const pid = match ? Number(match[1]) : null;
+    if (pid > 0 && processAlive(pid)) return pid;
+    await removeLockMarker(lockPath, match ? entries[0] : null);
+    return null;
+  }
+  if (!stat.isFile()) throw new Error('Unrecognized run lock type.');
+  // Older releases used a PID file. Never reclaim an empty file here, since
+  // that writer may still be writing its PID. unlink cannot remove a directory.
+  try {
+    const contents = (await readFile(lockPath, 'utf8')).trim();
+    const pid = /^\d+$/.test(contents) ? Number(contents) : null;
+    if (!pid || processAlive(pid)) return pid ?? 'unknown';
+    await unlink(lockPath);
+    return null;
+  } catch (error) {
+    if (['ENOENT', 'EISDIR'].includes(error.code)) return null;
+    if (['EPERM', 'EACCES'].includes(error.code)) {
+      // Darwin and Windows can report a directory unlink as a permission error.
+      // A contender may have installed its directory after we read the legacy file.
+      const current = await lstat(lockPath).catch(error => {
+        if (error.code !== 'ENOENT') throw error;
+        return null;
+      });
+      if (!current || current.isDirectory()) return null;
+    }
+    throw error;
+  }
+}
+
 export async function withRunLock(directory, operation, { maxAttempts = 100, intervalMs = 50 } = {}) {
-  const lockPath = join(directory, LOCK_FILE);
-  for (let attempt = 0; ; attempt++) {
-    try {
-      const handle = await open(lockPath, 'wx');
-      try { await handle.writeFile(`${process.pid}\n`, 'utf8'); } finally { await handle.close(); }
-      break;
-    } catch (error) {
-      if (error.code !== 'EEXIST') throw error;
-      let owner = null;
-      try { owner = Number((await readFile(lockPath, 'utf8')).trim()); } catch { /* an unreadable lock is stale */ }
-      // A lock naming this same pid is live, not stale: a process can hold the
-      // lock in one async flow while another waits on it. Only a pid that no
-      // longer exists (or a lock that cannot be read) is reclaimable.
-      const stale = !Number.isInteger(owner) || owner <= 0 || !processAlive(owner);
-      if (stale) {
-        // Two racing reclaimers both remove; the exclusive create settles who owns it next.
-        await rm(lockPath, { force: true });
-      } else if (attempt >= maxAttempts) {
-        throw new Error(`Another harness writer (pid ${owner}) is writing to this run; retry when it finishes.`);
-      } else {
-        await new Promise(wait => setTimeout(wait, intervalMs));
+  return withLedgerLock(directory, LOCK_FILE, operation, {maxAttempts, intervalMs});
+}
+
+async function withLedgerLock(directory, name, operation, {maxAttempts, intervalMs}) {
+  const lockPath = join(directory, name);
+  const staged = await mkdtemp(join(directory, '.run-lock-'));
+  const marker = `${process.pid}-${randomUUID()}`;
+  let acquired = false;
+  try {
+    await writeFile(join(staged, marker), '', { flag: 'wx' });
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await rename(staged, lockPath);
+        acquired = true;
+        break;
+      } catch (error) {
+        if (!['EEXIST', 'ENOTEMPTY', 'ENOTDIR', 'EPERM', 'EACCES'].includes(error.code)) throw error;
+        const owner = await lockOwner(lockPath);
+        if (attempt >= maxAttempts) throw new Error(owner ? `Another harness writer (pid ${owner}) is writing to this run; retry when it finishes.` : 'Could not acquire the run lock; retry the command.');
+        if (owner) await new Promise(wait => setTimeout(wait, intervalMs));
       }
     }
-  }
-  try { return await operation(); } finally {
-    // A failed release must not mask the operation's own error; a lock left
-    // behind is reclaimable as stale once its pid is gone.
-    await rm(lockPath, { force: true }).catch(() => {});
+    return await operation();
+  } finally {
+    if (acquired) await removeLockMarker(lockPath, marker).catch(() => {});
+    else await rm(staged, { recursive: true, force: true }).catch(() => {});
   }
 }
 
@@ -143,6 +189,29 @@ export async function saveOnboarding(directory, onboarding) {
   });
 }
 
+export async function saveContinuation(directory, {onboarding, limits, references = []}) {
+  return withRunLock(directory, async () => {
+    const run = await loadRun(directory);
+    const {continuationBrief} = await import('./continue-review.js');
+    if (run.manifest.onboarding || !onboarding?.continuation || run.manifest.captures.before || run.manifest.plan) throw Error('Continuation limits must be set before capture and planning.');
+    if (!Number.isInteger(limits.round) || limits.round < 2 || limits.round > limits.maxRounds || !Number.isInteger(limits.maxRounds) || limits.maxRounds > DEFAULT_LIMITS.maxRounds || !Number.isFinite(limits.maxMinutes) || limits.maxMinutes <= 0 || limits.maxMinutes > DEFAULT_LIMITS.maxMinutes) throw Error('Invalid continuation limits.');
+    run.manifest.limits = {maxRounds: limits.maxRounds, maxMinutes: limits.maxMinutes, round: limits.round};
+    run.manifest.onboarding = onboarding;
+    await continuationBrief(run);
+    if (references.length > 12) throw Error('Too many predecessor references.');
+    const inherited=[];
+    for(const {content,...reference} of references){
+      if(!/^references\/[a-f0-9]{64}\.(md|json|css)$/.test(reference.path)||verificationHash(Buffer.from(content))!==reference.sha256)throw Error('Invalid predecessor reference text.');
+      await mkdir(join(run.directory,'references'),{recursive:true});
+      await writeFile(join(run.directory,reference.path),content,{flag:'wx'});
+      inherited.push(reference);
+    }
+    if(inherited.length)run.manifest.selectedReferences=inherited;
+    await writeJson(join(run.directory, MANIFEST), run.manifest);
+    return run.manifest;
+  });
+}
+
 export async function saveDiagnosis(directory, diagnosis) {
   return withRunLock(directory, async () => {
     const run = await loadRun(directory);
@@ -187,6 +256,10 @@ export async function loadRun(directory) {
   const run={directory:root,manifest,spec};
   if(manifest.plan?.designSourcesDigest&&manifest.plan.designSourcesDigest!==designSourcesDigest(designSourceRefs(run)))throw Error('Selected design sources changed after planning.');
   if(manifest.selectedReferences?.length)await designSourceContext(run);
+  if(manifest.onboarding?.continuation){
+    const {continuationBrief}=await import('./continue-review.js');
+    await continuationBrief(run);
+  }
   return run;
 }
 
@@ -399,11 +472,20 @@ export async function saveVisualReview(directory, review, { screenshotHashes = {
   });
 }
 
+// The capture lock covers the original images as well as the manifest update.
+export async function captureOnce(directory, phase, operation) {
+  if (!['before', 'after'].includes(phase)) throw new Error('Phase must be before or after.');
+  return withLedgerLock(directory, `capture-${phase}.lock`, async () => {
+    const {manifest} = await loadRun(directory);
+    if (manifest.captures[phase]) throw new Error(`${phase} is already captured; start a new run for another comparison.`);
+    return operation();
+  }, {maxAttempts: 1, intervalMs: 0});
+}
+
 export async function saveCapture(directory, phase, capture) {
   if (!['before', 'after'].includes(phase)) throw new Error('Phase must be before or after.');
   return withRunLock(directory, async () => {
     const run = await loadRun(directory);
-    const selectedDesignSources=await designSourceBrief(run);
     const bootstrap = run.manifest.mode === 'bootstrap';
     if (bootstrap && phase === 'before') throw new Error('A bootstrap run has no baseline; record the absent baseline, then capture the first render as after.');
     // A change made outside the Harness can still be captured, in either mode, as long as the
@@ -412,6 +494,8 @@ export async function saveCapture(directory, phase, capture) {
     if (!bootstrap && phase === 'after' && !run.manifest.captures.before) throw new Error('Capture before before capturing after.');
     if (!bootstrap && phase === 'after' && run.manifest.confirmation?.verdict !== 'supported') throw new Error('Confirm a supported finding before capturing after.');
     if (run.manifest.captures[phase]) throw new Error(`${phase} is already captured; start a new run for another comparison.`);
+    const block = phase === 'after' ? executionBlock(run.manifest) : null;
+    if (block) throw new Error(block.reason);
     run.manifest.captures[phase] = capture;
     await writeJson(join(run.directory, MANIFEST), run.manifest);
     return run.manifest;
@@ -487,7 +571,9 @@ export async function savePlan(directory, findingId) {
     const delegated=run.manifest.confirmation.authority==='user-delegated';
     const confirmedScope = `\n\n## ${delegated?'User-delegated repair scope':'Human-confirmed scope'}\n\nConfirmation note (JSON string): ${JSON.stringify(run.manifest.confirmation.note)}\n\n${delegated?'The user delegated investigation and repair, not candidate verification. Reproduce candidates, skip false positives, and leave final judgment to the user.':'This confirmation narrows the diagnosis proposal. Follow these explicit boundaries; do not implement unconfirmed suggestions.'}\n`+await repairRequestContext(run);
     const remediation=await stageRemediation(run,findingId);
-    const brief = codexBrief(run.spec, findingId) + confirmedScope + componentReuseBrief(reuse) + designSystemBrief(designSystem) + (run.manifest.foundationApproval ? `\n\nApproved Foundation version: ${run.manifest.foundationApproval.foundationVersion}\nApproval artifact: ${run.manifest.foundationApproval.path}\n` : '')+projectMemoryBrief(memory)+captureScope+requestContext+await experienceCaseBrief(run)+selectedDesignSources;
+    const {continuationBrief}=await import('./continue-review.js');
+    const predecessorContext=await continuationBrief(run);
+    const brief = codexBrief(run.spec, findingId) + confirmedScope + componentReuseBrief(reuse) + designSystemBrief(designSystem) + (run.manifest.foundationApproval ? `\n\nApproved Foundation version: ${run.manifest.foundationApproval.foundationVersion}\nApproval artifact: ${run.manifest.foundationApproval.path}\n` : '')+projectMemoryBrief(memory)+captureScope+requestContext+await experienceCaseBrief(run)+predecessorContext+selectedDesignSources;
     await writeFile(join(run.directory, 'codex-brief.md'), brief, 'utf8');
     run.manifest.findingId = findingId;
     run.manifest.plan = { path: 'codex-brief.md', kind: 'fix', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), confirmationHash: projectMemoryDigest(run.manifest.confirmation), componentReuse: {path: reusePath, findingId, status: reuse.status}, createdAt: new Date().toISOString() };
@@ -666,6 +752,8 @@ export async function saveJudgment(directory, decision, reason = '') {
     if (run.manifest.judgment) throw new Error('This run already has a judgment; start a new run to reassess it.');
     const visualQa = visualReviewFor(run.manifest, 'visual-qa-evaluator');
     if (!visualQa) throw new Error('Independent Visual QA is required before human judgment.');
+    const block = decision === 'accept' ? executionBlock(run.manifest) : null;
+    if (block) throw new Error(block.reason);
     if(decision==='accept')await readVisualReviewBinding(run,visualQa);
     if(decision==='accept')await readVerificationEvidence(directory,run.manifest);
     if(decision==='accept')await readRemediation(run,{execution:true});
@@ -682,6 +770,7 @@ export async function saveJudgment(directory, decision, reason = '') {
 export async function savePullRequest(directory,pullRequest) {
   return withRunLock(directory,async()=>{
     const run=await loadRun(directory);
+    if(run.manifest.judgmentWithdrawal)throw Error('The final acceptance was withdrawn.');
     if(run.manifest.judgment?.decision!=='accept')throw Error('Final acceptance is required before recording a pull request.');
     if(!/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/.test(pullRequest.url||''))throw Error('Invalid pull request URL.');
     if(run.manifest.pullRequest&&run.manifest.pullRequest.url!==pullRequest.url)throw Error('A different pull request is already recorded.');

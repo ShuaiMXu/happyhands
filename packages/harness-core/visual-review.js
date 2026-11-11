@@ -1,8 +1,8 @@
-import {assertMethodChecks} from './remediation.js';
+import {assertMethodChecks} from './remediation-validation.js';
 import { wholePageReviewCoverage, missingAfterStates } from './whole-page.js';
 import Ajv from 'ajv/dist/2020.js';
 import schema from '../../visual-review.schema.json' with { type: 'json' };
-import { captureEntries, captureKey, captureOriginals } from './capture-state.js';
+import { captureEntries, captureOriginals } from './capture-state.js';
 
 const validate = new Ajv({ allErrors: true }).compile(schema);
 
@@ -55,18 +55,20 @@ export function assertVisualReview(review, manifest) {
     for(const phase of ['before','after'])for(const entry of captureEntries(manifest.captures[phase]))for(const part of entry.interactionParts||[])if(!refs.has(part.screenshot))throw Error('Visual QA must inspect every interaction original.');
     const baselineEntries = captureEntries(manifest.captures.before);
     const afterEntries = captureEntries(manifest.captures.after);
-    for (const entry of captureEntries(firstRender ? manifest.captures.after : manifest.captures.before).filter(item => item.screenshot)) {
-      const key = captureKey(entry.stateId, entry.configurationId);
+    const stateKey = entry => JSON.stringify([entry.stateId, entry.configurationId]);
+    const afterByState = new Map(afterEntries.map(entry => [stateKey(entry), entry]));
+    for (const entry of (firstRender ? afterEntries : baselineEntries).filter(item => item.screenshot)) {
+      const after = afterByState.get(stateKey(entry));
       if (firstRender) {
         if (!refs.has(entry.screenshot)) throw new Error(`Visual QA of a first render must cite state ${entry.stateId} in ${entry.configurationId}; one capture cannot stand in for the others.`);
-      } else if (!refs.has(entry.screenshot) || !refs.has(`after/${key}.png`) && !captureEntries(manifest.captures.after).some(item => item.stateId === entry.stateId && item.configurationId === entry.configurationId && refs.has(item.screenshot))) {
+      } else if (!refs.has(entry.screenshot) || (after?.screenshot && !refs.has(after.screenshot))) {
         if (entry.legacy) throw new Error(`Visual QA must cite matched before/after ${entry.configurationId} screenshots.`);
         throw new Error(`Visual QA must cite matched before/after state ${entry.stateId} in ${entry.configurationId}.`);
       }
     }
     if (!firstRender) {
-      const baselineScreenshots = new Set(baselineEntries.filter(item => item.screenshot).map(item => captureKey(item.stateId, item.configurationId)));
-      for (const entry of afterEntries.filter(item => item.screenshot && !baselineScreenshots.has(captureKey(item.stateId, item.configurationId)))) {
+      const baselineScreenshots = new Set(baselineEntries.filter(item => item.screenshot).map(stateKey));
+      for (const entry of afterEntries.filter(item => item.screenshot && !baselineScreenshots.has(stateKey(item)))) {
         if (!refs.has(entry.screenshot)) throw new Error(`Visual QA must cite newly reachable state ${entry.stateId} in ${entry.configurationId}.`);
       }
     }

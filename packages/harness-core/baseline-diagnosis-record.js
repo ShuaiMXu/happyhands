@@ -17,6 +17,7 @@ export async function verifyBaselineDiagnosis(run,diagnosis,{current=true}={}){
  const bytes=await readVerificationFile(run.directory,reference.path,2*1024*1024);
  if(baselineHash(bytes)!==reference.sha256)throw Error('Baseline diagnosis record changed.');
  const record=JSON.parse(bytes);
+ if(reference.status!==record.result.status)throw Error('Baseline diagnosis completion status changed.');
  if(record.captureHash!==baselineCaptureHash(run))throw Error('Baseline diagnosis capture manifest changed.');
  if(record.sourceHash!==baselineSourceHash(run))throw Error('Baseline diagnosis source context changed.');
  if(current&&record.binding!==baselineBinding(run))throw Error('Baseline diagnosis context changed.');
