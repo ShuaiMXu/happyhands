@@ -1,0 +1,48 @@
+name: Refresh README star growth
+
+on:
+  schedule:
+    - cron: '23 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: readme-star-growth
+
+jobs:
+  refresh:
+    if: github.repository == 'ShuaiMXu/happyhands' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Refresh chart from GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in 1 2 3; do
+            if node scripts/update-star-history.mjs; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              sleep 5
+            fi
+          done
+          exit 1
+      - name: Publish chart assets
+        run: |
+          git add -- assets/readme/star-history.json assets/readme/star-history-light.svg assets/readme/star-history-dark.svg
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -m "docs: refresh README star growth"
+          git push origin "HEAD:${GITHUB_REF}"
