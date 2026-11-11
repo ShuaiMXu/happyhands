@@ -1,0 +1,41 @@
+skills/experience-remediation/SKILL.md
+  s_c3a809bd8a1ec1::t_6da3672f0b0fe3 28-31
+packages/harness-core/remediation.js
+  s_c3a809bd8a1ec1::t_6da3672f0b0fe3 11-16,18-19,23-25,31,34-35,37,39-40,42-43
+  s_c3a809bd8a1ec1::t_c90dc49cd03963 17,38,41
+packages/harness-core/visual-review.js
+  s_c3a809bd8a1ec1::t_6da3672f0b0fe3 1,30,36-44
+  s_c3a809bd8a1ec1::t_7566d5d06bd0cc 31-35
+skills/experience-remediation/rules.json
+  s_c3a809bd8a1ec1::t_6da3672f0b0fe3 2,235-252
+docs/experience-orchestration.md
+  s_c3a809bd8a1ec1::t_55370de83e0576 22
+docs/experience-remediation.md
+  s_c3a809bd8a1ec1::t_dbec007cb42d05 52-84
+docs/model-value-evaluation-zh.md
+  s_c3a809bd8a1ec1::t_6f6ca5f52e8393 9
+packages/harness-core/finding-admission.js
+  s_c3a809bd8a1ec1::t_63578b67eef43d 1-2,36,38
+packages/workbench/baseline-diagnosis.js
+  s_c3a809bd8a1ec1::t_c83b4a41a6684b 45-47,76
+skills/happyhands/references/workflow.md
+  s_c3a809bd8a1ec1::t_549d34e7dceca5 3,11-12,14
+tests/remediation.test.mjs
+  s_c3a809bd8a1ec1::t_6263847bf4a05f 8,78-134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "4089502f05981ee02931b50030ccd69c470515b2",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
