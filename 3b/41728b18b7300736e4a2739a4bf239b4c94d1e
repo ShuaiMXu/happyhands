@@ -1,0 +1,23 @@
+docs/model-value-evaluation-zh.md
+  s_c3a809bd8a1ec1::t_e18664b466befc 3,9,39,41,43,49
+  s_c3a809bd8a1ec1::t_c40f6d3bf6d43a 5-8,10-12,27-38,40,42
+  s_c3a809bd8a1ec1::t_0bbc607cc60078 1-2,4,13-26,44-48,50-53
+docs/next-steps.md
+  s_c3a809bd8a1ec1::t_e18664b466befc 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "3b41728b18b7300736e4a2739a4bf239b4c94d1e",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
