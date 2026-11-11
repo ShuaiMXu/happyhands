@@ -1,6 +1,8 @@
 # 模型升级时，HappyHands 应保留什么
 
-对应 [Issue #14](https://github.com/ShuaiMXu/happyhands/issues/14)。当前记录包含一个已验收的功能修复和两项同模型试验。
+对应 [Issue #14](https://github.com/ShuaiMXu/happyhands/issues/14)。**完整 Harness 同题验证待执行。**
+
+本文记录两项规划上下文预实验，并引用 Alpha.2 的独立历史案例。Issue #14 的对照需要轻量模型在同一项任务上实际走完诊断、隔离修复、复拍对比和独立复核，保留可追溯的运行证据。随后将结果与直跑基线一起交给人盲评。
 
 ## 产品目标与比较标准
 
