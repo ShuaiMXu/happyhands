@@ -1,3 +1,5 @@
+import {HERO_SURFACE} from './remediation.js';
+
 // Clear findings only. A skill citation is a reasoning source, never proof that
 // a third-party UI adopted a house style or that a screenshot contains a defect.
 export const FINDING_POLICY_VERSION='clear-defects@1';
@@ -31,7 +33,7 @@ export function isReportableFinding(finding){
  if((finding.sources||[]).some(source=>source.type==='model'||source.type==='skill'))return finding.findingBasis?.policyVersion===FINDING_POLICY_VERSION&&finding.findingBasis.kind==='defect';
  return finding.id!=='AUTOMATIC_REPAIR';
 }
-export function guidanceCatalog(design,ojo){
+export function guidanceCatalog(design,ojo,remediation){
  const entry=(path,content,ownedOnly=false)=>({path,content,ownedOnly,sections:[...content.matchAll(/^#{1,6}\s+(.+)$/gm)].map(match=>match[1].trim())});
- return [entry(`${design.metadata.reference}/happyhands-ui/SKILL.md`,design.uiRules,true),...design.packs.flatMap(pack=>[entry(`${design.metadata.reference}/${pack.metadata.id}/ADAPTER.md`,pack.adapter),...pack.documents.filter(doc=>doc.path.endsWith('.md')).map(doc=>entry(`${design.metadata.reference}/${pack.metadata.id}/${doc.path}`,doc.content))]),entry(`${ojo.metadata.reference}/ADAPTER.md`,ojo.adapter),...ojo.documents.filter(doc=>doc.path.endsWith('.md')).map(doc=>entry(`${ojo.metadata.reference}/${doc.path}`,doc.content))];
+ return [...(remediation?.profile.surface===HERO_SURFACE?[entry('remediation-SKILL.md',remediation.skill,true)]:[]),entry(`${design.metadata.reference}/happyhands-ui/SKILL.md`,design.uiRules,true),...design.packs.flatMap(pack=>[entry(`${design.metadata.reference}/${pack.metadata.id}/ADAPTER.md`,pack.adapter),...pack.documents.filter(doc=>doc.path.endsWith('.md')).map(doc=>entry(`${design.metadata.reference}/${pack.metadata.id}/${doc.path}`,doc.content))]),entry(`${ojo.metadata.reference}/ADAPTER.md`,ojo.adapter),...ojo.documents.filter(doc=>doc.path.endsWith('.md')).map(doc=>entry(`${ojo.metadata.reference}/${doc.path}`,doc.content))];
 }

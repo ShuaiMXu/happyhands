@@ -8,21 +8,39 @@ const encode=value=>JSON.stringify(value,null,2)+'\n';
 const text=value=>typeof value==='string'&&value.trim().length>=5&&value.length<=16000;
 const files={contract:'remediation-contract.json',skill:'remediation-SKILL.md',result:'remediation-result.json'};
 export const RESULT_FILE='.harness-remediation-result.json';
+export const HERO_SURFACE='homepage-hero';
+export const HERO_MOTION_RULE='HH-HERO-MOTION';
+export const HERO_VERIFICATION_ID='hero-motion';
+
+export function isHomepageHero(entry){
+  const value=entry?.finalUrl||entry?.start?.url;
+  if(!value||!URL.canParse(value))return false;
+  return ['/', '/apps/portal', '/en/apps/portal'].includes(new URL(value).pathname.replace(/\/+$/,'')||'/');
+}
 
 export function remediationProfile(value){
   if(value===undefined)return null;
-  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!['profile','adoptionReason'].includes(k))||!['project','happyhands'].includes(value.profile)||!text(value.adoptionReason))throw Error('Remediation requires project/happyhands profile and an explicit adoptionReason.');
-  return {profile:value.profile,adoptionReason:value.adoptionReason};
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!['profile','adoptionReason','surface'].includes(k))||!['project','happyhands'].includes(value.profile)||!text(value.adoptionReason))throw Error('Remediation requires project/happyhands profile and an explicit adoptionReason.');
+  if(value.surface!==undefined&&(value.profile!=='happyhands'||value.surface!==HERO_SURFACE))throw Error('The homepage-hero surface requires the HappyHands owned profile.');
+  return {profile:value.profile,adoptionReason:value.adoptionReason,...(value.surface?{surface:value.surface}:{})};
 }
 export async function remediationDefinition(profile){
   if(!profile)return null;
   const skill=await readFile(new URL('../../skills/experience-remediation/SKILL.md',import.meta.url),'utf8');
   const catalog=JSON.parse(await readFile(new URL('../../skills/experience-remediation/rules.json',import.meta.url),'utf8'));
-  return {version:catalog.version,workflow:catalog.workflow,profile,skill,skillHash:digest(skill),rules:catalog.rules.filter(r=>r.profile==='project'||profile.profile==='happyhands')};
+  return {version:catalog.version,workflow:catalog.workflow,profile,skill,skillHash:digest(skill),rules:catalog.rules.filter(r=>(r.profile==='project'||profile.profile==='happyhands')&&(!r.surface||r.surface===profile.surface))};
 }
 export async function stageRemediation(run,findingId){
-  const profile=remediationProfile(run.manifest.onboarding?.config?.designGuidance?.remediation);
+  const config=run.manifest.onboarding?.config;
+  const profile=remediationProfile(config?.designGuidance?.remediation);
   if(!profile)return null;
+  if(profile.surface===HERO_SURFACE){
+    const check=config.verificationChecks?.find(check=>check.id===HERO_VERIFICATION_ID&&check.stage==='normal-interaction'&&check.screenshots?.length>=2);
+    const states=captureEntries(run.manifest.captures?.before);
+    if(!check||!states.some(entry=>entry.screenshot&&check.stateIds.includes(entry.stateId)&&isHomepageHero(entry))) {
+      throw Error('Homepage Hero remediation requires a captured homepage state assigned to the hero-motion normal-interaction check with at least two original frames.');
+    }
+  }
   const definition=await remediationDefinition(profile);
   const contract={...definition,issueIds:run.manifest.repair?.findingIds||[findingId||'BOOTSTRAP'],sourceCommit:run.manifest.onboarding?.repository?.commit||null};
   const bytes=encode(contract);

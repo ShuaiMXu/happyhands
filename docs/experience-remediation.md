@@ -49,6 +49,39 @@ Select the actual project design source files through the existing project confi
 
 The own Skill also covers information grouping, primary actions, copy removal/retention and shared component consumers. For menus, inspect the real open/selected/focus/disabled and keyboard behavior, not only the trigger. A static card can legitimately have no loading or keyboard interaction; record why it is not applicable rather than manufacturing states.
 
+## HappyHands 官网 Hero
+
+用独立的首页 Hero 运行启用这项约定。将下列配置合入官网的项目配置，使用目标仓库中支持 `--url` 和 `--out` 的首页动效检查。Capture Plan 的首个状态应为 `hero`，指向对应预览的 `/apps/portal/` 或 `/en/apps/portal/`，配置正常桌面与手机尺寸。采集同一页面的 before 与 after，验证时使用 after 的实际预览入口。
+
+```json
+{
+  "designGuidance": {
+    "taste": "public-page",
+    "intent": "animate",
+    "remediation": {
+      "profile": "happyhands",
+      "surface": "homepage-hero",
+      "adoptionReason": "The approved HappyHands homepage cover orbit and glass logo."
+    }
+  },
+  "verificationChecks": [{
+    "id": "hero-motion",
+    "command": "node",
+    "args": ["tests/homepage-motion-browser.mjs", "--url", "{url}", "--out", "{out}"],
+    "stage": "normal-interaction",
+    "stateIds": ["hero"],
+    "method": "Chrome WebGL drawing, scroll pause and resume, preferences and fallback checks, plus original frames in both themes.",
+    "limitations": ["Desktop and phone-sized Chrome viewports; visual quality still requires independent review."],
+    "screenshots": ["desktop-dark.png", "desktop-light.png", "desktop-motion.png", "phone-dark.png", "phone-light.png"]
+  }]
+}
+```
+
+- `HH-HERO-MOTION` 保留原封面与旋转轨迹，用 Three.js 的透视强化近大远小。检查开场倾斜、鼠标响应、滚动退出与恢复、标题和导航可读性、减少动态效果及 WebGL 降级。这一例外只适用于已采纳的首页旋转封面。
+- `HH-HERO-MARK` 要求中央玻璃 Logo 保持单一轮廓，高光限制在 Logo 内。深浅主题和正常桌面、手机尺寸都检查是否有重影。
+
+诊断和计划加载这两条规则，执行逐条记录决定。After 采集后用现有 `verify` 运行专项检查，再交独立复核。缺少通过的绑定浏览器记录或动态原图时，Hero 复核不能通过。被专项检查覆盖的首屏状态，两条规则都须明确通过。WebGL 绘制和截图序列用于证据，设计完成度由独立评审检查，人工接受仍单独记录。普通 HappyHands 与其他项目的规则清单不变。
+
 ## Reports and gates
 
 Execution `checks` and `issues` each contain exact IDs, status (`fixed`, `preserved`, `not-applicable`, `blocked`), observed evidence, a concrete decision, actual changed files and verification description. Fixed requires a changed source file. Workflow phase labels are ordering guidance, never additional rule IDs. The reserved report filename is rejected if already tracked by the target; collected reports are removed from both the worktree and its Git index, including malformed reports archived for diagnosis. Blocked stops successful execution. These are executor claims, not independent visual proof.

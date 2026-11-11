@@ -1,4 +1,4 @@
-import {assertMethodChecks} from './remediation.js';
+import {assertMethodChecks,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation.js';
 import { wholePageReviewCoverage, missingAfterStates } from './whole-page.js';
 import Ajv from 'ajv/dist/2020.js';
 import schema from '../../visual-review.schema.json' with { type: 'json' };
@@ -27,6 +27,21 @@ export function assertVisualReview(review, manifest) {
   }
   if(review.verificationDigest && review.verificationDigest!==manifest.verificationEvidence?.digest)throw Error('Review verification evidence changed.');
   const records=manifest.verificationRecords||[];
+  if(review.skillId==='visual-qa-evaluator'&&review.verdict==='pass'&&manifest.plan?.remediation?.ruleIds.includes(HERO_MOTION_RULE)){
+    const check=records.find(record=>record.id===HERO_VERIFICATION_ID&&record.stage==='normal-interaction'&&record.status==='pass'&&record.images.length>=2);
+    const heroAfter=captureEntries(manifest.captures.after).filter(entry=>entry.screenshot&&isHomepageHero(entry));
+    const hasHero=heroAfter.length||captureEntries(manifest.captures.before).some(entry=>entry.screenshot&&isHomepageHero(entry));
+    const verifiedHero=check?heroAfter.filter(entry=>check.stateIds.includes(entry.stateId)):[];
+    if(hasHero&&!verifiedHero.length) {
+      throw Error('Passing Homepage Hero QA requires passing source-bound hero-motion browser evidence for the captured homepage.');
+    }
+    for(const entry of verifiedHero){
+      const stateKey=captureKey(entry.stateId,entry.configurationId)+':'+entry.screenshot;
+      if(![HERO_MOTION_RULE,'HH-HERO-MARK'].every(ruleId=>review.methodChecks.some(row=>row.ruleId===ruleId&&row.stateKey===stateKey&&row.status==='pass'))) {
+        throw Error('The verified homepage Hero states require explicit passes for motion and the single glass mark.');
+      }
+    }
+  }
   if(records.length){
     if(review.verificationDigest!==manifest.verificationEvidence?.digest || records.some(record=>!review.verificationRefs?.includes(record.id)))throw Error('Review must acknowledge every assigned verification record.');
     if((review.verificationRefs||[]).some(id=>!records.some(record=>record.id===id)))throw Error('Unknown verification reference.');
