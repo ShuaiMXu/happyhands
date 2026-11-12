@@ -1,0 +1,52 @@
+package.json
+  s_c3a809bd8a1ec1::t_1a7c8fdc5d5fc3 3
+docs/lightweight.md
+  s_c3a809bd8a1ec1::t_65636c9787777a 3
+  s_c3a809bd8a1ec1::t_1a7c8fdc5d5fc3 1,12,15,17,60
+skills/happyhands/references/workflow.md
+  s_c3a809bd8a1ec1::t_611bf3f85428e5 17-20,22,24
+  s_c3a809bd8a1ec1::t_3df1a06faae165 21
+  s_c3a809bd8a1ec1::t_b4e797a303e86c 23
+scripts/harness.mjs
+  s_c3a809bd8a1ec1::t_1a7c8fdc5d5fc3 130
+skills/happyhands/SKILL.md
+  s_c3a809bd8a1ec1::t_611bf3f85428e5 16-17
+distribution/lite/package.json
+  s_c3a809bd8a1ec1::t_1a7c8fdc5d5fc3 3
+docs/remaining-work-2026-11-12.zh-CN.md
+  s_c3a809bd8a1ec1::t_6246ff2b5a8554 3,7,11,13,16-22
+README.zh-CN.md
+  s_c3a809bd8a1ec1::t_1a7c8fdc5d5fc3 14,33,36,41-43,95,112
+  s_c3a809bd8a1ec1::t_65636c9787777a 87-88
+README.md
+  s_c3a809bd8a1ec1::t_1a7c8fdc5d5fc3 14,33,36,41-43,95,112
+  s_c3a809bd8a1ec1::t_65636c9787777a 87-88
+docs/finding-admission-policy.md
+  s_c3a809bd8a1ec1::t_df5aef390feac5 11-14
+distribution/lite/package-lock.json
+  s_22deeb1f712cd1::t_66afaa9269dfdd 3,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "542e667b64321034510c9fe81a0d80c97ca8ba20",
+  "prompts": {},
+  "sessions": {
+    "s_22deeb1f712cd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1cdef-2494-70c0-b001-f3cd25686fea",
+        "model": "unknown"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    },
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
