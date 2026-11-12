@@ -37,12 +37,19 @@ jobs:
           done
           exit 1
       - name: Publish chart assets
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          git add -- assets/readme/star-history.json assets/readme/star-history-light.svg assets/readme/star-history-dark.svg
-          if git diff --cached --quiet; then
+          chart_assets=(
+            assets/readme/star-history.json
+            assets/readme/star-history-light.svg
+            assets/readme/star-history-dark.svg
+          )
+          git add -- "${chart_assets[@]}"
+          if git diff --cached --quiet -- "${chart_assets[@]}"; then
             exit 0
           fi
           git -c user.name='github-actions[bot]' \
             -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-            commit -m "docs: refresh README star growth"
-          git push origin "HEAD:${GITHUB_REF}"
+            commit --only -m "docs: refresh README star growth" -- "${chart_assets[@]}"
+          git push origin "HEAD:refs/heads/${DEFAULT_BRANCH}"
