@@ -1,6 +1,6 @@
 {
   "name": "happyhands-lite",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Evidence-backed UI and product experience review for coding agents, without the workbench.",
   "type": "module",
   "license": "MIT",

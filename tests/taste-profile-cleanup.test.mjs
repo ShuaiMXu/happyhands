@@ -67,7 +67,9 @@ if (process.argv[2] === '--fixture') {
       const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--fixture'], {
         env: { ...process.env, CHROME_PATH: fakeChrome, TASTE_SKILL_TMP: base },
         encoding: 'utf8',
-        timeout: 15000,
+        // Allow the launcher's own 20s failure deadline and bounded shutdown to
+        // finish under parallel test load, while still killing a stuck fixture.
+        timeout: 45000,
       });
       assert.equal(result.error, undefined, result.error?.message);
       assert.equal(result.status, 0, result.stdout + result.stderr);

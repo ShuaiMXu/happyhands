@@ -9,7 +9,7 @@ The `happyhands` Skill packages the existing Harness engine, its pinned design m
 From the product repository, with Node.js 22.15+ and npm installed:
 
 ```sh
-npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.3/happyhands-lite-0.1.0-alpha.3.tgz happyhands install
+npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.4/happyhands-lite-0.1.0-alpha.4.tgz happyhands install
 ```
 
 Git, Chrome/Edge and an authenticated coding agent are also needed for the repair loop. The package is distributed as a public GitHub Release asset, so installing it does not require GitHub Packages authentication. The install command downloads the package and npm runtime dependencies; it runs `npm ci --ignore-scripts` using the bundled shrinkwrap. Existing installations and linked destination directories are rejected. For an upgrade, select a separate `--destination PATH`, review it, then switch your agent to the chosen installation; this Alpha does not replace existing drafts or Skills automatically.
@@ -42,9 +42,20 @@ node ~/.codex/skills/happyhands/bin/happyhands.mjs resources search --query lime
 
 The installed [workflow reference](../skills/happyhands/references/workflow.md) explains `start`, bound capture, model diagnosis, scoped planning/execution, independent review, comparison and the final user decision. `start --config FILE` validates an already-running preview and the actual Git repository without crawling unrelated pages or extracting the whole project. Lightweight capture defaults to `--extract-design-system false` and requires `--bind-evidence true`: it hashes the complete Git input set and binds originals, but does not automatically build a whole-project component/module inventory. The omission is recorded and incremental inference is unavailable. Select actual project rules and references for the task; request `--extract-design-system true` explicitly for a full extraction. Full source hashing currently allows up to 1 GiB total with a 64 MiB per-file cap and refuses larger inputs without partial binding. The full `onboard` and bootstrap flow remain available separately. The installer does not edit product source or launch the workbench.
 
-`resources search` downloads only the Design.md, design-system and component indexes and returns up to eight candidates. `resources select --run DIRECTORY --id ID` fetches the chosen full document; system references can select an indexed `--document PATH`, and local references can use `--file PATH`. Only selected documents are copied to the run. Index/document hashes, original source, available stack/license information and selection time are retained. Check the actual source license and component API before reuse. No resource commands or installers from a retrieved document run automatically.
+`resources search` downloads only the Design.md, design-system and component indexes and returns up to eight candidates. `resources select --run DIRECTORY --id ID` fetches the chosen full document; system references can select an indexed `--document PATH`, and local references can use `--file PATH`. Use `resources select --run DIRECTORY --url HTTPS_RAW_DOCUMENT` for a selected Markdown, CSS or JSON document; GitHub `blob` URLs are resolved to their raw document. HTML viewers and redirects are rejected. Each selected text is limited to 512 KiB, with 1 MiB total per run. Only selected documents are copied to the run. Index/document hashes, original source, available stack/license information and selection time are retained. Check the actual source license and component API before reuse. URLs and retrieved documents are reference data; their commands and installers never run automatically.
 
 Project `designSourcePaths` are read and hashed during CLI configuration. Selected external/local references are frozen before diagnosis, contribute to its source binding and the execution plan, and are rechecked during run reads and execution. A missing, changed or incompatible reference remains a failure or explicit limitation, not an approval or a visual pass. Retrieval does not create layout decisions by itself: the Skill must connect the reference to actual content grouping, hierarchy, grid, component APIs and state behavior, then independent review checks those decisions in the rendered product.
+
+## Product-video review
+
+Explicit video tasks use the bundled [video workflow](../skills/review-video/SKILL.md), rather than the still-page capture loop. Keep the existing renderer, original assets and approved brief. Read its manifest contract and provide real before/after exports, source files, provenance and a complete timeline, outside the product repository. FFmpeg and FFprobe must be available or passed as explicit executable paths; they are not bundled or installed automatically.
+
+```sh
+node /actual/skill/bin/happyhands.mjs video collect --manifest /actual/video-project.json --out /actual/fresh-video-review --ffmpeg /actual/ffmpeg --ffprobe /actual/ffprobe
+node /actual/skill/bin/happyhands.mjs video review --run /actual/fresh-video-review --report /actual/independent-review.json
+```
+
+Collection freezes source/media and methods, decodes complete exports and extracts original frames. It does not establish visual or audio quality. A separate reviewer must watch and listen to both complete timelines and report every rule and segment against the frozen digest. Missing playback, listening or evidence remains `needs-evidence`; failed checks cannot pass. Even an independent pass leaves `humanJudgment:"pending"` until the user supplies their decision. This workflow does not publish a video or authorize deployment.
 
 ## What this Alpha does not establish
 
