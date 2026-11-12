@@ -125,7 +125,8 @@ async function printWorkbenchLink(runId, stage) {
 }
 
 async function main() {
-  const [command, ...rest] = process.argv.slice(2);
+  const [requestedCommand, ...rest] = process.argv.slice(2);
+  const command = ['--help', '-h'].includes(requestedCommand) ? 'help' : requestedCommand;
   if (!command || command === 'help') {
     process.stdout.write(`HappyHands Harness v1.0.0 (workflow schema 0.1)
 
