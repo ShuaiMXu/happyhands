@@ -148,14 +148,26 @@ test('separate processes reclaim a stale owner and release to new owners without
   const events = join(root, 'owners.ndjson');
   const worker = join(root, 'contender.mjs');
   await writeFile(worker, `
-import {withRunLock} from ${JSON.stringify(new URL('../packages/harness-core/store.js', import.meta.url).href)};
 import {appendFile} from 'node:fs/promises';
 import {setTimeout as delay} from 'node:timers/promises';
-for(let index=0;index<3;index++)await withRunLock(process.argv[2],async()=>{
- await appendFile(process.argv[3],JSON.stringify({pid:process.pid,event:'enter'})+'\\n');
- await delay(3);
- await appendFile(process.argv[3],JSON.stringify({pid:process.pid,event:'exit'})+'\\n');
-},{maxAttempts:2000,intervalMs:2});
+const started=performance.now();
+const stage=(stage,index)=>process.stderr.write(JSON.stringify({pid:process.pid,stage,index,at:Date.now(),elapsed:performance.now()-started})+'\\n');
+stage('bootstrap');
+const {withRunLock}=await import(${JSON.stringify(new URL('../packages/harness-core/store.js', import.meta.url).href)});
+stage('import-ready');
+for(let index=0;index<3;index++){
+ stage('request',index);
+ await withRunLock(process.argv[2],async()=>{
+  stage('acquired',index);
+  await appendFile(process.argv[3],JSON.stringify({pid:process.pid,event:'enter'})+'\\n');
+  await delay(3);
+  await appendFile(process.argv[3],JSON.stringify({pid:process.pid,event:'exit'})+'\\n');
+ },{maxAttempts:2000,intervalMs:2});
+ // This phase means the lock API returned; the existing event assertions still
+ // determine mutual exclusion rather than treating diagnostics as acceptance.
+ stage('released',index);
+}
+stage('finished');
 `);
   const processes = await Promise.allSettled(Array.from({length: 6}, async () => {
     const started = performance.now();
