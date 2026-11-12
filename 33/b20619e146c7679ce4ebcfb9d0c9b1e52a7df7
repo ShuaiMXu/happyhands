@@ -1,0 +1,24 @@
+tests/run-integrity-claims.test.mjs
+  s_c3a809bd8a1ec1::t_19b051dc1bdf3b 20
+  s_c3a809bd8a1ec1::t_dab1f28e309985 1-19,21-128
+tests/run-integrity.test.mjs
+  s_c3a809bd8a1ec1::t_4a51ee40fdbeb4 153-170
+packages/harness-core/store.js
+  s_c3a809bd8a1ec1::t_423c01a791b189 60-61,70-105,107-109,138-141,144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "33b20619e146c7679ce4ebcfb9d0c9b1e52a7df7",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
