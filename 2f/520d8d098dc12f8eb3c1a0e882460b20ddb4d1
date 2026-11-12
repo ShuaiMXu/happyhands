@@ -1,0 +1,39 @@
+.github/workflows/checks.yml
+  s_c3a809bd8a1ec1::t_d62ca53d962dc1 2-6
+packages/harness-core/store.js
+  s_c3a809bd8a1ec1::t_d63b556ebbf06b 13,55-56,59-60,68-86,91,95,99,103-105,109,123,130-131,148-150,154
+tests/agents.test.mjs
+  s_c3a809bd8a1ec1::t_e6bbb9906a8975 4,235-237
+tests/continuation-integrity.test.mjs
+  s_c3a809bd8a1ec1::t_02233372496df7 82
+tests/helpers/wait-for-job.mjs
+  s_c3a809bd8a1ec1::t_d50126c6609b64 1-16
+tests/job-wait.test.mjs
+  s_c3a809bd8a1ec1::t_20e2f29087ae3b 1-24
+tests/onboarding-provenance.test.mjs
+  s_c3a809bd8a1ec1::t_c9d0ca33ad94ff 2
+tests/review-planning-service.test.mjs
+  s_c3a809bd8a1ec1::t_86c17ac28443b0 2
+tests/run-integrity.test.mjs
+  s_c3a809bd8a1ec1::t_9e52f5bed4ba20 3,8,107-172
+tests/star-history.test.mjs
+  s_c3a809bd8a1ec1::t_5c02455f8bbb54 8,40
+tests/video-review.test.mjs
+  s_c3a809bd8a1ec1::t_17ddaef2b565fd 5,67-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "2f520d8d098dc12f8eb3c1a0e882460b20ddb4d1",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
