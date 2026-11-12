@@ -127,7 +127,7 @@ async function printWorkbenchLink(runId, stage) {
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   if (!command || command === 'help') {
-    process.stdout.write(`Product Designer Harness v0.1
+    process.stdout.write(`HappyHands Harness v1.0.0 (workflow schema 0.1)
 
 pnpm harness init --spec FILE [--url URL] [--mode review|bootstrap] [--out DIRECTORY]
 pnpm harness start --config FILE [--out DIRECTORY]

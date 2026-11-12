@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://happyhands.cc"><img alt="Website" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
-  <a href="docs/next-steps.md"><img alt="Local Web Alpha" src="https://img.shields.io/badge/status-Local_Web_Alpha-F79B60?style=flat"></a>
+  <a href="https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0"><img alt="v1.0.0" src="https://img.shields.io/badge/release-v1.0.0-F79B60?style=flat"></a>
   <a href="https://github.com/ShuaiMXu/happyhands/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&amp;label=Stars&amp;color=202020"></a>
   <a href="docs/harness.md"><img alt="Harness guide" src="https://img.shields.io/badge/docs-Harness_guide-202020?style=flat"></a>
 </p>
@@ -30,15 +30,17 @@ https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## Get started
 
-Install the **lightweight Alpha Skill** from your product repository. It uses the existing Harness without starting the workbench:
+Install the **lightweight v1.0.0 Skill** from your product repository. It uses the Harness without starting the workbench:
 
 ```sh
-npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.4/happyhands-lite-0.1.0-alpha.4.tgz happyhands install
+npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v1.0.0/happyhands-lite-1.0.0.tgz happyhands install
 ```
 
 The default destination is your Codex user Skill directory (`~/.codex/skills/happyhands`, or under `CODEX_HOME`), so product source stays untouched. `--scope project` selects `.agents/skills/happyhands`; commit or ignore that project-local installation before a clean isolated repair. It includes the runtime, complete pinned methods and six runtime dependencies; the installer never overwrites an existing Skill. Use `$happyhands` in Codex with your preview and one user task, or follow the [lightweight guide](docs/lightweight.md). Claude Code discovery is available with `install --agent claude-code`; its full execution loop remains unverified. DSH can operate the portable instructions as an external coordinator.
 
-Requires Node.js 22.15+ with npm, Git, Chrome/Edge and a configured agent. Model diagnosis/review use Codex; newer models require a Codex version that supports them. Runtime installation and reference selection do not establish a verified product repair. See the [release](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) for actual validation and open limits.
+Requires Node.js 22.15+ with npm, Git, Chrome/Edge and a configured agent. Model diagnosis/review use Codex; newer models require a Codex version that supports them. Runtime installation and reference selection do not establish a verified product repair. See the [v1.0.0 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0) for archive-specific validation and open limits. The previous [Alpha.4 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) remains available; upgrades use a separate `--destination PATH` and preserve the existing installation.
+
+The first release covers the local evidence and repair workflow, selected Design.md/design-system references and a separate timestamped video-review path. Its verified environment is macOS with Chrome and Codex; Windows/Ubuntu, complete Claude-only or DSH-only workflows, new-user onboarding and cross-model quality comparisons remain open. Video review additionally requires explicitly available FFmpeg/FFprobe and actual full audiovisual review. The release number does not turn untested environments or unseen states into accepted results.
 
 ### Optional local workbench
 
@@ -82,13 +84,15 @@ One repair action delegates the intermediate scope and planning steps; it does n
 
 A reported defect needs a reproducible observation, an explanation of what is wrong, and a reference to the relevant skill snapshot. The Harness checks the cited section, line and quotation. General design advice and aesthetic preferences do not enter the automatic repair list on their own.
 
+An explicitly requested enhancement is recorded as a user request rather than relabeled as an observed defect. Its implementation still requires the adopted project rules, source-bound scope, isolated execution and fresh independent review.
+
 Repairs follow the reviewed product's own design sources. The HappyHands UI profile applies to the workbench and to projects that have explicitly adopted it. Original screenshots, earlier failures and excluded suggestions remain in the record. See the [finding admission policy](docs/finding-admission-policy.md).
 
 The [HappyClaw review record](docs/counter-evidence-review-2026-10-21.md) shows how new counter-evidence led to an independent re-review while retaining the original failure. It documents that case's review path, not a whole-product acceptance or production deployment.
 
 ### Design resources
 
-The [website](https://happyhands.cc) provides Design.md references, design systems and components. Select references for the task and inspect their source, usage and licensing. Browsing a resource does not approve it as your project's design system; the lightweight entry can search indexes and snapshot selected full references into the same run. Selection does not install components or approve a new design system. Further real-case acceptance is tracked in [#7](https://github.com/ShuaiMXu/happyhands/issues/7).
+The [website](https://happyhands.cc) provides Design.md references, design systems and components. Select references for the task and inspect their source, usage and licensing. The lightweight entry can search indexes and freeze selected full documents in the same run, including explicitly selected HTTPS Markdown/CSS/JSON and GitHub document links. Selection does not install components or approve a new design system. Further real-case acceptance is tracked in [#7](https://github.com/ShuaiMXu/happyhands/issues/7).
 
 ## Use your coding agent
 
@@ -105,7 +109,7 @@ Run `pnpm harness agents` to inspect registered executors. Select one with `harn
 
 ## Current scope
 
-HappyHands is a **free Local Web Alpha**. External model and CLI services may require their own accounts, subscriptions or usage fees. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, real-user acceptance and other gaps are tracked in the [backlog](docs/next-steps.md).
+HappyHands is **free and open source**. v1.0.0 is the first release of the lightweight local Skill; the source workbench remains optional. External model and CLI services may require their own accounts, subscriptions or usage fees. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, new-user validation, hosted checks and other gaps are tracked in the [remaining work](docs/remaining-work-2026-11-12.zh-CN.md).
 
 Lightweight runs default to `~/.happyhands/runs`; the source CLI/workbench retains `.harness/`. An explicit output path can override these locations. Model-assisted steps send selected source context and images to the configured model service through the CLI. Worktrees and repository checks are workflow safeguards, not a security sandbox. Review shared exports for sensitive material. See [data and execution details](docs/local-workbench.md).
 
