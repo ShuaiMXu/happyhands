@@ -33,12 +33,12 @@ https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 Install the **lightweight Alpha Skill** from your product repository. It uses the existing Harness without starting the workbench:
 
 ```sh
-npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.2/happyhands-lite-0.1.0-alpha.2.tgz happyhands install
+npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.3/happyhands-lite-0.1.0-alpha.3.tgz happyhands install
 ```
 
 The default destination is your Codex user Skill directory (`~/.codex/skills/happyhands`, or under `CODEX_HOME`), so product source stays untouched. `--scope project` selects `.agents/skills/happyhands`; commit or ignore that project-local installation before a clean isolated repair. It includes the runtime, complete pinned methods and six runtime dependencies; the installer never overwrites an existing Skill. Use `$happyhands` in Codex with your preview and one user task, or follow the [lightweight guide](docs/lightweight.md). Claude Code discovery is available with `install --agent claude-code`; its full execution loop remains unverified. DSH can operate the portable instructions as an external coordinator.
 
-Requires Node.js 22.15+ with npm, Git, Chrome/Edge and a configured agent. Model diagnosis/review use Codex; newer models require a Codex version that supports them. Runtime installation and reference selection do not establish a verified product repair. See the [release](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.2) for actual validation and open limits.
+Requires Node.js 22.15+ with npm, Git, Chrome/Edge and a configured agent. Model diagnosis/review use Codex; newer models require a Codex version that supports them. Runtime installation and reference selection do not establish a verified product repair. See the [release](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.3) for actual validation and open limits.
 
 ### Optional local workbench
 
