@@ -1,0 +1,27 @@
+docs/remaining-work-2026-11-12.zh-CN.md
+  s_c3a809bd8a1ec1::t_0b2d9d2e9da2a5 8-9,17-19
+tests/lite-distribution.test.mjs
+  s_c3a809bd8a1ec1::t_887bb3ee280d6c 34-38
+skills/happyhands/bin/happyhands.mjs
+  s_c3a809bd8a1ec1::t_887bb3ee280d6c 10-11
+scripts/harness.mjs
+  s_c3a809bd8a1ec1::t_887bb3ee280d6c 128-129
+tests/cli-help.test.mjs
+  s_c3a809bd8a1ec1::t_887bb3ee280d6c 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "06ba8b8ad6853d4aed515fb0a99f4fde677fb373",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
