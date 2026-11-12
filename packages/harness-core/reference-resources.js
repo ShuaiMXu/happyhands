@@ -5,13 +5,37 @@ import {loadRun,withRunLock} from './store.js';
 import {readVerificationFile} from './verification.js';
 const origin='https://happyhands.cc',hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const safe=value=>typeof value==='string'&&/^[a-zA-Z0-9_./-]+$/.test(value)&&!value.startsWith('/')&&!value.split('/').some(part=>!part||part==='.'||part==='..');
+async function responseBytes(response,maxBytes){
+ if(!response.ok){await response.body?.cancel().catch(()=>{});throw Error('Resource fetch failed: '+response.status);}
+ if(!response.body||Number(response.headers.get('content-length')||0)>maxBytes){await response.body?.cancel().catch(()=>{});throw Error('Resource is empty or exceeds its size limit.');}
+ const chunks=[];let count=0;for await(const chunk of response.body){count+=chunk.length;if(count>maxBytes)throw Error('Resource exceeds its size limit.');chunks.push(chunk);}
+ return Buffer.concat(chunks);
+}
 async function request(path,{fetcher=fetch,maxBytes=8*1024*1024}={}){
  const url=new URL(path,origin);if(url.origin!==origin||url.username||url.password)throw Error('Resource indexes may only fetch official website paths.');
  const response=await fetcher(url.href,{redirect:'error',signal:AbortSignal.timeout(15000)});
- if(!response.ok)throw Error('Resource fetch failed: '+response.status);
- if(Number(response.headers.get('content-length')||0)>maxBytes)throw Error('Resource exceeds its size limit.');
- const chunks=[];let count=0;for await(const chunk of response.body){count+=chunk.length;if(count>maxBytes)throw Error('Resource exceeds its size limit.');chunks.push(chunk);}
- return Buffer.concat(chunks);
+ return responseBytes(response,maxBytes);
+}
+async function explicitUrlReference(value,fetcher){
+ const requested=new URL(value);
+ if(requested.protocol!=='https:'||requested.username||requested.password)throw Error('Reference URLs require HTTPS without embedded credentials. Use --file for local documents.');
+ const url=new URL(requested);url.hash='';
+ // GitHub's normal file link is an HTML viewer. Select its corresponding raw
+ // document explicitly rather than ingesting a page shell as a design method.
+ const parts=url.pathname.split('/').filter(Boolean);
+ if(url.hostname==='github.com'&&parts.length>=5&&parts[2]==='blob'){
+  url.hostname='raw.githubusercontent.com';url.pathname='/'+[...parts.slice(0,2),...parts.slice(3)].join('/');
+  if([...url.searchParams.keys()].every(key=>['raw','plain'].includes(key)))url.search='';
+ }
+ const response=await fetcher(url.href,{redirect:'error',signal:AbortSignal.timeout(15000)});
+ if(!response.ok){await response.body?.cancel().catch(()=>{});throw Error('Resource fetch failed: '+response.status);}
+ const type=(response.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
+ if(!['text/plain','text/markdown','text/x-markdown','text/css','application/json','application/octet-stream'].includes(type)){await response.body?.cancel().catch(()=>{});throw Error('Reference URL must serve Markdown, JSON or CSS text, not an HTML viewer. Use a raw-document URL.');}
+ const bytes=await responseBytes(response,512*1024);
+ try{new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{throw Error('Reference URL must contain UTF-8 text.');}
+ if(/^\s*(?:<!doctype\s+html|<html\b)/i.test(bytes.toString('utf8')))throw Error('Reference URL returned HTML; select its raw document.');
+ const extension=type==='application/json'?'.json':type==='text/css'?'.css':['.md','.json','.css'].includes(extname(url.pathname).toLowerCase())?extname(url.pathname).toLowerCase():'.md';
+ return {bytes,extension,source:{id:'url:'+hash(url.href),name:'Selected HTTPS '+extension.slice(1)+' reference',type:'external',source:url.href,originalSource:requested.href,version:hash(bytes),license:'User-selected source; inspect its original license before reuse.'}};
 }
 export async function resourceIndex({fetcher=fetch}={}){
  const paths=['/design-archive/index.json','/design-how/catalog.json','/r/index.json'];
@@ -39,14 +63,17 @@ export async function selectedReferenceContext(run){
   return {...ref,content:bytes.toString('utf8')};
  }));
 }
-export async function selectResource({directory,id,document,file,fetcher=fetch}){
- if(Boolean(id)===Boolean(file))throw Error('Select exactly one --id or --file.');
+export async function selectResource({directory,id,document,file,url,fetcher=fetch}){
+ if([id,file,url].filter(Boolean).length!==1)throw Error('Select exactly one --id, --file or --url.');
  return withRunLock(directory,async()=>{
   const run=await loadRun(directory);
   if(run.manifest.diagnosis||run.manifest.confirmation||run.manifest.plan||run.manifest.execution)throw Error('Reference selection is frozen after diagnosis; start a fresh review.');
   if((run.manifest.selectedReferences||[]).length>=12)throw Error('Select at most twelve references.');
   let bytes,source,extension='.md';
-  if(file){
+  if(url){
+   if(document)throw Error('--document is only for a system resource.');
+   ({bytes,source,extension}=await explicitUrlReference(url,fetcher));
+  }else if(file){
    if(document)throw Error('--document is only for a system resource.');
    const path=resolve(file),info=await stat(path);extension=extname(path).toLowerCase();
    if(!info.isFile()||info.size>512*1024||!['.md','.json','.css'].includes(extension))throw Error('Select a Markdown, JSON or CSS reference below 512 KiB.');
@@ -78,6 +105,6 @@ export async function resourceCommand(args){
  const [command,...rest]=args,options={};
  for(let i=0;i<rest.length;i+=2){if(!/^--[a-z]+$/.test(rest[i])||!rest[i+1]||rest[i+1].startsWith('--')||Object.hasOwn(options,rest[i].slice(2)))throw Error('Expected unique --option VALUE.');options[rest[i].slice(2)]=rest[i+1];}
  if(command==='search'&&Object.keys(options).every(key=>['query','limit'].includes(key)))return searchResources(options.query,{limit:options.limit===undefined?8:Number(options.limit)});
- if(command==='select'&&options.run&&Object.keys(options).every(key=>['run','id','document','file'].includes(key)))return selectResource({directory:options.run,id:options.id,document:options.document,file:options.file});
- throw Error('Use resources search --query TEXT or resources select --run DIRECTORY --id ID [--document PATH] / --file PATH.');
+ if(command==='select'&&options.run&&Object.keys(options).every(key=>['run','id','document','file','url'].includes(key)))return selectResource({directory:options.run,id:options.id,document:options.document,file:options.file,url:options.url});
+ throw Error('Use resources search --query TEXT or resources select --run DIRECTORY --id ID [--document PATH] / --file PATH / --url HTTPS_RAW_DOCUMENT.');
 }

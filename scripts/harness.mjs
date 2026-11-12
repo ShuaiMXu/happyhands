@@ -161,9 +161,12 @@ pnpm harness next --run DIRECTORY
 pnpm harness export --run DIRECTORY [--out DIRECTORY]
 pnpm harness compare --run DIRECTORY --state ID --configuration ID [--out DIRECTORY]
 pnpm harness reindex [--out DIRECTORY]
+pnpm harness video collect --manifest FILE --out NEW_DIRECTORY [--ffmpeg PATH --ffprobe PATH]
+pnpm harness video review --run DIRECTORY --report FILE
 
 Every --option takes the next value (--run DIR); --option=value also works, for values that
 themselves start with "--" such as a judgment reason.
+The video subcommands require separate --option VALUE pairs.
 
 export copies an allow-list of run files into a statically served folder; it never copies the Git worktree or the agent event log.
 init, capture and plan do not edit the target repository. execute explicitly starts the selected agent in a new Git worktree; it does not push or deploy, and a run whose agent touched the host repository is failed.
@@ -173,6 +176,13 @@ renders gives a baseline to review, a route that is missing has to be built firs
 so baseline records why it is absent, plan is constrained by the approved design foundation instead of a confirmed
 finding, and evaluate reports deterministic render checks without claiming an improvement.
 `);
+    return;
+  }
+  if(command==='video'){
+    const {runVideoReview,videoExitCode}=await import('../skills/review-video/scripts/video-review.mjs');
+    const result=await runVideoReview(rest);
+    console.log(JSON.stringify(result,null,2));
+    process.exitCode=videoExitCode(result);
     return;
   }
   const options = argsOf(command, rest);

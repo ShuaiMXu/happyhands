@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "rules": [
+    {"id":"V-message","check":"The audience, channel, one core message and intended viewer action are explicit; claims match actual supported product behavior."},
+    {"id":"V-source","check":"Product revision, real assets, licensing, proportions and source-to-output decisions are traceable; illustrative collaboration is described truthfully."},
+    {"id":"V-type","check":"Type weight, size, spacing and rendering preserve brand and reading without default heavy titles or decorative font combinations."},
+    {"id":"V-copy","check":"Necessary accurate copy, grouping, primary action and readable hold times replace redundant labels, jargon and repeated explanation."},
+    {"id":"V-framing","check":"Small viewing size, channel crop, perspective, occlusion and boundaries preserve important information without unwanted stretching or clipping."},
+    {"id":"V-motion","check":"Every movement has an information or interaction purpose; the interface settles for reading and clicking after the approved camera introduction."},
+    {"id":"V-orbit","check":"The adopted product's real motion, image count, density, aspect ratio and near/far relationship are retained; arbitrary floating is not substituted."},
+    {"id":"V-glass","check":"Glass retains the approved transparency/refraction, readable foreground and restrained boundaries, with no unapproved white glow or layered decoration."},
+    {"id":"V-cursors","check":"Each cursor has a distinct task and real target, remains understandable in parallel, and avoids arbitrary empty-space journeys or obscuring key copy."},
+    {"id":"V-actions","check":"Asset placement, typing, clicks, drag/release, selection and feedback correspond in both position and time; text is actually revealed character by character."},
+    {"id":"V-transitions","check":"Camera return, theme and complete-language transitions are triggered coherently, remain legible and preserve expected control/content states."},
+    {"id":"V-audio","check":"Full audible playback confirms the agreed sound ownership, synchronized effects, controlled levels, clean joins and ending; metadata does not prove absence of voice/music."},
+    {"id":"V-cover","check":"The cover matches the video's product message; generated text, logos, geometry and repeated elements are inspected when present."},
+    {"id":"V-export","check":"Complete decode, real duration, dimensions, rational frame rate, streams and clean ending match the brief; the editable source and provenance remain available."}
+  ]
+}

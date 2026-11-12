@@ -1,13 +1,17 @@
 ---
 name: happyhands
-description: Review and repair a concrete UI or product-experience problem in a working web product using source-bound screenshots, existing project rules, isolated changes and independent before/after review. Use when the user asks to improve a real interface or user task, including AI slop and error recovery.
+description: Review and repair a concrete UI or product-experience problem using source-bound screenshots, existing project rules, isolated changes and independent review. Route explicitly requested product or promotional video work to the bundled timestamped video workflow.
 ---
 
 # HappyHands
 
 Use the installed `bin/happyhands.mjs` with Node from the user's project directory. It runs the same Harness engine and ledger as the optional workbench. Resolve the script path from this Skill's actual location; do not assume a global command exists. See [workflow](references/workflow.md) for the real command sequence and prerequisites.
 
+For an explicitly requested product or promotional video, read the complete bundled `skills/review-video/SKILL.md`, its evidence contract and rule inventory. Use `video collect` to freeze the real source, exports, timeline and technical evidence, and `video review` for a separate reviewer's timestamped report. The video workflow does not use a still-image page review to certify motion or audio. Keep full playback, actual listening and the user's final judgment explicit; missing evidence remains unaccepted. It requires the existing renderer plus explicitly chosen FFmpeg/FFprobe executables, which are not bundled or installed automatically. For webpage work, continue with the source-bound page workflow below.
+
 First reuse the supplied repository, preview, task and authorization. Narrow an ambiguous task and label your inference. Run `doctor` and `agents`, then verify actual browser and model access. Codex is the first supported implementation and independent model-review combination; a DSH conversation can operate these commands, but is not a dedicated executor or a replacement for Codex model access. Never invent an adapter.
+
+Put the user's concrete requirements and verified product facts in the Experience Spec's project goal/task, not only an external brief path. Supporting authored observations can retain the complete supplied brief and provenance; they are questions and facts to verify, not browser evidence or execution authority. Inspect the actual diagnosis context and generated execution brief before launching: a file existing beside the run does not mean either model received it. If inputs were omitted, retain that attempt and correct the next run; do not blame the model or claim an equal-input comparison.
 
 Read the complete bundled `skills/review-product/SKILL.md`, `skills/experience-remediation/SKILL.md` and `docs/finding-admission-policy.md`. The current product, its adopted rules and the user's decisions take precedence over external examples. The engine stages the complete assigned OJO, Taste and Impeccable methods and adapters. Read their relevant complete references; availability is not proof of application.
 

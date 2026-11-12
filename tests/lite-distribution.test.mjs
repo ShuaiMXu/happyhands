@@ -14,6 +14,7 @@ async function fixture(t){const root=await realpath(await mkdtemp(join(tmpdir(),
 test('portable bundle works from a different project and contains complete methods without UI dependencies',async t=>{
  const f=await fixture(t),manifest=await verifyBundle(f.output),pkg=JSON.parse(await readFile(join(f.output,'package.json')));
  assert.ok(manifest.files.some(row=>row.path==='skills/vendor/ojo/upstream/references/component-recipe.md'));
+ for(const path of ['skills/review-video/SKILL.md','skills/review-video/rules.json','skills/review-video/references/evidence-contract.md','skills/review-video/scripts/video-review.mjs'])assert.ok(manifest.files.some(row=>row.path===path),'the bundle must include the complete video workflow: '+path);
  assert.ok(manifest.files.some(row=>row.path==='docs/lightweight.md'),'the installed Harness guide must retain its lightweight setup reference');
  const harnessGuide=await readFile(join(f.output,'docs/harness.md'),'utf8');
  assert.ok(harnessGuide.includes(`/blob/${manifest.sourceRevision}/docs/architecture.md`),'references excluded from the bundle must resolve to its source revision');
@@ -22,6 +23,18 @@ test('portable bundle works from a different project and contains complete metho
  assert.ok(!pkg.dependencies.react&&!pkg.dependencies.tldraw&&!pkg.dependencies.vite);
  const packed=JSON.parse((await exec(process.platform==='win32'?'npm.cmd':'npm',['pack',f.output,'--pack-destination',f.root,'--json'],{shell:process.platform==='win32'})).stdout)[0];
  const paths=new Set(packed.files.map(file=>file.path));assert.ok(manifest.files.every(file=>paths.has(file.path)),'npm must preserve every file the runtime declares');
+ assert.ok(paths.has('skills/review-video/scripts/video-review.mjs'),'the actual npm archive must retain the video helper');
+ const unpacked=join(f.root,'unpacked');await mkdir(unpacked);
+ await exec('tar',['-xzf',join(f.root,packed.filename),'-C',unpacked]);
+ const packedRoot=join(unpacked,'package');await verifyBundle(packedRoot);
+ // Explicit fixture dependency reuse, not an isolated installation claim. Run
+ // the extracted npm artifact, so source-checkout resolution cannot hide omissions.
+ await symlink(join(repo,'node_modules'),join(packedRoot,'node_modules'),process.platform==='win32'?'junction':'dir');
+ const unrelated=join(f.root,'video-consumer');await mkdir(unrelated);
+ const video=JSON.parse((await exec(process.execPath,[join(packedRoot,'bin/happyhands.mjs'),'video','help'],{cwd:unrelated})).stdout);
+ assert.equal(video.status,'help');assert.equal(video.independentReview,'required');
+ assert.ok(video.commands.some(command=>command.startsWith('collect ')));
+ await assert.rejects(exec(process.execPath,[join(packedRoot,'bin/happyhands.mjs'),'video','collect','--manifest','missing.json','--out','unused','--publish','true'],{cwd:unrelated}),error=>error.code===1&&/Usage: video-review/.test(error.stderr),'the packed entry must preserve invalid-option failure');
  await symlink(join(repo,'node_modules'),join(f.output,'node_modules'),process.platform==='win32'?'junction':'dir');
  const project=join(f.root,'unrelated-project');await mkdir(project);
  const result=await exec(process.execPath,[join(f.output,'bin/happyhands.mjs'),'skills'],{cwd:project});
