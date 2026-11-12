@@ -26,3 +26,12 @@ test('lightweight start creates the first existing ledger, snapshots real projec
  const source=fileURLToPath(new URL('../scripts/harness.mjs',import.meta.url));const legacy=await exec(process.execPath,[source,...initArgs],{cwd:root,env:{...process.env,PD_HARNESS_HEADLESS:'',HAPPYHANDS_RUNS_DIR:join(root,'unused-cache')}});assert.ok(legacy.stdout.trim().startsWith(join(root,'.harness','runs')),'source CLI retains its existing output location');
  assert.equal((await git('status','--porcelain')).stdout,'');
 });
+
+test('Harness rejects misspelled, duplicate and missing option values before running a command', async () => {
+ const source = fileURLToPath(new URL('../scripts/harness.mjs', import.meta.url));
+ const invoke = (...args) => exec(process.execPath, [source, ...args]);
+ await assert.rejects(invoke('agents', '--unexpected', 'value'), /Unknown option --unexpected for agents/);
+ await assert.rejects(invoke('init', '--spec', 'first.json', '--spec=second.json'), /Duplicate option --spec/);
+ await assert.rejects(invoke('init', '--spec', '--url', 'http://127.0.0.1/'), /Expected a value after --spec/);
+ await assert.rejects(invoke('init', '--spec=--named-spec.json'), /--named-spec.json/);
+});

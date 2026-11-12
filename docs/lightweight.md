@@ -12,7 +12,7 @@ npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.
 
 Git, Chrome/Edge and an authenticated coding agent are also needed for the repair loop. The package is distributed as a public GitHub Release asset, so installing it does not require GitHub Packages authentication. The install command downloads the package and npm runtime dependencies; it runs `npm ci --ignore-scripts` using the bundled shrinkwrap. Existing installations and linked destination directories are rejected. For an upgrade, select a separate `--destination PATH`, review it, then switch your agent to the chosen installation; this Alpha does not replace existing drafts or Skills automatically.
 
-The current real-case validation uses macOS, Node.js 22.19, Chrome and Codex CLI 0.167.0 with `gpt-6-astra`. The older local Codex CLI 0.141.0 rejected that model configuration. `doctor` only reports the detected executable; verify actual model access before starting a repair. These observations are not a compatibility claim for every newer CLI, model or platform.
+The current real-case validation uses macOS, Node.js 22.19, Chrome and Codex CLI 0.167.0 with `gpt-6-astra`. The older local Codex CLI 0.141.0 rejected that model configuration. `doctor` reports installed executables, and optional `--repo` / `--url` checks cover source cleanliness, directly declared Vite/Astro dependencies and the exact HTTP entry. Browser launch and model access remain explicitly unverified; check them before starting a repair. These observations are not a compatibility claim for every newer CLI, model or platform.
 
 The default Codex discovery path is `~/.codex/skills/happyhands` (or under `CODEX_HOME`); `install --agent claude-code` selects the Claude user Skill directory. `--scope project` selects `.agents/skills/happyhands` or `.claude/skills/happyhands` in the current project. Project-local installations must be committed or explicitly ignored before the core can require a clean repair checkout; the installer never edits your Git ignore rules. Only the environment actually validated in the release is claimed as tested. DSH is an external operator, not a registered executor or a replacement for Codex model access.
 
@@ -33,7 +33,7 @@ Use actual product details rather than the sample task. If the agent cannot disc
 From the product directory:
 
 ```sh
-node ~/.codex/skills/happyhands/bin/happyhands.mjs doctor
+node ~/.codex/skills/happyhands/bin/happyhands.mjs doctor --repo /actual/product --url http://127.0.0.1:3000/
 node ~/.codex/skills/happyhands/bin/happyhands.mjs help
 node ~/.codex/skills/happyhands/bin/happyhands.mjs resources search --query lime
 ```
@@ -52,4 +52,16 @@ The runtime uses the same local access and model-service behavior as the source 
 
 ## Build a release asset
 
-From a clean source commit with development dependencies installed, run `pnpm lite:build`, then `npm pack BUILT_DIRECTORY --pack-destination OUTPUT_DIRECTORY`. The generated `bundle.json` records the exact source revision, dirty state and hashes of every shipped file; only a clean, tested source build should be released. The original engine lock bytes are preserved as `engine-lock.yaml`, and runtime dependency resolution uses `npm-shrinkwrap.json`, because npm excludes ordinary lockfile names from a packed dependency. No local run records, captures, credentials or private assets are copied by the builder.
+From a clean source commit with development dependencies installed, run `pnpm lite:build`, then `npm pack BUILT_DIRECTORY --pack-destination OUTPUT_DIRECTORY`. The generated `bundle.json` records the exact source revision, dirty state and hashes of every shipped file; only a clean, tested source build should be released. The original engine lock bytes are preserved as `engine-lock.yaml`, and runtime dependency resolution uses `npm-shrinkwrap.json`, because npm excludes ordinary lockfile names from a packed dependency. The builder includes Git-tracked engine and Skill files from its release inputs. Untracked and ignored local files are excluded.
+
+## Continue a repair
+
+For another code correction after an immutable attempt, choose a clean checkout of the same Git repository and run its actual preview. Commit intended isolated edits before using that checkout as the next source. The config must retain the same project and user task. Run the installed CLI with:
+
+```sh
+node /actual/skill/bin/happyhands.mjs continue --run /actual/previous-run --config /actual/next-project.json --reason "Correct the error state identified by independent review"
+```
+
+The command creates a child Run outside the target by default, increments the three-attempt budget, freezes a local predecessor summary and copies chosen reference texts. Repeating the command for the same source/config returns the same child. Changed project design paths are read from the next checkout. The selected source and preview remain the operator's explicit inputs; the command does not commit or apply retained drafts.
+
+Capture fresh originals and diagnose the child, then confirm its current finding, plan, execute, capture after, evaluate and obtain independent review. Each child's screenshots, confirmation, execution, QA and final judgment start empty. Its execution brief includes the hash-checked prior review as historical context. Prior pass or human acceptance never supplies the child's acceptance. Accepted reviews start new tasks with `start`; a withdrawn acceptance may be reassessed as a continuation. A third unsuccessful attempt requires reviewing the unresolved evidence and narrowing the next task.

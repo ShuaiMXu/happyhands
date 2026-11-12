@@ -8,8 +8,9 @@ const MISSING = 'missing';
 const UNREACHABLE = 'unreachable';
 const AMBIGUOUS = 'client-rendered';
 const REDIRECTED = 'redirected';
+const HTTP_ERROR = 'http-error';
 
-export const ENTRY_STATES = Object.freeze({ RENDERED, EMPTY, MISSING, UNREACHABLE, AMBIGUOUS, REDIRECTED });
+export const ENTRY_STATES = Object.freeze({ RENDERED, EMPTY, MISSING, UNREACHABLE, AMBIGUOUS, REDIRECTED, HTTP_ERROR });
 
 export function resolveRoutes(url, routes) {
   if (!url) return [];
@@ -52,7 +53,11 @@ export async function probeEntry(url, { timeoutMs = 5000, requireSelf = false } 
   try {
     const response = await fetch(parsed.href, { redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
     const finalUrl = response.url || parsed.href;
-    if (response.status >= 400) return { url: parsed.href, finalUrl, status: response.status, state: MISSING, detail: `HTTP ${response.status}` };
+    if (response.status >= 400) {
+      await response.body?.cancel().catch(() => {});
+      const state = [404, 410].includes(response.status) ? MISSING : HTTP_ERROR;
+      return { url: parsed.href, finalUrl, status: response.status, state, detail: `HTTP ${response.status}` };
+    }
     if (requireSelf && !servedItself(parsed.href, finalUrl)) {
       return {
         url: parsed.href,
@@ -99,19 +104,20 @@ export async function resolveMode({ mode = 'auto', url = null, routes = [], time
   const rendered = entries.filter(item => item.state === RENDERED);
   if (rendered.length) {
     const absent = entries.filter(item => item.state !== RENDERED);
-    return {
-      mode: 'review',
-      entries,
-      reason: absent.length
-        ? `${rendered.length} of ${entries.length} entry routes render. Review those; start a separate bootstrap run for ${absent.map(item => item.url).join(', ')}.`
-        : 'Every entry route renders.'
-    };
+    const missing = absent.filter(item => [MISSING, EMPTY].includes(item.state));
+    const unresolved = absent.filter(item => !missing.includes(item));
+    const reason = absent.length ? [
+      `${rendered.length} of ${entries.length} entry routes render.`,
+      missing.length ? `Review those; start a separate bootstrap run for ${missing.map(item => item.url).join(', ')}.` : '',
+      unresolved.length ? `Check the remaining routes separately: ${unresolved.map(item => `${item.url} (${item.state})`).join(', ')}.` : ''
+    ].filter(Boolean).join(' ') : 'Every entry route renders.';
+    return { mode: 'review', entries, reason };
   }
-  if (entries.every(item => [MISSING, UNREACHABLE, EMPTY].includes(item.state))) {
+  if (entries.every(item => [MISSING, EMPTY].includes(item.state))) {
     return { mode: 'bootstrap', entries, reason: `No entry route renders: ${entries.map(item => `${item.url} (${item.state})`).join(', ')}.` };
   }
   // Neither answer is safe here: calling it review would capture a baseline of the wrong page,
   // and calling it bootstrap would ask for a surface that may already exist. Say so instead.
-  const undecided = entries.filter(item => [AMBIGUOUS, REDIRECTED].includes(item.state));
+  const undecided = entries.filter(item => [AMBIGUOUS, REDIRECTED, UNREACHABLE, HTTP_ERROR].includes(item.state));
   throw new Error(`Cannot infer a mode. ${undecided.map(item => `${item.url}: ${item.detail}`).join(' ')} Set "mode" to review or bootstrap in the project config.`);
 }

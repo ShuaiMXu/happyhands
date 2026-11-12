@@ -6,14 +6,14 @@ import {runVerificationChecks} from './verification.js';
 import {designGuidanceProfile} from '../skill-core/design-guidance.js';
 import { discoverReviewTargets, confirmedReviewPlan } from '../harness-core/review-discovery.js';
 import { discoverProject } from './project-setup.js';
-import {diagnoseBaseline,assertBaselineModelCapacity} from './baseline-diagnosis.js';
+import {assertBaselineModelCapacity} from './baseline-diagnosis.js';
+import {diagnoseProduct} from '../harness-core/diagnose-product.js';
 import { runAiVisualReview } from './ai-review.js';
 import {createReviewedPullRequest} from './pull-request.js';
 import {runPatternReview} from './pattern-review.js';
 import {stagePatternAdmission} from '../harness-core/store.js';
 import { autoExecuteDirection } from './direction-execution.js';
 import { directionService } from './directions.js';
-import { executeSkill } from '../skill-core/runner.js';
 import { extractFoundationInventory, FOUNDATION_SKILL_IDS } from '../skill-core/foundation-inventory.js';
 import { fileURLToPath } from 'node:url';
 import { projectMemory } from './memory.js';
@@ -26,15 +26,14 @@ import { randomUUID, createHash } from 'node:crypto';
 import { chromium } from 'playwright-core';
 import { createJobs, runLocal, writeJson } from './jobs.js';
 import { resolveCanvasTarget } from './cowart-storage.js';
-import { createRun, loadRun, saveOnboarding, confirmFinding, saveRepairScope, savePlan, saveEvaluation, saveJudgment, saveDiagnosis, saveVisualReview, saveReviewAttachment, saveFoundationApproval, recordAbsentBaseline, runFilePath } from '../harness-core/store.js';
-import { loadProjectConfig, inspectRepository, publicProjectConfig, spawnPreview, stopPreview, waitForPreview } from '../harness-core/onboard.js';
+import { createRun, loadRun, saveOnboarding, confirmFinding, saveRepairScope, savePlan, saveEvaluation, saveJudgment, saveVisualReview, saveReviewAttachment, saveFoundationApproval, recordAbsentBaseline, runFilePath } from '../harness-core/store.js';
+import { assertManagedPreview, loadProjectConfig, inspectRepository, publicProjectConfig, spawnPreview, stopPreview, waitForPreview } from '../harness-core/onboard.js';
 import { captureBrowser, captureBrowserPlan } from '../harness-core/browser.js';
 import { captureEntries } from '../harness-core/capture-state.js';
 import {captureWithDesignSystem,extractDesignSystem} from '../harness-core/design-system.js';
 import { evaluateCaptures, evaluateFirstRender } from '../harness-core/evaluate.js';
 import { executeWithAgent } from '../harness-core/runner.js';
 import { exportRun } from '../harness-core/export.js';
-import { diagnoseRun } from '../harness-core/diagnosis.js';
 import { workflowState,visualReviewFor } from '../harness-core/workflow.js';
 import { reviewPrimaryAction } from '../harness-core/primary-action.js';
 import { incrementalReviewPlan,verifiedIncrementalDelta } from '../harness-core/incremental.js';
@@ -68,6 +67,8 @@ export function managedPreviewVersionStatus(repository, manifest, session, curre
 export function createWorkbench(root, dependencies = {}) {
   const advancing = new Set();
   const jobs = createJobs(root), runRoot = join(root, '.harness', 'runs'), bindings = join(root, '.harness', 'workbench-projects'), previewSessions = new Map();
+  const startingPreviews = new Map();
+  let closed = false;
   const execute = dependencies.execute || executeWithAgent, generate = dependencies.generate || runLocal,createPr=dependencies.createPullRequest||createReviewedPullRequest;
   const inspect = dependencies.inspectRepository || inspectRepository, launchPreview = dependencies.spawnPreview || spawnPreview, haltPreview = dependencies.stopPreview || stopPreview, awaitPreview = dependencies.waitForPreview || waitForPreview, fingerprintPreview = dependencies.previewResponseFingerprint || previewResponseFingerprint;
   const request = dependencies.fetch || fetch;
@@ -121,26 +122,19 @@ export function createWorkbench(root, dependencies = {}) {
       await assertBaseline();
       if (config.start) {
         // Baselines need the same owned-preview boundary as isolated recaptures.
-        const previewUrl = new URL(config.url);
-        if (!['localhost','127.0.0.1','[::1]'].includes(previewUrl.hostname)) throw new Error('A managed capture must use a local preview.');
-        if (config.capturePlanDocument?.states.some(state => new URL(state.start.url).origin !== previewUrl.origin)) throw new Error('All capture states must use the managed preview origin.');
-        let alive = false;
-        try { await request(config.url, { signal: AbortSignal.timeout(1000) }); alive = true; } catch {}
-        if (alive) throw new Error('Preview port is already in use. Stop that preview before starting a new review.');
-        const sub = relative(config.repo, config.start.cwd);
-        if (sub.startsWith('..') || isAbsolute(sub)) throw new Error('Preview directory must be inside the reviewed repository.');
+        const sub = await assertManagedPreview(config, { request, signal });
         child = launchPreview({ ...config.start, cwd: worktree ? join(worktree, sub) : config.start.cwd });
       }
       const abort = () => haltPreview(child);
       signal?.addEventListener('abort', abort, { once: true });
       try {
-        await awaitPreview(config.url, { timeoutMs: Math.min(config.timeoutMs || 30000, 60000) });
+        await awaitPreview(config.url, { timeoutMs: Math.min(config.timeoutMs || 30000, 60000), signal });
         if (child && (child.exitCode !== null || child.signalCode !== null || child.killed)) throw new Error('The managed preview stopped before capture. Fix its startup command, then start a new review.');
         signal?.throwIfAborted();
         const result = await captureWithDesignSystem({directory,repo:worktree||config.repo,phase,signal,inspect,bindVerificationSource:Boolean(config.verificationChecks?.length),verificationUrl:config.url,capture:async()=>{
           const captured = effectivePlan
           ? await capturePlan({ plan: effectivePlan, directory, phase, channel: config.browser, sourceRoot: worktree || config.repo, signal })
-          : await capturePage({ url: config.url, directory, phase, channel: config.browser });
+          : await capturePage({ url: config.url, directory, phase, channel: config.browser, signal });
           signal?.throwIfAborted();
           if(incrementalCapture&&phase==='after')await assertIncrementalRecapture(captureRun,worktree||config.repo,incrementalCapture);
           await assertBaseline();
@@ -154,29 +148,24 @@ export function createWorkbench(root, dependencies = {}) {
     } finally { haltPreview(child); }
   }
   async function diagnose(directory, selectedSkills = null, context = {}) {
-    let run = await loadRun(directory);
-    const config = await configFor(run);
-    const registryRoot = fileURLToPath(new URL('../../skills/product-design/',import.meta.url));
-    for (const id of new Set([...(selectedSkills || ['accessibility-reviewer','responsive-reviewer','information-architecture-reviewer','visual-hierarchy-reviewer']), 'design-system-drift-detector', 'component-state-auditor'])) {
-      const previous = (run.manifest.skills || []).find(item=>item.id===id);
-      if (!previous || previous.status !== 'complete' && !run.manifest.confirmation && !run.manifest.plan) await executeSkill({id,directory,repo:config.repo,registryRoot,retry:Boolean(previous)});
-    }
-    run = await loadRun(directory);
-    const results = await Promise.all((run.manifest.skills || []).map(item => json(runFilePath(directory, item.path))));
-    if(run.manifest.confirmation||run.manifest.plan||run.manifest.execution)throw Error('Start a fresh review before changing a confirmed diagnosis.');
-    let diagnosis=diagnoseRun({ run, skillResults: results });
-    const signal=context.signal||new AbortController().signal;
-    try {
-      await context.update?.({stage:'model-diagnosis'});
-      diagnosis=await diagnoseBaseline(directory,diagnosis,{cwd:context.cwd||join(directory,'diagnosis-attempts'),generate,signal,language:context.language,onProgress:progress=>context.update?.({stage:'model-diagnosis',...progress})});
-    } catch(error) {
-      signal.throwIfAborted();
-      diagnosis=diagnoseRun({run,skillResults:results});
-      diagnosis.modelDiagnosis={status:'failed',summary:'Model diagnosis did not complete; rule candidates remain unverified.',limitations:[error.message]};
-    }
-    const latest=await inspect(config.repo);
-    if(latest.dirty||latest.commit!==run.manifest.onboarding?.repository?.commit)throw Error('Repository changed during baseline diagnosis; capture a fresh review.');
-    await saveDiagnosis(directory, diagnosis);
+    const run = await loadRun(directory), config = await configFor(run);
+    return diagnoseProduct(directory, {
+      strategy: 'project',
+      repo: config.repo,
+      selectedSkills: selectedSkills ?? undefined,
+      cwd: context.cwd || join(directory, 'diagnosis-attempts'),
+      generate,
+      signal: context.signal,
+      language: context.language,
+      onProgress: context.update,
+      modelFailure: 'record',
+      verifySource: async () => {
+        const latest = await inspect(config.repo);
+        if (latest.dirty || latest.commit !== run.manifest.onboarding?.repository?.commit) {
+          throw new Error('Repository changed during baseline diagnosis; capture a fresh review.');
+        }
+      }
+    });
   }
   async function onboard(input) {
     const config = await loadProjectConfig(text(input.configPath, 'Project configuration', 2000));
@@ -256,11 +245,9 @@ export function createWorkbench(root, dependencies = {}) {
     if(run.manifest.verificationEvidence){await readVerificationEvidence(directory,run.manifest);if(!retry||!run.manifest.verificationEvidence.retryable)return;}
     const config=await configFor(run),repo=run.manifest.execution?.worktree||config.repo;
     if(!config.start)throw Error('Specialist verification requires the connected managed preview.');
-    if(await previewReachable(config.url))throw Error('Preview port is already in use; stop it before retrying verification.');
-    const sub=relative(config.repo,config.start.cwd);
-    if(sub.startsWith('..')||isAbsolute(sub))throw Error('Preview directory must be inside the reviewed repository.');
+    const sub=await assertManagedPreview(config,{request,signal});
     const child=launchPreview({...config.start,cwd:join(repo,sub)});
-    try {await awaitPreview(config.url);await runVerificationChecks({directory,repo,url:config.url,checks:config.verificationChecks,signal});}
+    try {await awaitPreview(config.url,{signal});await runVerificationChecks({directory,repo,url:config.url,checks:config.verificationChecks,signal});}
     finally {haltPreview(child);}
   }
   async function reviewAfterChange(directory, context, language) {
@@ -573,11 +560,8 @@ export function createWorkbench(root, dependencies = {}) {
         const abort=()=>haltPreview(child);signal.addEventListener('abort',abort,{once:true});
         try {
           await check();
-          let occupied=false;try{await request(config.url,{signal:AbortSignal.timeout(1000)});occupied=true;}catch{}
-          if(occupied)throw Error('Preview port is already in use. Stop it before discovery.');
-          const previewUrl=new URL(config.url);if(!['localhost','127.0.0.1','[::1]'].includes(previewUrl.hostname))throw Error('Discovery requires a local preview.');
-          const sub=relative(config.repo,config.start.cwd);if(sub.startsWith('..')||isAbsolute(sub))throw Error('Preview directory must be inside the reviewed repository.');
-          child=launchPreview(config.start);await awaitPreview(config.url,{timeoutMs:Math.min(config.timeoutMs||30000,60000)});await check();signal.throwIfAborted();
+          await assertManagedPreview(config,{request,signal});
+          child=launchPreview(config.start);await awaitPreview(config.url,{timeoutMs:Math.min(config.timeoutMs||30000,60000),signal});await check();signal.throwIfAborted();
           const fingerprint=await fingerprintPreview(config.url);
           const discovered=await (dependencies.discoverReviewTargets||discoverReviewTargets)({url:config.url,routes:[...config.routes,...(input.routes||[])],configurations:config.capturePlanDocument?.configurations,channel:config.browser,signal,onProgress:route=>update({stage:'discovering-pages',route})});
           signal.throwIfAborted();await check();
@@ -701,25 +685,56 @@ export function createWorkbench(root, dependencies = {}) {
     const repository = await inspect(config.repo), sourceStatus = previewSourceStatus(repository, run.manifest);
     if (sourceStatus !== 'source-match') throw new Error(sourceStatus === 'dirty' ? 'Commit or discard local changes before starting a managed preview.' : 'The repository no longer matches the captured commit. Start a fresh review first.');
     const existing = previewSessions.get(runId);
-    if (existing && !existing.stopped && existing.child.exitCode === null) return { status: 'already-running', fingerprint: existing.fingerprint };
-    if (await previewReachable(config.url)) throw new Error('The preview URL is already in use. Stop the existing server before starting a managed preview.');
-    const child = launchPreview(config.start), startedAt = new Date().toISOString();
+    if (existing && !existing.stopped && existing.child.exitCode === null && !existing.child.signalCode && !existing.child.killed) return { status: 'already-running', fingerprint: existing.fingerprint };
+    if (closed) throw new Error('The workbench service is closed.');
+    const port = url.port || (url.protocol === 'https:' ? '443' : '80');
+    if (startingPreviews.has(runId) || [...startingPreviews.values()].some(item => item.port === port)) throw new Error('A managed preview is already starting. Wait for it to become ready.');
+    const controller = new AbortController();
+    const { signal } = controller;
+    startingPreviews.set(runId, { port, controller });
+    let child;
+    const stop = () => { if (child) haltPreview(child); };
+    signal.addEventListener('abort', stop, { once: true });
     try {
-      await awaitPreview(config.url, { timeoutMs: Math.min(config.timeoutMs || 30000, 60000) });
-      const fingerprint = await fingerprintPreview(config.url), session = { child, fingerprint, startedAt, stopped: false };
+      await assertManagedPreview(config, { request, signal });
+      child = launchPreview(config.start);
+      const startedAt = new Date().toISOString();
+      await awaitPreview(config.url, { timeoutMs: Math.min(config.timeoutMs || 30000, 60000), signal });
+      signal.throwIfAborted();
+      const fingerprint = await fingerprintPreview(config.url);
+      signal.throwIfAborted();
+      if (!child.pid || child.exitCode !== null || child.signalCode || child.killed) throw new Error('The managed preview stopped before verification. Check its startup command and retry.');
+      const session = { child, fingerprint, startedAt, stopped: false };
       child.once?.('exit', () => { session.stopped = true; });
       previewSessions.set(runId, session);
       return { status: 'started', fingerprint, startedAt };
-    } catch (error) { haltPreview(child); throw error; }
+    } catch (error) {
+      if (child && !signal.aborted) haltPreview(child);
+      throw error;
+    } finally {
+      signal.removeEventListener('abort', stop);
+      startingPreviews.delete(runId);
+    }
   }
   async function stopManagedPreview(runId) {
     await localRun(runId);
+    const pending = startingPreviews.get(runId);
+    if (pending) {
+      pending.controller.abort(new Error('Managed preview startup was stopped.'));
+      return { status: 'stopped' };
+    }
     const session = previewSessions.get(runId);
     if (!session) return { status: 'not-running' };
     haltPreview(session.child); session.stopped = true;
     return { status: 'stopped' };
   }
-  function close() { for (const session of previewSessions.values()) haltPreview(session.child); previewSessions.clear(); jobs.close(); }
+  function close() {
+    closed = true;
+    for (const pending of startingPreviews.values()) pending.controller.abort(new Error('The workbench service closed during preview startup.'));
+    for (const session of previewSessions.values()) haltPreview(session.child);
+    previewSessions.clear();
+    jobs.close();
+  }
   return { siteHandoff, discoverPlan, confirmReviewPlan, inspectProject, prepareChangeRequest, advance, aiReview, patternReview, patternAdmit, attachment, jobs, localRun, state, history, foundationHistory, foundationWorkspace, memory, withdrawDecision, configure, bind, onboard, startPreview, stopManagedPreview, close, refreshReview: async (runId,{fullReview=false}={}) => onboard({configPath:(await configFor(await localRun(runId),{newSourceRevision:fullReview})).configPath,originRunId:runId,fullReview}), action, sourceChange, create };
 }
 function imageBytes(value) {
@@ -764,6 +779,7 @@ export function workbenchServicePlugin(root, dependencies = {}) {
         if (url.pathname.endsWith('/foundation-history')) return reply(200,await service.foundationWorkspace(url.searchParams.get('run')));
         if (url.pathname.endsWith('/history')) return reply(200,await service.history(url.searchParams.get('run')));
         if (url.pathname.endsWith('/state')) return reply(200,await service.state(url.searchParams.get('run')));
+        if (url.pathname === '/api/workbench/job') return reply(200,await service.jobs.get(url.searchParams.get('id')));
         if (url.pathname.endsWith('/jobs')) return reply(200,await service.jobs.list());
         if (url.pathname.endsWith('/artifact')) {
           const job=await service.jobs.get(url.searchParams.get('job')), name=url.searchParams.get('file');

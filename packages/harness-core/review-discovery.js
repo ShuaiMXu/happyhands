@@ -1,7 +1,7 @@
 import { chromium } from 'playwright-core';
 import { createHash } from 'node:crypto';
 import { assertCapturePlan, configurationsForState } from './capture-state.js';
-import { DEFAULT_VIEWPORTS } from './browser.js';
+import { assertNoPreviewErrorOverlay, DEFAULT_VIEWPORTS } from './browser.js';
 import { inspectScrollSurfaces, surfaceOffsets } from './scroll-surface.js';
 
 export const discoveryLimits = Object.freeze({ routes: 12, targets: 100 });
@@ -126,7 +126,7 @@ export async function discoverReviewTargets({url,routes=[],configurations=Object
           const page=await context.newPage(),response=await page.goto(next,{waitUntil:'domcontentloaded',timeout:15000});
           await page.waitForLoadState('networkidle',{timeout:1500}).catch(()=>{});
           if(!response||response.status()>=400)throw Error('Discovery returned HTTP '+response?.status());
-          if(await page.locator('astro-error-overlay').count())throw Error('Preview has an Astro error overlay.');
+          await assertNoPreviewErrorOverlay(page);
           const data=await inspectReviewPage(page);
           observations.push({...data,url:localReviewUrl(page.url(),base),configurationId:configuration.id});
           for(const link of data.links){try{const candidate=localReviewUrl(link,base);if(!seen.has(candidate)&&!queue.includes(candidate)){if(queue.length<100)queue.push(candidate);else gaps.push({url:base,reason:'Link discovery limit reached; additional routes require a manual plan.'});}}catch{/* External links are outside this project. */}}

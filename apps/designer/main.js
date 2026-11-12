@@ -96,9 +96,7 @@ async function postJson(path, body) {
 
 async function waitForJob(id,{attempts=240}={}) {
   for (let attempt = 0; attempt < attempts; attempt++) {
-    const jobs = await fetchJson('/api/workbench/jobs');
-    const job = jobs.find(item => item.id === id);
-    if (!job) throw new Error('Task disappeared from the local queue.');
+    const job = await fetchJson('/api/workbench/job?id='+encodeURIComponent(id));
     if (job.status === 'succeeded') return job;
     if (['failed', 'cancelled', 'interrupted'].includes(job.status)) throw new Error(job.error || `Approval ${job.status}.`);
     await new Promise(resolve => setTimeout(resolve, 250));

@@ -4,8 +4,9 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import sample from '../examples/happyclaw-site/experience.json' with { type: 'json' };
-import { createRun, loadRun, runFilePath, saveCapture, saveSkillResult, withRunLock } from '../packages/harness-core/store.js';
+import { captureOnce, createRun, loadRun, runFilePath, saveCapture, saveSkillResult, withRunLock } from '../packages/harness-core/store.js';
 
 async function fixture(t, id) {
   const root = await mkdtemp(join(tmpdir(), 'pd-integrity-test-'));
@@ -73,7 +74,61 @@ test('the lock serialises concurrent writers instead of dropping a stage record'
   assert.deepEqual(manifest.skills.map(item => item.id).sort(), ['alpha-reviewer', 'beta-reviewer']);
 });
 
+for (const legacy of [false, true]) {
+  test(`concurrent reclaimers of a dead ${legacy ? 'legacy' : 'current'} writer keep owners exclusive`, async t => {
+    const { directory } = await fixture(t, 'integ005');
+    const lock = join(directory, 'run.lock');
+    if (legacy) await writeFile(lock, '999999999\n');
+    else {
+      await mkdir(lock);
+      await writeFile(join(lock, '999999999-11111111-1111-1111-1111-111111111111'), '');
+    }
+    let active = 0;
+    let peak = 0;
+    const requests = Array.from({ length: 32 }, () => withRunLock(directory, async () => {
+      peak = Math.max(peak, ++active);
+      await delay(2);
+      active--;
+    }, { maxAttempts: 500, intervalMs: 1 }));
+    await Promise.all(requests);
+    assert.equal(peak, 1);
+  });
+}
+
+test('an empty legacy lock is left in place while its owner may be writing', async t => {
+  const { directory } = await fixture(t, 'integ006');
+  const lock = join(directory, 'run.lock');
+  await writeFile(lock, '');
+  await assert.rejects(withRunLock(directory, () => assert.fail('entered a live lock'), { maxAttempts: 3, intervalMs: 1 }), /Another harness writer/);
+  assert.equal(await readFile(lock, 'utf8'), '');
+});
+
 test('a skill result with an unsafe id cannot write outside the run directory', async t => {
   const { directory } = await fixture(t, 'integ004');
   await assert.rejects(saveSkillResult(directory, skillResult('../escape')), /must name a file inside the run directory/);
+});
+
+test('concurrent captures cannot replace the original before its manifest is committed', async t => {
+  const {directory} = await fixture(t, 'capture-lock');
+  const before = join(directory, 'before');
+  await mkdir(before);
+  const original = join(before, 'desktop.png');
+  let started, release;
+  const recording = new Promise(resolve => { started = resolve; });
+  const proceed = new Promise(resolve => { release = resolve; });
+  const first = captureOnce(directory, 'before', async () => {
+    await writeFile(original, 'first original');
+    started();
+    await proceed;
+    await saveCapture(directory, 'before', {viewports:{desktop:{screenshot:'before/desktop.png'}}});
+  });
+  await recording;
+  try {
+    await assert.rejects(captureOnce(directory, 'before', () => writeFile(original, 'second original')), /writing to this run/);
+  } finally {
+    release();
+    await first;
+  }
+  await assert.rejects(captureOnce(directory, 'before', () => writeFile(original, 'third original')), /already captured/);
+  assert.equal(await readFile(original, 'utf8'), 'first original');
 });

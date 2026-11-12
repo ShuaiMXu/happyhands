@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { createServer as createTcpServer } from 'node:net';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { inspectRepository, loadProjectConfig, publicProjectConfig, waitForPreview } from '../packages/harness-core/onboard.js';
+import { assertManagedPreview, inspectRepository, loadProjectConfig, publicProjectConfig, waitForPreview } from '../packages/harness-core/onboard.js';
 
 test('project config resolves repository, spec and start cwd relative to its file', async t => {
   const root = await mkdtemp(join(tmpdir(), 'pd-onboard-test-'));
@@ -129,6 +130,37 @@ test('preview readiness records the final reachable URL', async t => {
   const result = await waitForPreview(`http://127.0.0.1:${address.port}/`, { timeoutMs: 2000, intervalMs: 10 });
   assert.equal(result.status, 200);
   assert.equal(result.finalUrl, `http://127.0.0.1:${address.port}/`);
+});
+
+test('preview readiness stops an in-flight request on cancellation', async t => {
+  const controller = new AbortController();
+  const reason = new Error('User cancelled preview');
+  const server = createServer(() => controller.abort(reason));
+  await new Promise(resolveListen => server.listen(0, '127.0.0.1', resolveListen));
+  t.after(() => { server.close(); server.closeAllConnections(); });
+  await assert.rejects(waitForPreview(`http://127.0.0.1:${server.address().port}/`, {
+    signal: controller.signal, timeoutMs: 30000
+  }), error => error === reason);
+});
+
+test('a managed preview requires a free local origin and an in-repo directory', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'managed-preview-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const repo = join(root, 'app'), cwd = join(repo, '..preview');
+  await mkdir(cwd, { recursive: true });
+  const config = { repo, start: { cwd }, url: 'http://127.0.0.1:4321/' };
+  const unavailable = { request: async () => { throw Error('No listener'); } };
+  assert.equal(await assertManagedPreview(config, unavailable), '..preview');
+  await assert.rejects(assertManagedPreview(config, { request: async () => new Response(null, { status: 404 }) }), /port is already in use/);
+  await assert.rejects(assertManagedPreview({ ...config, url: 'https://example.invalid' }, unavailable), /local preview URL/);
+  const outside = join(repo, 'outside');
+  await symlink(root, outside, 'junction');
+  await assert.rejects(assertManagedPreview({ ...config, start: { cwd: outside } }, unavailable), /inside the reviewed repository/);
+
+  const server = createTcpServer();
+  await new Promise(resolveListen => server.listen(0, '127.0.0.1', resolveListen));
+  t.after(() => server.close());
+  await assert.rejects(assertManagedPreview({ ...config, url: `http://127.0.0.1:${server.address().port}/` }), /port is already in use/);
 });
 
 test('repository inspection records commit and dirty state', async () => {
