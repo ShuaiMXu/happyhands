@@ -57,6 +57,8 @@ export function runFilePath(directory, relativePath) {
 const LOCK_FILE = 'run.lock';
 const LOCK_OWNER = /^(\d+)-[0-9a-f-]{36}$/;
 const LOCK_REAPER = /^reaping-(\d+)-[0-9a-f-]{36}$/;
+const LOCK_CLAIM = /^claim-[0-9a-f]{64}$/;
+const MAX_LOCK_CLAIMS = 32;
 const LOCK_BUSY = ['EPERM', 'EACCES', 'EBUSY'];
 
 function processAlive(pid) {
@@ -65,15 +67,46 @@ function processAlive(pid) {
 }
 
 async function removeLockMarker(lockPath, marker) {
-  // Only one contender can rename this exact owner's marker. Others must leave
-  // the empty/publication window and an in-progress reaper alone. Move the whole
-  // claimed directory away before deleting it, so cleanup cannot erase a new owner.
-  const reaper = `reaping-${process.pid}-${randomUUID()}`;
-  try { await rename(join(lockPath, marker), join(lockPath, reaper)); }
-  catch (error) {
-    if (['ENOENT', 'ENOTDIR', ...LOCK_BUSY].includes(error.code)) return false;
-    throw error;
+  // Claims are immutable, exclusive creates keyed to one owner generation.
+  // A dead claimant can be succeeded by a claim keyed to its unique token;
+  // never unlink/rewrite a public claim (that would introduce another ABA race).
+  // Empty/live claims and an overlong chain fail closed within a bounded wait.
+  let predecessor = marker, claimed = false;
+  for (let depth = 0; depth < MAX_LOCK_CLAIMS; depth++) {
+    const claim = join(lockPath, `claim-${createHash('sha256').update(predecessor).digest('hex')}`);
+    const token = `${process.pid}-${randomUUID()}`;
+    try { await writeFile(claim, token, {flag: 'wx'}); }
+    catch (error) {
+      if (error.code === 'EEXIST') {
+        const contents = await readFile(claim, 'utf8').catch(error => {
+          if (['ENOENT', 'ENOTDIR', ...LOCK_BUSY].includes(error.code)) return null;
+          throw error;
+        });
+        const owner = contents?.match(LOCK_OWNER);
+        if (!owner || processAlive(Number(owner[1]))) return false;
+        predecessor = contents;
+        continue;
+      }
+      if (['ENOENT', 'ENOTDIR', ...LOCK_BUSY].includes(error.code)) return false;
+      throw error;
+    }
+    // A delayed contender may have created an obsolete claim in a NEW owner's
+    // directory. Its old marker must still be the sole owner before any move.
+    // Other movers for this generation must win this same immutable claim chain;
+    // our live terminal token excludes them throughout the subsequent rename.
+    const entries = await readdir(lockPath).catch(error => {
+      if (['ENOENT', 'ENOTDIR', ...LOCK_BUSY].includes(error.code)) return [];
+      throw error;
+    });
+    const owners = entries.filter(name => LOCK_OWNER.test(name) || LOCK_REAPER.test(name));
+    if (owners.length !== 1 || owners[0] !== marker ||
+        entries.some(name => name !== marker && !LOCK_CLAIM.test(name))) return false;
+    claimed = true;
+    break;
   }
+  if (!claimed) return false;
+  // Only delete the uniquely retired directory, never the reusable public path.
+  // Obsolete claims left by delayed contenders are removed with that generation.
   const retired = `${lockPath}.retired-${randomUUID()}`;
   for (let attempt = 0; ; attempt++) {
     try { await rename(lockPath, retired); break; }
@@ -102,11 +135,13 @@ async function lockOwner(lockPath) {
     });
     // A creator may not have published its marker yet; never reclaim this gap.
     if (!entries || !entries.length) return 'unknown';
-    const match = entries.length === 1 && (entries[0].match(LOCK_OWNER) || entries[0].match(LOCK_REAPER));
-    if (entries.length && !match) throw new Error('Unrecognized run lock contents.');
+    const owners = entries.filter(name => LOCK_OWNER.test(name) || LOCK_REAPER.test(name));
+    if (owners.length > 1 || entries.some(name => !LOCK_OWNER.test(name) && !LOCK_REAPER.test(name) && !LOCK_CLAIM.test(name))) throw new Error('Unrecognized run lock contents.');
+    if (!owners.length) return 'unknown';
+    const match = owners[0].match(LOCK_OWNER) || owners[0].match(LOCK_REAPER);
     const pid = match ? Number(match[1]) : null;
     if (pid > 0 && processAlive(pid)) return pid;
-    if (!await removeLockMarker(lockPath, entries[0])) return 'unknown';
+    if (!await removeLockMarker(lockPath, owners[0])) return 'unknown';
     return null;
   }
   if (!stat.isFile()) throw new Error('Unrecognized run lock type.');
