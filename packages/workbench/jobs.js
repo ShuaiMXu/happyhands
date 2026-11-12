@@ -75,13 +75,19 @@ export function createJobs(root) {
     await ready;
     if (active.size >= 3) throw new Error('Task queue is full; wait or cancel a task.');
     const id = randomUUID(), cwd = join(directory, id), controller = new AbortController();
-    await mkdir(cwd);
     const job = { id, ...context, status: 'queued', stage: 'queued', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     const persist = () => {
       const snapshot = structuredClone(job);
       return withIo(() => writeJson(join(cwd, 'job.json'), snapshot));
     };
-    await persist(); active.set(id, controller);
+    active.set(id, controller);
+    try {
+      await mkdir(cwd);
+      await persist();
+    } catch (error) {
+      active.delete(id);
+      throw error;
+    }
     const update = async values => { Object.assign(job, values, { updatedAt: new Date().toISOString() }); await persist(); };
     const work = async () => {
       try {

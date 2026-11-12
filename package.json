@@ -13,7 +13,7 @@
     "design:check": "node scripts/verify-design-contract.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "harness": "node scripts/harness.mjs",
-    "test": "node --test --test-concurrency=4 tests/*.test.mjs",
+    "test": "node --import ./tests/helpers/isolated-git.mjs --test --test-concurrency=4 tests/*.test.mjs",
     "regression": "node scripts/regression.mjs",
     "expertise": "node scripts/expertise-release.mjs",
     "workbench": "vite --host 127.0.0.1 --port 4190 --open /apps/designer/",

@@ -15,6 +15,9 @@ test('portable bundle works from a different project and contains complete metho
  const f=await fixture(t),manifest=await verifyBundle(f.output),pkg=JSON.parse(await readFile(join(f.output,'package.json')));
  assert.ok(manifest.files.some(row=>row.path==='skills/vendor/ojo/upstream/references/component-recipe.md'));
  assert.ok(manifest.files.some(row=>row.path==='docs/lightweight.md'),'the installed Harness guide must retain its lightweight setup reference');
+ const harnessGuide=await readFile(join(f.output,'docs/harness.md'),'utf8');
+ assert.ok(harnessGuide.includes(`/blob/${manifest.sourceRevision}/docs/architecture.md`),'references excluded from the bundle must resolve to its source revision');
+ assert.ok(harnessGuide.includes('](lightweight.md)'),'included guides remain usable offline');
  assert.ok(!manifest.files.some(row=>row.path.startsWith('apps/')||row.path.startsWith('public/')||row.path.includes('node_modules/')));
  assert.ok(!pkg.dependencies.react&&!pkg.dependencies.tldraw&&!pkg.dependencies.vite);
  const packed=JSON.parse((await exec(process.platform==='win32'?'npm.cmd':'npm',['pack',f.output,'--pack-destination',f.root,'--json'],{shell:process.platform==='win32'})).stdout)[0];

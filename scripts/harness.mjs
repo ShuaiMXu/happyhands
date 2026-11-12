@@ -9,7 +9,7 @@ import { request as httpsRequest } from 'node:https';
 import { mkdir, readFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { homedir } from 'node:os';
-import { createRun, loadRun, runFilePath, saveCapture, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveOnboarding, saveDiagnosis, saveVisualReview, recordAbsentBaseline, saveFoundationApproval } from '../packages/harness-core/store.js';
+import { createRun, loadRun, runFilePath, captureOnce, saveCapture, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveOnboarding, saveDiagnosis, saveVisualReview, recordAbsentBaseline, saveFoundationApproval } from '../packages/harness-core/store.js';
 import { captureBrowser, captureBrowserPlan, DEFAULT_VIEWPORTS } from '../packages/harness-core/browser.js';
 import { evaluateCaptures, evaluateFirstRender } from '../packages/harness-core/evaluate.js';
 import { resolveMode } from '../packages/harness-core/entry.js';
@@ -17,27 +17,68 @@ import { executeWithAgent } from '../packages/harness-core/runner.js';
 import { listAgents, DEFAULT_AGENT } from '../packages/harness-core/agents.js';
 import { exportRun, reindex } from '../packages/harness-core/export.js';
 import {exportComparison} from '../packages/harness-core/comparison.js';
-import { inspectRepository, loadProjectConfig, publicProjectConfig, spawnPreview, stopPreview, waitForPreview } from '../packages/harness-core/onboard.js';
+import { inspectRepository, loadProjectConfig, publicProjectConfig, assertManagedPreview, spawnPreview, stopPreview, waitForPreview } from '../packages/harness-core/onboard.js';
 import { diagnoseRun, overridePriority } from '../packages/harness-core/diagnosis.js';
-import { workflowState } from '../packages/harness-core/workflow.js';
+import { executionBlock, workflowState } from '../packages/harness-core/workflow.js';
 import { executeSkill, loadRegistry } from '../packages/skill-core/runner.js';
 import { extractFoundationInventory } from '../packages/skill-core/foundation-inventory.js';
 import {captureWithDesignSystem} from '../packages/harness-core/design-system.js';
 import {saveRepairScope} from '../packages/harness-core/store.js';
 
-function argsOf(values) {
-  const options = {};
+const commandOptions = new Map([
+  ['init', 'spec url mode out'],
+  ['start', 'config out'],
+  ['continue', 'run config reason out'],
+  ['onboard', 'config out'],
+  ['baseline', 'run reason'],
+  ['foundation-approve', 'run input'],
+  ['capture', 'run phase url plan repo bind-evidence extract-design-system browser'],
+  ['skills', ''],
+  ['agents', ''],
+  ['model-diagnose', 'run model language'],
+  ['model-review', 'run model language'],
+  ['repair-scope', 'run finding all'],
+  ['skill', 'run skill repo'],
+  ['diagnose', 'run rubric'],
+  ['prioritize', 'run finding priority reason'],
+  ['verify', 'run config repo'],
+  ['attest', 'run input'],
+  ['confirm', 'run finding verdict note'],
+  ['plan', 'run finding'],
+  ['execute', 'run repo agent command model'],
+  ['evaluate', 'run'],
+  ['judge', 'run decision reason'],
+  ['withdraw-judgment', 'run reason'],
+  ['case-collect', 'run'],
+  ['case-list', 'run query'],
+  ['case-admit', 'run id kind reason tags'],
+  ['memory-exception', 'run principle hash decision reason'],
+  ['status', 'run'],
+  ['next', 'run'],
+  ['export', 'run out'],
+  ['compare', 'run state configuration out'],
+  ['reindex', 'out']
+]);
+
+function argsOf(command, values) {
+  if (!commandOptions.has(command)) throw new Error(`Unknown command: ${command}`);
+  const supported = commandOptions.get(command).split(' ');
+  const options = Object.create(null);
   for (let i = 0; i < values.length; i++) {
-    if (!values[i].startsWith('--')) throw new Error(`Expected --option near ${values[i]}`);
-    // `--option=value` is the escape hatch for a value that itself starts
-    // with `--`, such as a judgment reason quoting a flag.
-    const equals = values[i].slice(2).indexOf('=');
-    if (equals > 0) {
-      options[values[i].slice(2, 2 + equals)] = values[i].slice(3 + equals);
-      continue;
+    const match = /^--([a-z][a-z-]*)(?:=([\s\S]*))?$/.exec(values[i]);
+    if (!match) throw new Error(`Expected --option near ${values[i]}`);
+    const [, key, inlineValue] = match;
+    if (!supported.includes(key)) throw new Error(`Unknown option --${key} for ${command}`);
+    if (Object.hasOwn(options, key)) throw new Error(`Duplicate option --${key}`);
+    if (inlineValue !== undefined) {
+      options[key] = inlineValue;
+    } else {
+      const value = values[++i];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error(`Expected a value after --${key}; use --${key}=VALUE for values starting with --`);
+      }
+      options[key] = value;
     }
-    if (i + 1 >= values.length) throw new Error(`Expected a value after ${values[i]}`);
-    options[values[i].slice(2)] = values[++i];
   }
   return options;
 }
@@ -90,10 +131,11 @@ async function main() {
 
 pnpm harness init --spec FILE [--url URL] [--mode review|bootstrap] [--out DIRECTORY]
 pnpm harness start --config FILE [--out DIRECTORY]
+pnpm harness continue --run DIRECTORY --config FILE --reason TEXT [--out DIRECTORY]
 pnpm harness onboard --config FILE [--out DIRECTORY]
 pnpm harness baseline --run DIRECTORY --reason TEXT
 pnpm harness foundation-approve --run DIRECTORY --input FILE
-pnpm harness capture --run DIRECTORY --phase before|after [--url URL] [--plan FILE] [--repo DIRECTORY] [--bind-evidence true] [--extract-design-system true|false] [--browser chrome|msedge]
+pnpm harness capture --run DIRECTORY --phase before|after [--url URL] [--plan FILE] [--repo DIRECTORY] [--bind-evidence true|false] [--extract-design-system true|false] [--browser chrome|msedge]
 pnpm harness skills
 pnpm harness agents
 pnpm harness model-diagnose --run DIRECTORY [--model ID] [--language zh|en]
@@ -105,7 +147,7 @@ pnpm harness prioritize --run DIRECTORY --finding ID --priority NUMBER --reason 
 pnpm harness verify --run DIRECTORY --config FILE [--repo DIRECTORY]
 pnpm harness attest --run DIRECTORY --input FILE
 pnpm harness confirm --run DIRECTORY --finding ID --verdict supported|stale --note TEXT
-pnpm harness plan --run DIRECTORY [--finding ID]
+pnpm harness plan --run DIRECTORY [--finding ID] (required for review)
 pnpm harness execute --run DIRECTORY --repo DIRECTORY [--agent ID] [--command PATH] [--model CODEX_MODEL]
 pnpm harness evaluate --run DIRECTORY
 pnpm harness judge --run DIRECTORY --decision accept|reject [--reason TEXT] (required for reject)
@@ -133,12 +175,16 @@ finding, and evaluate reports deterministic render checks without claiming an im
 `);
     return;
   }
-  const options = argsOf(rest);
+  const options = argsOf(command, rest);
+  if(command==='continue'){
+    const {continueReview}=await import('../packages/harness-core/continue-review.js');
+    console.log(await continueReview({directory:required(options,'run'),configPath:required(options,'config'),reason:required(options,'reason'),outputRoot:runOutputRoot(options)}));
+    return;
+  }
   if(command==='start'){
-    if(Object.keys(options).some(key=>!['config','out'].includes(key)))throw Error('Start supports --config and --out.');
     const config=await loadProjectConfig(required(options,'config'));
     if(config.mode!=='review'||!config.url)throw Error('Lightweight start requires an existing preview and explicit mode review; use onboard for bootstrap.');
-    const repository=await inspectRepository(config.repo);await waitForPreview(config.url,{timeoutMs:10000});
+    const repository=await inspectRepository(config.repo);await waitForPreview(config.url,{timeoutMs:config.timeoutMs ?? 10000});
     const spec=JSON.parse(await readFile(config.spec,'utf8'));
     const outputRoot=runOutputRoot(options);await mkdir(outputRoot,{recursive:true});
     const run=await createRun({spec,url:config.url,outputRoot,mode:'review'});
@@ -146,11 +192,10 @@ finding, and evaluate reports deterministic render checks without claiming an im
     console.log(run.directory);return;
   }
   if(command==='repair-scope'){
-    if(Object.keys(options).some(key=>!['run','finding','all'].includes(key))||Boolean(options.finding)===(options.all==='true')||options.all!==undefined&&options.all!=='true')throw Error('Explicitly choose --finding ID or --all true within the user-authorized repair scope.');
+    if(Boolean(options.finding)===(options.all==='true')||options.all!==undefined&&options.all!=='true')throw Error('Explicitly choose --finding ID or --all true within the user-authorized repair scope.');
     console.log(JSON.stringify(await saveRepairScope(required(options,'run'),{findingId:options.finding}),null,2));return;
   }
   if(['model-diagnose','model-review'].includes(command)){
-    if(Object.keys(options).some(key=>!['run','model','language'].includes(key)))throw Error('Model commands support --run, --model and --language.');
     const {headlessModel}=await import('../packages/harness-core/headless-models.js');
     console.log(JSON.stringify(await headlessModel({directory:required(options,'run'),phase:command==='model-diagnose'?'diagnosis':'review',model:options.model,language:options.language||'zh'}),null,2));return;
   }
@@ -189,14 +234,28 @@ finding, and evaluate reports deterministic render checks without claiming an im
     await mkdir(outputRoot, { recursive: true });
     let preview = null;
     let child = null;
+    const previewLifetime = new AbortController();
+    const previewStopped = () => previewLifetime.abort(new Error('The managed preview stopped. Check its startup command and try again.'));
     try {
-      if (config.start) child = spawnPreview(config.start);
+      if (config.start) {
+        await assertManagedPreview(config);
+        child = spawnPreview(config.start);
+        child.once('error', previewStopped);
+        child.once('exit', previewStopped);
+      }
       let previewError = null;
       if (config.url) {
-        // In auto mode an unreachable preview is evidence about the surface, not a fatal error.
-        try { preview = await waitForPreview(config.url, { timeoutMs: config.timeoutMs || 30000 }); } catch (error) { previewError = error; }
+        // The entry probe distinguishes a missing route from an unavailable preview.
+        try {
+          preview = await waitForPreview(config.url, { timeoutMs: config.timeoutMs ?? 30000, signal: previewLifetime.signal });
+        } catch (error) { previewError = error; }
+        previewLifetime.signal.throwIfAborted();
+        if (child && preview && new URL(preview.finalUrl).origin !== new URL(config.url).origin) {
+          throw new Error('The managed preview redirected to a different origin.');
+        }
       }
       const entry = await resolveMode({ mode: config.mode, url: config.url, routes: config.routes });
+      previewLifetime.signal.throwIfAborted();
       if (entry.mode === 'review' && previewError) throw previewError;
       if (entry.mode === 'bootstrap') {
         const run = await createRun({ spec, url: config.url, outputRoot, mode: 'bootstrap', entry });
@@ -225,9 +284,13 @@ finding, and evaluate reports deterministic render checks without claiming an im
       };
       await saveOnboarding(run.directory, base);
       try {
-        await captureWithDesignSystem({directory:run.directory,repo:config.repo,phase:'before',bindVerificationSource:Boolean(config.verificationChecks?.length),verificationUrl:config.url,capture:async()=>config.capturePlanDocument
-          ? await captureBrowserPlan({ plan: config.capturePlanDocument, directory: run.directory, phase: 'before', channel: config.browser, sourceRoot: config.repo })
-          : await captureBrowser({ url: config.url, directory: run.directory, phase: 'before', channel: config.browser })});
+        await captureWithDesignSystem({directory:run.directory,repo:config.repo,phase:'before',bindVerificationSource:Boolean(config.verificationChecks?.length),verificationUrl:config.url,signal:previewLifetime.signal,capture:async()=>{
+          const result = config.capturePlanDocument
+            ? await captureBrowserPlan({ plan: config.capturePlanDocument, directory: run.directory, phase: 'before', channel: config.browser, sourceRoot: config.repo, signal: previewLifetime.signal })
+            : await captureBrowser({ url: config.url, directory: run.directory, phase: 'before', channel: config.browser, signal: previewLifetime.signal });
+          previewLifetime.signal.throwIfAborted();
+          return result;
+        }});
         let foundationInventory;
         try {
           foundationInventory = (await extractFoundationInventory({ directory: run.directory, repo: config.repo })).inventory;
@@ -242,6 +305,8 @@ finding, and evaluate reports deterministic render checks without claiming an im
         throw new Error(`Baseline capture failed; the failed run is preserved at ${run.directory}: ${error.message}`);
       }
     } finally {
+      child?.off('error', previewStopped);
+      child?.off('exit', previewStopped);
       stopPreview(child);
     }
     return;
@@ -295,6 +360,8 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const run = await loadRun(directory);
     const bootstrap = run.manifest.mode === 'bootstrap';
     if (!['before', 'after'].includes(phase)) throw new Error('Phase must be before or after.');
+    const blocked = phase === 'after' && executionBlock(run.manifest);
+    if (blocked) throw new Error(blocked.reason);
     if (run.manifest.captures[phase]) throw new Error(`${phase} is already captured; start a new run for another comparison.`);
     if (bootstrap && phase === 'before') throw new Error('A bootstrap run has no baseline; capture the first render as after.');
     if (bootstrap && phase === 'after' && !run.manifest.plan) throw new Error('Plan the first render before capturing it.');
@@ -308,13 +375,14 @@ finding, and evaluate reports deterministic render checks without claiming an im
     if(bound&&!repo)throw Error('Bound evidence capture requires --repo DIRECTORY.');
     const verificationUrl=plan?.states?.[0]?.start?.url||options.url||run.manifest.url;
     if(bound&&plan){const origin=new URL(verificationUrl).origin;if(plan.states.some(state=>new URL(state.start.url).origin!==origin||state.actions.some(action=>action.type==='navigate'&&new URL(action.url).origin!==origin)))throw Error('Specialist capture requires one preview origin.');}
+    const channel = options.browser ?? run.manifest.onboarding?.config?.browser ?? 'chrome';
     const takeCapture=async()=>plan
-      ? await captureBrowserPlan({ plan, directory, phase, channel: options.browser || 'chrome', sourceRoot: repo || null })
-      : await captureBrowser({ url: options.url || run.manifest.url, directory, phase, channel: options.browser || 'chrome' });
+      ? await captureBrowserPlan({ plan, directory, phase, channel, sourceRoot: repo || null })
+      : await captureBrowser({ url: options.url || run.manifest.url, directory, phase, channel });
     const extraction=options['extract-design-system']??(process.env.PD_HARNESS_HEADLESS==='1'?'false':'true');
     if(!['true','false'].includes(extraction))throw Error('--extract-design-system must be true or false.');
     if(repo)await captureWithDesignSystem({directory,repo,phase,bindVerificationSource:bound,verificationUrl,capture:takeCapture,extract:extraction==='true'});
-    else await saveCapture(directory,phase,await takeCapture());
+    else await captureOnce(directory,phase,async()=>saveCapture(directory,phase,await takeCapture()));
     process.stdout.write(`Saved ${phase} ${options.plan ? 'task-state' : 'desktop/mobile'} captures in ${directory}\n`);
   } else if (command === 'confirm') {
     await confirmFinding(directory, required(options, 'finding'), required(options, 'verdict'), required(options, 'note'));
@@ -336,6 +404,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
     });
     await printWorkbenchLink(execution.branch.replace(/^pd\//, ""));
     process.stdout.write(JSON.stringify(execution, null, 2) + '\n');
+    if (executionBlock({ execution })) process.exitCode = 1;
   } else if (command === 'evaluate') {
     const run = await loadRun(directory);
     const bootstrap = run.manifest.mode === 'bootstrap';

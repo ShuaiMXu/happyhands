@@ -51,7 +51,7 @@ export async function renderPageReview(container,run,previous={}) {
   function syncPanels(){left.hidden=!directoryOpen;right.hidden=!inspectorOpen;root.dataset.directory=String(directoryOpen);root.dataset.inspector=String(inspectorOpen);directoryToggle.setAttribute('aria-expanded',String(directoryOpen));inspectorToggle.setAttribute('aria-expanded',String(inspectorOpen));}
   root.append(actionContainer,panels,metadata,center,right,left);syncPanels();
   const comparisonHashes=new Map();
-  const primary=mountReviewAction(actionContainer,run,{onChanged:previous.onChanged,onFoundation:()=>{location.href=reviewLink(run.manifest.id,'list')+'#foundation-title';}});
+  const primary=mountReviewAction(actionContainer,run,{poll:false,onChanged:previous.onChanged,onFoundation:()=>{location.href=reviewLink(run.manifest.id,'list')+'#foundation-title';}});
   const planning=reviewPlanning(run,{onChanged:previous.onChanged});
   let filters=null,pendingFilterFocus=null;
   function renderDirectory(){
@@ -211,10 +211,11 @@ export async function renderPageReview(container,run,previous={}) {
   async function refreshState(){
     if(disposed||refreshing)return;
     refreshing=true;
+    const stateRequest=workbenchApi('state?run='+encodeURIComponent(run.manifest.id));
     try{
-      const next=await workbenchApi('state?run='+encodeURIComponent(run.manifest.id));
+      const next=await stateRequest;
       if(disposed)return;
-      const selectedId=selected?.id,hadLivePreview=livePreviewAvailable(preview);
+      const selectedId=selected?.id;
       const previousPreview=JSON.stringify(preview),previousTargets=JSON.stringify(targets),previousState=JSON.stringify(state);
       state={...next,readOnly:!next.project};targets=reviewTargets(run,state.reviews);associations=reviewAssociations(run,targets,findings);
       selected=targets.find(node=>node.id===selectedId)||targets.find(node=>node.phase==='after'&&node.available)||targets[0];
@@ -225,9 +226,12 @@ export async function renderPageReview(container,run,previous={}) {
       if(!hasLivePreview&&mode==='live')mode=run.manifest.captures.after?'compare':'evidence';
       if(previousPreview!==JSON.stringify(preview))renderContent();
       if(previousState!==JSON.stringify(state))renderInspector();
-    }finally{refreshing=false;}
+    }finally{
+      await primary.refresh(stateRequest);
+      refreshing=false;
+    }
   }
   try{await refreshState();}catch{/* Exported evidence remains useful without a live run. */}
-  timer=setInterval(()=>refreshState().catch(()=>{}),3000);
+  timer=setInterval(()=>refreshState().catch(()=>{}),1500);
   return {snapshot:()=>({captureId:selected?.id,directoryOpen,inspectorOpen,fitWidth}),destroy:async()=>{imagePreview?.close();disposed=true;planning.destroy();primary.destroy();clearInterval(timer);observer?.disconnect();if(resizeFrame!==null)cancelAnimationFrame(resizeFrame);if(activeFrame)activeFrame.src='about:blank';root.remove();}};
 }

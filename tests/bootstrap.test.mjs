@@ -235,3 +235,17 @@ test('review runs keep their own gates and cannot record an absent baseline', as
   await assert.rejects(recordAbsentBaseline(directory, 'Nothing here.'), /Only a bootstrap run/);
   await assert.rejects(savePlan(directory, 'F1'), /baseline/i);
 });
+
+test('auto mode does not infer an unbuilt route from a preview or authentication failure', async t => {
+  const server = createServer((request, response) => {
+    response.writeHead(request.url === '/private' ? 401 : 503);
+    response.end();
+  });
+  await new Promise(resolveListen => server.listen(0, '127.0.0.1', resolveListen));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  await assert.rejects(resolveMode({ url: base + '/' }), /HTTP 503/);
+  await assert.rejects(resolveMode({ url: base + '/private' }), /HTTP 401/);
+  await new Promise(resolveClosed => server.close(resolveClosed));
+  await assert.rejects(resolveMode({ url: base + '/', timeoutMs: 100 }), /Cannot infer a mode/);
+});
