@@ -134,7 +134,7 @@ Before contributing, read [AGENTS.md](AGENTS.md), [DESIGN.md](DESIGN.md) and the
   <img src="assets/readme/star-history-light.svg" width="100%" alt="HappyHands cumulative GitHub star growth, with stars added in the last seven days and the snapshot date">
 </picture>
 
-The chart groups GitHub's current stargazers by their actual star dates; it cannot reconstruct historical counts before unstars. The snapshot date is shown in the chart, while the top badge reports GitHub's current total.
+The chart groups GitHub's current stargazers by their star dates. Removed stars are excluded from the historical totals. The chart refreshes daily through GitHub Actions and shows its snapshot date. The top badge reports the current total.
 
 <details>
 <summary>Refresh the growth chart</summary>

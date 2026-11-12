@@ -134,7 +134,7 @@ pnpm harness skills # 已注册方法及其成熟度
   <img src="assets/readme/star-history-light.svg" width="100%" alt="HappyHands Star 累计增长曲线，包含最近 7 天加星数量和数据更新时间">
 </picture>
 
-曲线来自 GitHub 当前 Star 用户的真实加星时间，按日期累计；取消 Star 前的历史数量无法据此还原。图中标明更新时间，顶部徽章显示 GitHub 当前总量。
+增长图按 GitHub 当前 Star 用户的加星日期累计，无法还原取消 Star 之前的历史总量。GitHub Actions 每天刷新图表，更新时间显示在图中。顶部徽章显示当前总量。
 
 <details>
 <summary>刷新增长图表</summary>

@@ -1,7 +1,7 @@
 // Refresh the README's self-contained chart from GitHub, using the existing gh login.
 // Only daily aggregates are saved; account names and credentials never enter assets.
 import {execFileSync} from 'node:child_process';
-import {mkdir, writeFile} from 'node:fs/promises';
+import {mkdir, readFile, writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 
 const repository = 'ShuaiMXu/happyhands';
@@ -34,6 +34,18 @@ const snapshot = {
   method: 'Cumulative starred_at dates of current stargazers. Removed stars are not reconstructed; this is not a historical net-count ledger.',
   series,
 };
+// Keep the first collection time when a same-day refresh finds identical data.
+// Otherwise generatedAt alone would create a new commit on every manual rerun.
+try {
+  const {generatedAt, ...previous} = JSON.parse(await readFile(`${directory}/star-history.json`, 'utf8'));
+  const {generatedAt: currentGeneratedAt, ...current} = snapshot;
+  if (typeof generatedAt === 'string' && generatedAt.startsWith(`${lastDay}T`) &&
+      Number.isFinite(Date.parse(generatedAt)) && JSON.stringify(previous) === JSON.stringify(current)) {
+    snapshot.generatedAt = generatedAt;
+  }
+} catch (error) {
+  if (error.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error;
+}
 
 function chart(dark) {
   const palette = dark
