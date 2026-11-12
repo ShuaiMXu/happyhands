@@ -1,0 +1,55 @@
+packages/harness-core/remediation.js
+  s_c3a809bd8a1ec1::t_718d09825dc39d 4-6,16,19-20,22-28
+skills/happyhands/references/workflow.md
+  s_c3a809bd8a1ec1::t_718d09825dc39d 3,11-12,14
+tests/review-modules-browser.mjs
+  s_c3a809bd8a1ec1::t_718d09825dc39d 1-41
+docs/next-steps.md
+  s_c3a809bd8a1ec1::t_718d09825dc39d 14
+docs/experience-orchestration.md
+  s_c3a809bd8a1ec1::t_718d09825dc39d 22
+tests/helpers/hero-store-fixture.mjs
+  s_c3a809bd8a1ec1::t_718d09825dc39d 1-58
+skills/experience-remediation/rules.json
+  s_c3a809bd8a1ec1::t_718d09825dc39d 2,235-252
+packages/harness-core/finding-admission.js
+  s_c3a809bd8a1ec1::t_718d09825dc39d 1-2,36,38
+packages/harness-core/remediation-validation.js
+  s_c3a809bd8a1ec1::t_718d09825dc39d 4-12,16-18
+docs/experience-remediation.md
+  s_c3a809bd8a1ec1::t_718d09825dc39d 52-97
+tests/verification.test.mjs
+  s_c3a809bd8a1ec1::t_718d09825dc39d 30-45
+docs/model-value-observations-zh.md
+  s_c3a809bd8a1ec1::t_718d09825dc39d 1-48
+packages/workbench/baseline-diagnosis.js
+  s_c3a809bd8a1ec1::t_718d09825dc39d 45-47,76
+tests/remediation.test.mjs
+  s_c3a809bd8a1ec1::t_718d09825dc39d 8,78-165
+skills/experience-remediation/SKILL.md
+  s_c3a809bd8a1ec1::t_718d09825dc39d 28-31
+docs/model-value-evaluation-zh.md
+  s_c3a809bd8a1ec1::t_718d09825dc39d 1-61
+packages/harness-core/verification.js
+  s_c3a809bd8a1ec1::t_718d09825dc39d 10-15,87-91,120,122
+packages/harness-core/visual-review.js
+  s_c3a809bd8a1ec1::t_718d09825dc39d 1-2,5,30-63
+tests/hero-evidence.test.mjs
+  s_c3a809bd8a1ec1::t_718d09825dc39d 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "eacadb9e5adfb12e1d1495d635b586990f4f805d",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
