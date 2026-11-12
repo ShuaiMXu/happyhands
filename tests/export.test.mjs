@@ -46,7 +46,8 @@ async function completeRun(root, id) {
     branch: `pd/${id}`,
     worktree: join(directory, 'worktree'),
     log: 'agent-events.jsonl',
-    head: 'abc1234'
+    head: 'abc1234',
+    exitCode: 0
   });
   await saveCapture(directory, 'after', capture('after', 'Team outcome'));
   await saveEvaluation(directory, evaluateCaptures(capture('before', 'HappyClaw'), capture('after', 'Team outcome')));

@@ -4,9 +4,9 @@
 
 **Job:** “Show me the most important experience problem in my working product, fix it with my coding agent, and prove the result is better. When I add a new page, establish the design system first and keep the result consistent as the product evolves.”
 
-**Positioning:** A continuous AI Product Designer for the post-build stage. It complements Codex's implementation ability with product judgment, evidence, prioritization, visual/interaction evaluation and project memory.
+**Positioning:** Evidence-backed UI and product-experience improvement within an existing coding-agent workflow. The lightweight Skill is the primary entry. The Harness supplies replayable evidence, scoped execution and independent review, with the workbench available for inspection and history.
 
-**Initial promise:** Connect a runnable app, choose a key user task, and receive one clear, evidence-backed improvement opportunity within five minutes. For a missing surface, review and approve its Design Foundation before generating the first page. A full review can examine more pages and flows; a continuous plan watches future changes.
+**Initial deliverable:** Connect a runnable app, choose a key user task, and produce one evidence-backed improvement with a reviewable change and matched before/after proof. Measure setup time, model calls, retries, manual intervention and final acceptance before setting a time promise. Design-system extraction and new-surface composition remain optional wider flows. Continuous monitoring requires separate validation.
 
 **Differentiation:** A reusable Experience Spec; an extracted and governed brand/design foundation; explicit expert loop; before/after proof; human judgment capture; versioned expertise and evaluator; incremental project history. A static skill or one-off report can imitate parts of this, so the product must earn its value through reliable outcomes and accumulated context.
 

@@ -125,7 +125,7 @@ Mode is a property of the surface under review, not of the project. A repository
 { "version": "0.1", "spec": "experience.json", "repo": "../your-app", "url": "http://127.0.0.1:4321/", "routes": ["/jobs"] }
 ```
 
-A route that returns text is a baseline to review. A route that is missing, unreachable or blank has to be built first, and the run becomes a bootstrap run. `url` is optional; without it there is nothing to probe and the run is always a bootstrap run. A route that returns scripts but no server-rendered text is reported as ambiguous rather than guessed: a fetch cannot tell an empty route from a client-rendered one, so the config has to set `"mode": "review"` or `"mode": "bootstrap"` explicitly.
+A route that returns text is a baseline to review. Automatic bootstrap requires missing (HTTP 404 or 410) or blank routes. Connection failures and other HTTP errors leave the mode undecided, because an existing page may be temporarily unavailable. `url` is optional; without it there is nothing to probe and the run is always a bootstrap run. A route that returns scripts but no server-rendered text is reported as ambiguous rather than guessed: a fetch cannot tell an empty route from a client-rendered one, so the config has to set `"mode": "review"` or `"mode": "bootstrap"` explicitly.
 
 A bootstrap run changes four gates and nothing else:
 
@@ -252,7 +252,7 @@ OJO、Taste、Impeccable 完整上游包、适配层与引用仍保留；这里�
 
 ## 专项验证自动进入独立复核
 
-项目配置可以声明 `verificationChecks`。CLI 需先用带此配置的 `onboard` 建立 Run，再 `capture --phase after` 和 `verify`；CLI 与工作台共用采集时的指纹边界。没有专项配置的普通采集保持原有范围，不要求完整仓库指纹。工作台在 after 原生采集完成后、同一个受管理预览关闭前执行这些脚本。正常布局检查先于正常交互，辅助压力检查排在最后。脚本不需要自己组装独立 review 提示词，也不需要手动搬运报告或截图。
+项目配置可以声明 `verificationChecks`。CLI 需先用带此配置的 `onboard` 或 `start` 建立 Run，再 `capture --phase after` 和 `verify`；CLI 与工作台共用采集时的指纹边界。没有专项配置的普通采集保持原有范围，不要求完整仓库指纹。工作台在 after 原生采集完成后、同一个受管理预览关闭前执行这些脚本。正常布局检查先于正常交互，辅助压力检查排在最后。脚本不需要自己组装独立 review 提示词，也不需要手动搬运报告或截图。
 
 ```json
 {
@@ -297,3 +297,7 @@ Projects can explicitly enable the [experience remediation contract](experience-
 For automatic local positive/negative case collection, explicit admission and historical references in execution plans, see [Experience cases](experience-cases.md).
 
 The operational Skill-to-stage mapping and current-page-first execution order are documented in [Experience orchestration](experience-orchestration.md).
+
+## Continuing the same task
+
+`pnpm harness continue --run PREVIOUS --config NEXT_PROJECT --reason TEXT` creates a fresh review from an explicitly chosen clean checkout and running preview. The config retains the parent project and task. Linked Git worktrees of the same repository are accepted. The child retains a hashed predecessor summary and selected reference texts, increments the maximum three-attempt budget and requires fresh capture, diagnosis, confirmation, implementation and review. Repeating the same continuation is idempotent. Local predecessor artifacts are omitted from public exports. See [the lightweight guide](lightweight.md#continue-a-repair) for the source handoff and limits.

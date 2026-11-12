@@ -19,7 +19,8 @@ const INDEX = 'index.json';
 
 // Public display copies are not executable; preserve the original local brief and hash.
 export function publicExecutionBrief(brief){
- const start=brief.indexOf('\n\nExperience-case digest: ');
+ const starts=['\n\nExperience-case digest: ','\n\nHistorical predecessor ('].map(marker=>brief.indexOf(marker)).filter(index=>index>=0);
+ const start=starts.length?Math.min(...starts):-1;
  return start<0?brief:brief.slice(0,start)+'\n\nHistorical case context omitted from this public display copy. Execute only from the original local run.\n';
 }
 
@@ -108,6 +109,7 @@ function publicManifest(manifest) {
     };
     delete copy.execution.log;
   }
+  if(copy.onboarding?.continuation)delete copy.onboarding.continuation;
   if (copy.onboarding) {
     copy.onboarding = {
       ...copy.onboarding,

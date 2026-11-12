@@ -27,6 +27,22 @@ async function fixture(t,{dirty=false}={}){
   return {run,root,binding:await verificationBinding(run.directory,(await loadRun(run.directory)).manifest)};
 }
 const record=()=>({...check,status:'pass',result:{status:'pass',checks:[{focus:'wrapped',clipboard:'actual readback'}]},images:[png],checkHash:verificationHash(check)});
+test('specialist image dimensions come from hash-checked PNGs and legacy ordinary records remain readable',async t=>{
+  const {run,binding}=await fixture(t);await saveVerificationEvidence(run.directory,{binding,records:[record()]});
+  const manifest=(await loadRun(run.directory)).manifest;
+  const original=JSON.parse(await readFile(join(run.directory,manifest.verificationEvidence.path)));
+  assert.deepEqual([original.records[0].images[0].width,original.records[0].images[0].height],[1,1]);
+  async function reindexed(bundle){
+    const raw=JSON.stringify(bundle),digest=verificationHash(raw),path=`verification/${digest}/index.json`;
+    await mkdir(join(run.directory,'verification',digest),{recursive:true});await writeFile(join(run.directory,path),raw);
+    return {...manifest,verificationEvidence:{...manifest.verificationEvidence,digest,path}};
+  }
+  const legacy=structuredClone(original);delete legacy.records[0].images[0].width;delete legacy.records[0].images[0].height;
+  const data=await readVerificationEvidence(run.directory,await reindexed(legacy));
+  assert.deepEqual([data.records[0].images[0].width,data.records[0].images[0].height],[1,1]);
+  original.records[0].images[0].width=1280;
+  await assert.rejects(readVerificationEvidence(run.directory,await reindexed(original)),/dimensions changed/);
+});
 async function review(run,root,generate){const cwd=join(root,'review-'+Math.random().toString(36).slice(2));await mkdir(cwd);return runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate});}
 function model(verdict='pass',inspect=()=>{}){return async(command,args,options)=>{
   const context=JSON.parse(await readFile(join(options.cwd,'review-context.json')));await inspect(context,args,options);

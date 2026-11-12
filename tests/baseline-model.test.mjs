@@ -2,7 +2,7 @@ import {methodStateEntries,assertMethodChecks} from '../packages/harness-core/re
 import {loadOjoGuidance} from '../packages/skill-core/ojo-guidance.js';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';
-import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding} from '../packages/harness-core/store.js';
+import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,saveRepairScope} from '../packages/harness-core/store.js';
 import {diagnoseRun,overridePriority} from '../packages/harness-core/diagnosis.js';import {diagnoseBaseline,assertBaselineResult} from '../packages/workbench/baseline-diagnosis.js';
 import {exportRun} from '../packages/harness-core/export.js';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
@@ -51,6 +51,11 @@ test('one incomplete batch prevents publishing successful batches as complete fi
  const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate:async(_cmd,_args,{cwd})=>{await batchResponse(cwd,++calls===2?{status:'needs-evidence',findings:[]}:{});}});
  assert.equal(calls,2);assert.equal(diagnosis.modelDiagnosis.status,'needs-evidence');assert.equal(diagnosis.findings.filter(item=>item.id.startsWith('MODEL-')).length,0);
  const record=JSON.parse(await readFile(join(run.directory,diagnosis.modelDiagnosis.path)));assert.equal(record.result.screenshotRefs.length,25);assert.equal(record.batches[0].result.findings.length,1);
+ await saveDiagnosis(run.directory, diagnosis);
+ await assert.rejects(saveRepairScope(run.directory), /Model diagnosis is incomplete/);
+ diagnosis.modelDiagnosis.status='complete';
+ await writeFile(join(run.directory,'diagnosis.json'),JSON.stringify(diagnosis));
+ await assert.rejects(saveRepairScope(run.directory), /completion status changed/);
 });
 
 test('a batch cannot cite an original assigned to a different session',async t=>{

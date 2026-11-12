@@ -1,21 +1,26 @@
 import {writeFile,realpath} from 'node:fs/promises';
 import {join} from 'node:path';
 import {loadRun,savePullRequest} from '../harness-core/store.js';
-import {visualReviewFor} from '../harness-core/workflow.js';
+import {executionBlock,visualReviewFor} from '../harness-core/workflow.js';
 import {readVisualReviewBinding} from '../harness-core/visual-review-binding.js';
 import {readVerificationEvidence} from '../harness-core/verification.js';
 import {readRepositoryInputs} from '../harness-core/repository-inputs.js';
 import {repositoryFingerprint} from '../harness-core/repository-fingerprint.js';
 import {runLocal} from './jobs.js';
 
-export async function verifyPublication(run){
+function assertPublicationAccepted(run){
+  if(run.manifest.judgmentWithdrawal)throw Error('The final acceptance was withdrawn.');
   if(run.manifest.judgment?.decision!=='accept')throw Error('Accept the final result before creating a pull request.');
+}
+
+export async function verifyPublication(run){
+  assertPublicationAccepted(run);
   const qa=visualReviewFor(run.manifest,'visual-qa-evaluator');
   if(qa?.verdict!=='pass')throw Error('A passing independent review is required before publication.');
   await readVisualReviewBinding(run,qa,{requireBound:true});
   await readVerificationEvidence(run.directory,run.manifest);
   const execution=run.manifest.execution;
-  if(!execution||execution.exitCode!==0||execution.boundaryBreaches?.length)throw Error('A successful isolated execution is required.');
+  if(!execution||executionBlock(run.manifest))throw Error('A successful isolated execution is required.');
   const worktree=await realpath(join(run.directory,'worktree'));
   if(await realpath(execution.worktree)!==worktree)throw Error('Publication must use this review’s isolated worktree.');
   const captured=await readRepositoryInputs(run,'after');
@@ -28,7 +33,7 @@ export async function verifyPublication(run){
 // merge, deployment, host-repository staging or private evidence upload.
 export async function createReviewedPullRequest(directory,{cwd,signal,command=runLocal,verify=verifyPublication}={}){
   const run=await loadRun(directory);
-  if(run.manifest.judgment?.decision!=='accept')throw Error('Accept the final result before creating a pull request.');
+  assertPublicationAccepted(run);
   const worktree=await verify(run),execution=run.manifest.execution;
   const branch=`pd/${run.manifest.id}`;
   if(execution.branch!==branch||!/^[a-zA-Z0-9_-]{4,64}$/.test(run.manifest.id))throw Error('Unexpected repair branch.');
@@ -74,10 +79,12 @@ export async function createReviewedPullRequest(directory,{cwd,signal,command=ru
   }else{
     head=(await git(['commit-tree',tree,'-p',execution.baseCommit,'-m',`fix: apply reviewed HappyHands repairs (${run.manifest.id})`])).trim();
     if(!/^[a-f0-9]{40,64}$/.test(head))throw Error('Invalid publication commit.');
+    assertPublicationAccepted(await loadRun(directory));
     await git(['push','origin',`${head}:refs/heads/${branch}`]);
   }
   const body=join(cwd,'pull-request-body.md');
   await writeFile(body,`Repairs for ${run.spec.project.name}.\n\nIndependent visual review passed for the recorded capture scope; the user accepted the final result.\n\n- Review: ${run.manifest.id}\n- Baseline: ${execution.baseCommit}\n- Changed files: ${files.length}\n\nThis does not claim coverage of uncaptured pages or a production deployment.\n`);
+  assertPublicationAccepted(await loadRun(directory));
   const output=existing[0]?.url||await invoke('gh',['pr','create','--draft','--repo',repo,'--base',base,'--head',branch,'--title',`HappyHands: repair ${run.spec.project.name}`,'--body-file',body]);
   const url=String(output).match(/https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/)?.[0];
   if(!url||!url.startsWith(`https://github.com/${repo}/pull/`))throw Error('GitHub did not return a matching pull request URL.');

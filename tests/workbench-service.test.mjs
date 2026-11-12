@@ -17,6 +17,25 @@ test('durable tasks serialize, retain results and can be reread after restart',a
 test('cancelling a queued job never starts its operation',async t=>{const root=await fixture(t),jobs=createJobs(root);const first=await jobs.start({},()=>new Promise(resolve=>setTimeout(resolve,50)));let ran=false;const second=await jobs.start({},async()=>{ran=true;});await jobs.cancel(second.id);assert.equal((await terminal(jobs,second.id)).status,'cancelled');assert.equal(ran,false);await terminal(jobs,first.id);});
 test('process cancellation stops execution rather than reporting success',async t=>{const root=await fixture(t),controller=new AbortController();const pending=runLocal(process.execPath,['-e','setInterval(()=>{},1000)'],{cwd:root,signal:controller.signal});setTimeout(()=>controller.abort(),80);await assert.rejects(pending,/Cancelled/);});
 test('restarted service marks persisted running tasks interrupted',async t=>{const root=await fixture(t),id='00000000-0000-0000-0000-000000000001',directory=join(root,'.harness','workbench-jobs',id);await mkdir(directory,{recursive:true});await writeFile(join(directory,'job.json'),JSON.stringify({id,status:'running',createdAt:'2026-01-01'}));assert.equal((await createJobs(root).get(id)).status,'interrupted');});
+test('workbench can poll one durable job independently of the history list', async t => {
+  const root = await fixture(t);
+  const jobs = createJobs(root);
+  const started = await jobs.start({ kind: 'polling-fixture' }, async () => ({ answer: 42 }));
+  const expected = await terminal(jobs, started.id);
+  jobs.close();
+
+  let handler;
+  const server = createServer((request, response) => handler(request, response, () => response.end()));
+  workbenchServicePlugin(root).configureServer({
+    middlewares: { use(middleware) { handler = middleware; } },
+    httpServer: server
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/workbench/job?id=${started.id}`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), expected);
+});
 test('local runs cannot escape the run root',async t=>{const service=createWorkbench(await fixture(t));await assert.rejects(service.localRun('../test-run'),/Invalid run/);});
 test('missing source association blocks execution instead of using the workbench repository',async t=>{const service=createWorkbench(await fixture(t));await assert.rejects(service.action({runId:'test-run',action:'execute',confirmed:true}),/no local project connection/);const state=await service.state('test-run');assert.equal(state.project,null);});
 test('an exported run without a local project connection exposes a read-only foundation workspace',async t=>{const service=createWorkbench(await fixture(t));assert.deepEqual(await service.foundationWorkspace('test-run'),{available:false,refreshAvailable:false,entries:[]});await assert.rejects(service.foundationWorkspace('../test-run'),/Invalid run/);});
@@ -67,17 +86,32 @@ test('a reachable unmanaged preview still exposes source drift instead of claimi
  assert.equal(state.project.preview.reachable,true);
  service.close();
 });
-test('workbench owns managed preview start, fingerprint and stop lifecycle',async t=>{
+test('workbench owns managed preview start, fingerprint and stop lifecycle',{timeout:5000},async t=>{
  const root=await fixture(t),runDirectory=join(root,'.harness','runs','test-run'),commit='a'.repeat(40),configPath=join(root,'project.json'),specPath=join(root,'project-spec.json');
  await writeFile(specPath,JSON.stringify(spec));
  await writeFile(configPath,JSON.stringify({version:'0.1',spec:specPath,repo:root,url:'http://127.0.0.1:43117/',mode:'review',start:{command:'npm',args:['run','dev']}}));
  await mkdir(join(root,'.harness','workbench-projects'),{recursive:true});await writeFile(join(root,'.harness','workbench-projects','test-run.json'),JSON.stringify({configPath}));
  await saveOnboarding(runDirectory,{status:'ready',repository:{root,commit,dirty:false}});
  const child=Object.assign(new EventEmitter(),{exitCode:null,signalCode:null,pid:12345,killed:false});let stopped=false;
- const service=createWorkbench(root,{inspectRepository:async()=>({root,commit,dirty:false}),spawnPreview:()=>child,stopPreview:()=>{stopped=true;child.killed=true;},waitForPreview:async()=>({status:200,finalUrl:'http://127.0.0.1:43117/'}),previewReachable:async()=>false,previewResponseFingerprint:async()=> 'f'.repeat(64)});
+ let readiness;
+ const service=createWorkbench(root,{inspectRepository:async()=>({root,commit,dirty:false}),spawnPreview:()=>{child.killed=false;child.exitCode=null;return child;},stopPreview:()=>{stopped=true;child.killed=true;},waitForPreview:async()=>{if(readiness){readiness.started.resolve();await readiness.finish.promise;}},fetch:async()=>{throw new Error('Fixture port is free');},previewReachable:async()=>false,previewResponseFingerprint:async()=> 'f'.repeat(64)});
  assert.equal((await service.startPreview('test-run')).status,'started');
  const running=await service.state('test-run');assert.equal(running.project.preview.versionStatus,'verified');assert.equal(running.project.preview.managed,true);assert.equal(running.project.preview.fingerprint,'f'.repeat(64));
  assert.equal((await service.stopManagedPreview('test-run')).status,'stopped');assert.equal(stopped,true);assert.equal((await service.state('test-run')).project.preview.versionStatus,'preview-stopped');
+ readiness={started:Promise.withResolvers(),finish:Promise.withResolvers()};
+ const startup=service.startPreview('test-run');
+ await readiness.started.promise;
+ try {
+  await assert.rejects(service.startPreview('test-run'),/already starting/);
+  assert.equal((await service.stopManagedPreview('test-run')).status,'stopped');
+ } finally { readiness.finish.resolve(); }
+ await assert.rejects(startup,/startup was stopped/);
+ readiness={started:Promise.withResolvers(),finish:Promise.withResolvers()};
+ const exiting=service.startPreview('test-run');
+ await readiness.started.promise;
+ child.exitCode=1;
+ readiness.finish.resolve();
+ await assert.rejects(exiting,/stopped before verification/);
  service.close();
 });
 test('code changes require explicit scope confirmation',async t=>{const service=createWorkbench(await fixture(t));await assert.rejects(service.sourceChange({runId:'test-run'}),/Confirm this change scope/);});

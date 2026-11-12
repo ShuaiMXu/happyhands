@@ -12,22 +12,31 @@ function agentName(manifest) {
   return manifest.execution?.agent?.id ? `Agent ${manifest.execution.agent.id}` : 'The agent';
 }
 
-// From execution onwards a first render and a change follow the same path: render it, check it
-// structurally, have a person look at it, then decide.
+export function executionBlock(manifest) {
+  const execution = manifest.execution;
+  if (execution?.boundaryBreaches?.length) {
+    return { stage: 'boundary-breached', blocked: true, reason: `The agent changed the host repository outside its worktree: ${execution.boundaryBreaches.join('; ')}.`, next: 'Inspect the repository, then start a new run.' };
+  }
+  if (execution?.cancelled) {
+    return { stage: 'execution-failed', blocked: true, reason: `${agentName(manifest)} was cancelled; the worktree may hold a partial edit.`, next: 'Inspect the retained worktree, then start a new run.' };
+  }
+  if (execution?.timedOut) {
+    return { stage: 'execution-failed', blocked: true, reason: `${agentName(manifest)} was stopped at the ${execution.limits?.maxMinutes ?? 'configured'}-minute execution window; the worktree holds a partial edit.`, next: 'Inspect the retained worktree, then start a new run.' };
+  }
+  if (execution && execution.exitCode !== 0) {
+    const how = execution.exitCode === null || execution.exitCode === undefined
+      ? `was stopped by ${execution.signal || 'a signal'}`
+      : `exited ${execution.exitCode}`;
+    return { stage: 'execution-failed', blocked: true, reason: `${agentName(manifest)} ${how}; inspect the retained worktree and log.`, next: 'Repair in the retained worktree or start a new run.' };
+  }
+  return null;
+}
+
+// First renders and changes use the same post-execution gates.
 function fromExecution(manifest, result) {
   if (!manifest.execution && !manifest.captures.after) return { ...result, stage: 'needs-execution', next: 'execute' };
-  if (manifest.execution?.boundaryBreaches?.length) {
-    return { ...result, stage: 'boundary-breached', blocked: true, reason: `The agent changed the host repository outside its worktree: ${manifest.execution.boundaryBreaches.join('; ')}.`, next: 'Inspect the repository, then start a new run.' };
-  }
-  if (manifest.execution?.timedOut) {
-    return { ...result, stage: 'execution-failed', blocked: true, reason: `${agentName(manifest)} was stopped at the ${manifest.execution.limits?.maxMinutes ?? 'configured'}-minute execution window; the worktree holds a partial edit.`, next: 'Inspect the retained worktree, then start a new run.' };
-  }
-  if (manifest.execution && manifest.execution.exitCode !== 0) {
-    const how = manifest.execution.exitCode === null || manifest.execution.exitCode === undefined
-      ? `was stopped by ${manifest.execution.signal || 'a signal'}`
-      : `exited ${manifest.execution.exitCode}`;
-    return { ...result, stage: 'execution-failed', blocked: true, reason: `${agentName(manifest)} ${how}; inspect the retained worktree and log.`, next: 'Repair in the retained worktree or start a new run.' };
-  }
+  const block = executionBlock(manifest);
+  if (block) return { ...result, ...block };
   if (!manifest.captures.after) return { ...result, stage: 'needs-after-capture', next: 'Start the retained worktree preview, then capture --phase after.' };
   if (!manifest.evaluation) return { ...result, stage: 'needs-structural-evaluation', next: 'evaluate' };
   if (missingAfterStates(manifest).length) return {...result,stage:'visual-qa-needs-evidence',blocked:true,reason:'Some planned after states were not captured. Complete the capture plan and start a new review.',next:'Start a new run with the missing states.'};

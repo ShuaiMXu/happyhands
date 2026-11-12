@@ -106,14 +106,14 @@ test('homepage Hero rules are scoped and cannot be planned without captured brow
 });
 
 test('homepage Hero cannot pass independent QA with static originals or unrelated verification',()=>{
- const before={stateId:'hero',configurationId:'desktop',screenshot:'before/hero--desktop.png',start:{url:'http://localhost:4321/apps/portal/'}};
+ const before={stateId:'hero',configurationId:'desktop',screenshot:'before/hero--desktop.png',width:1280,height:800,start:{url:'http://localhost:4321/apps/portal/'}};
  const after={...before,screenshot:'after/hero--desktop.png'};
  const ruleIds=['HH-HERO-MOTION','HH-HERO-MARK'],hash='a'.repeat(64);
  const manifest={captures:{before:{states:[before]},after:{states:[after]}},plan:{remediation:{hash,ruleIds}}};
  const review={schemaVersion:'0.1',skillId:'visual-qa-evaluator',reviewer:{type:'model',name:'Fixture',version:'1'},reviewedAt:new Date().toISOString(),verdict:'pass',screenshotRefs:[before.screenshot,after.screenshot],findings:[],rationale:'Test review of the captured Hero state.',limitations:['Fixture only'],remediationHash:hash,methodChecks:ruleIds.map(ruleId=>({ruleId,stateKey:methodStateEntries(manifest)[0].key,status:'pass',reason:'Fixture reviewed the rendered Hero.',screenshotRefs:[after.screenshot]}))};
  assert.throws(()=>assertVisualReview(review,manifest),/source-bound hero-motion/);
- const images=['verification/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/image-0.png','verification/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/image-1.png'].map(path=>({path}));
- const evidence={id:'hero-motion',status:'pass',stage:'normal-interaction',stateIds:['elsewhere'],images};
+ const images=['verification/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/image-0.png','verification/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/image-1.png'].map((path,index)=>({path,width:1280,height:800,sha256:String(index).repeat(64)}));
+ const evidence={id:'hero-motion',status:'pass',stage:'normal-interaction',stateIds:['elsewhere'],images,result:{heroMotion:{version:1,contexts:[{stateId:'hero',configurationId:'desktop',motionObserved:true,frameIndexes:[0,1]}]}}};
  manifest.verificationEvidence={digest:hash};
  manifest.verificationRecords=[evidence];
  review.verificationDigest=hash;
@@ -130,5 +130,36 @@ test('homepage Hero cannot pass independent QA with static originals or unrelate
  review.methodChecks[1].status='not-applicable';
  assert.throws(()=>assertVisualReview(review,manifest),/explicit passes/);
  review.methodChecks[1].status='pass';
+ assert.doesNotThrow(()=>assertVisualReview(review,manifest));
+ // One covered homepage state must not stand in for another captured homepage.
+ const secondBefore={...before,stateId:'hero-light',screenshot:'before/hero-light--desktop.png'};
+ const secondAfter={...secondBefore,screenshot:'after/hero-light--desktop.png'};
+ manifest.captures.before.states.push(secondBefore);
+ manifest.captures.after.states.push(secondAfter);
+ review.screenshotRefs.push(secondBefore.screenshot,secondAfter.screenshot);
+ review.methodChecks.push(...ruleIds.map(ruleId=>({ruleId,stateKey:methodStateEntries(manifest)[1].key,status:'pass',reason:'Fixture reviewed the second captured Hero state.',screenshotRefs:[secondAfter.screenshot]})));
+ assert.throws(()=>assertVisualReview(review,manifest),/captured homepage/);
+ evidence.stateIds.push('hero-light');
+ evidence.result.heroMotion.contexts.push({stateId:'hero-light',configurationId:'desktop',motionObserved:true,frameIndexes:[0,1]});
+ assert.throws(()=>assertVisualReview(review,manifest),/own original frame sequences/);
+ images.push(...images.map((image,index)=>({...image,path:image.path.replace(`image-${index}.png`,`image-${index+2}.png`),sha256:String(index+2).repeat(64)})));
+ review.screenshotRefs.push(...images.slice(2).map(image=>image.path));
+ evidence.result.heroMotion.contexts[1].frameIndexes=[2,3];
+ assert.doesNotThrow(()=>assertVisualReview(review,manifest));
+ secondAfter.finalUrl='http://localhost:4322/apps/setup/';
+ review.methodChecks.at(-1).status='not-applicable';
+ assert.throws(()=>assertVisualReview(review,manifest),/homepage route/);
+ secondAfter.finalUrl='http://localhost:4322/apps/portal/';
+ review.methodChecks.at(-1).status='pass';
+ const motion=evidence.result.heroMotion;
+ motion.contexts[1].motionObserved=false;
+ assert.throws(()=>assertVisualReview(review,manifest),/motion-observed context/);
+ motion.contexts[1].motionObserved=true;
+ motion.contexts[1].frameIndexes=[2,2];
+ assert.throws(()=>assertVisualReview(review,manifest),/distinct frame indexes/);
+ motion.contexts[1].frameIndexes=[2,3];
+ images[1].sha256=images[0].sha256;
+ assert.throws(()=>assertVisualReview(review,manifest),/distinct original frames/);
+ images[1].sha256='1'.repeat(64);
  assert.doesNotThrow(()=>assertVisualReview(review,manifest));
 });

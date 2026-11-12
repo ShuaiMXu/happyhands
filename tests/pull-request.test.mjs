@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {createRun,loadRun} from '../packages/harness-core/store.js';
+import {createRun,loadRun,savePullRequest,withdrawJudgment} from '../packages/harness-core/store.js';
 import {createReviewedPullRequest,verifyPublication} from '../packages/workbench/pull-request.js';
 const spec=JSON.parse(await readFile(new URL('../examples/happyclaw-site/experience.json',import.meta.url),'utf8'));
 async function fixture(t,{accepted=true,existing=false,remote='https://github.com/example/app.git'}={}){
@@ -59,4 +59,13 @@ test('legacy CRLF diagnostics remain in the ledger but cannot be staged as files
  await createReviewedPullRequest(f.run.directory,{cwd:f.root,command:f.command,verify:f.verify});
  assert.deepEqual(f.calls.find(c=>c.args[0]==='add').args,['add','--','src/page.js']);assert.equal((await loadRun(f.run.directory)).manifest.execution.changedFiles.length,2);
  assert.ok(f.calls.every(c=>c.options.stdoutOnly));
+});
+
+test('withdrawn acceptance blocks publication and ledger recording before any Git commands', async t => {
+  const f = await fixture(t);
+  await withdrawJudgment(f.run.directory, 'Review scope is incomplete.');
+  await assert.rejects(verifyPublication(await loadRun(f.run.directory)), /acceptance was withdrawn/);
+  await assert.rejects(createReviewedPullRequest(f.run.directory, {cwd:f.root, command:f.command, verify:f.verify}), /acceptance was withdrawn/);
+  await assert.rejects(savePullRequest(f.run.directory, {url:'https://github.com/example/app/pull/12'}), /acceptance was withdrawn/);
+  assert.equal(f.calls.length, 0);
 });

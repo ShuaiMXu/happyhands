@@ -1,8 +1,8 @@
-import {assertMethodChecks,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation.js';
-import { wholePageReviewCoverage, missingAfterStates } from './whole-page.js';
+import {assertMethodChecks,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation-validation.js';
+import { wholePageReviewCoverage, missingAfterStates, captureRouteKey } from './whole-page.js';
 import Ajv from 'ajv/dist/2020.js';
 import schema from '../../visual-review.schema.json' with { type: 'json' };
-import { captureEntries, captureKey, captureOriginals } from './capture-state.js';
+import { captureEntries, captureOriginals, captureKey } from './capture-state.js';
 
 const validate = new Ajv({ allErrors: true }).compile(schema);
 
@@ -30,12 +30,31 @@ export function assertVisualReview(review, manifest) {
   if(review.skillId==='visual-qa-evaluator'&&review.verdict==='pass'&&manifest.plan?.remediation?.ruleIds.includes(HERO_MOTION_RULE)){
     const check=records.find(record=>record.id===HERO_VERIFICATION_ID&&record.stage==='normal-interaction'&&record.status==='pass'&&record.images.length>=2);
     const heroAfter=captureEntries(manifest.captures.after).filter(entry=>entry.screenshot&&isHomepageHero(entry));
-    const hasHero=heroAfter.length||captureEntries(manifest.captures.before).some(entry=>entry.screenshot&&isHomepageHero(entry));
-    const verifiedHero=check?heroAfter.filter(entry=>check.stateIds.includes(entry.stateId)):[];
-    if(hasHero&&!verifiedHero.length) {
+    const expected=captureEntries(manifest.captures.before).filter(isHomepageHero);
+    // Baseline targets keep their original route/viewport expectation. New or
+    // newly reachable after targets also require their own motion evidence.
+    const required=[...new Map([...heroAfter,...expected].map(entry=>[captureKey(entry.stateId,entry.configurationId),entry])).values()];
+    if(!required.length)throw Error('Passing Homepage Hero QA requires captured homepage evidence.');
+    const verifiedHero=required.map(before=>{
+      const after=heroAfter.find(entry=>entry.stateId===before.stateId&&entry.configurationId===before.configurationId);
+      if(!after||captureRouteKey(after)!==captureRouteKey(before)||after.width!==before.width||after.height!==before.height)throw Error('Passing Homepage Hero QA requires the captured homepage route and viewport in every expected state and configuration.');
+      return after;
+    });
+    if(!check||verifiedHero.some(entry=>!check.stateIds.includes(entry.stateId))) {
       throw Error('Passing Homepage Hero QA requires passing source-bound hero-motion browser evidence for the captured homepage.');
     }
+    const assignedFrames=new Set(),assignedHashes=new Set();
     for(const entry of verifiedHero){
+      const motion=check.result?.heroMotion;
+      const contexts=motion?.version===1&&Array.isArray(motion.contexts)?motion.contexts.filter(context=>context.stateId===entry.stateId&&context.configurationId===entry.configurationId):[];
+      const context=contexts[0],indexes=context?.frameIndexes;
+      if(contexts.length!==1||context.motionObserved!==true||!Array.isArray(indexes)||indexes.length<2||new Set(indexes).size!==indexes.length||indexes.some(index=>!Number.isInteger(index)||index<0||index>=check.images.length))throw Error('Passing Homepage Hero QA requires one motion-observed context with distinct frame indexes for every expected state and configuration.');
+      if(indexes.some(index=>assignedFrames.has(index)))throw Error('Homepage Hero configurations require their own original frame sequences.');
+      indexes.forEach(index=>assignedFrames.add(index));
+      const frames=indexes.map(index=>check.images[index]);
+      if(!Number.isInteger(entry.width)||!Number.isInteger(entry.height)||frames.some(image=>image.width!==entry.width||image.height!==entry.height||!/^[a-f0-9]{64}$/.test(image.sha256))||new Set(frames.map(image=>image.sha256)).size<2)throw Error('Passing Homepage Hero QA requires at least two distinct original frames matching each captured configuration viewport.');
+      if(frames.some(image=>assignedHashes.has(image.sha256)))throw Error('Homepage Hero configurations require their own original frame sequences.');
+      frames.forEach(image=>assignedHashes.add(image.sha256));
       const stateKey=captureKey(entry.stateId,entry.configurationId)+':'+entry.screenshot;
       if(![HERO_MOTION_RULE,'HH-HERO-MARK'].every(ruleId=>review.methodChecks.some(row=>row.ruleId===ruleId&&row.stateKey===stateKey&&row.status==='pass'))) {
         throw Error('The verified homepage Hero states require explicit passes for motion and the single glass mark.');
@@ -70,18 +89,20 @@ export function assertVisualReview(review, manifest) {
     for(const phase of ['before','after'])for(const entry of captureEntries(manifest.captures[phase]))for(const part of entry.interactionParts||[])if(!refs.has(part.screenshot))throw Error('Visual QA must inspect every interaction original.');
     const baselineEntries = captureEntries(manifest.captures.before);
     const afterEntries = captureEntries(manifest.captures.after);
-    for (const entry of captureEntries(firstRender ? manifest.captures.after : manifest.captures.before).filter(item => item.screenshot)) {
-      const key = captureKey(entry.stateId, entry.configurationId);
+    const stateKey = entry => JSON.stringify([entry.stateId, entry.configurationId]);
+    const afterByState = new Map(afterEntries.map(entry => [stateKey(entry), entry]));
+    for (const entry of (firstRender ? afterEntries : baselineEntries).filter(item => item.screenshot)) {
+      const after = afterByState.get(stateKey(entry));
       if (firstRender) {
         if (!refs.has(entry.screenshot)) throw new Error(`Visual QA of a first render must cite state ${entry.stateId} in ${entry.configurationId}; one capture cannot stand in for the others.`);
-      } else if (!refs.has(entry.screenshot) || !refs.has(`after/${key}.png`) && !captureEntries(manifest.captures.after).some(item => item.stateId === entry.stateId && item.configurationId === entry.configurationId && refs.has(item.screenshot))) {
+      } else if (!refs.has(entry.screenshot) || (after?.screenshot && !refs.has(after.screenshot))) {
         if (entry.legacy) throw new Error(`Visual QA must cite matched before/after ${entry.configurationId} screenshots.`);
         throw new Error(`Visual QA must cite matched before/after state ${entry.stateId} in ${entry.configurationId}.`);
       }
     }
     if (!firstRender) {
-      const baselineScreenshots = new Set(baselineEntries.filter(item => item.screenshot).map(item => captureKey(item.stateId, item.configurationId)));
-      for (const entry of afterEntries.filter(item => item.screenshot && !baselineScreenshots.has(captureKey(item.stateId, item.configurationId)))) {
+      const baselineScreenshots = new Set(baselineEntries.filter(item => item.screenshot).map(stateKey));
+      for (const entry of afterEntries.filter(item => item.screenshot && !baselineScreenshots.has(stateKey(item)))) {
         if (!refs.has(entry.screenshot)) throw new Error(`Visual QA must cite newly reachable state ${entry.stateId} in ${entry.configurationId}.`);
       }
     }

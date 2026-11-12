@@ -3,8 +3,10 @@ import {collectDesignSources} from './design-sources.js';
 import {designGuidanceProfile} from '../skill-core/design-guidance.js';
 import { createHash } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { readFile, realpath } from 'node:fs/promises';
+import { connect } from 'node:net';
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { assertCapturePlan } from './capture-state.js';
 
@@ -140,19 +142,66 @@ export async function inspectRepository(repo) {
   return { root: root.trim(), commit: commit.trim(), dirty: Boolean(status.trim()) };
 }
 
-export async function waitForPreview(url, { timeoutMs = 30000, intervalMs = 250 } = {}) {
-  const started = Date.now();
+async function managedPreviewPortOccupied(url, request, signal) {
+  const deadline = AbortSignal.timeout(1000);
+  const probeSignal = signal ? AbortSignal.any([signal, deadline]) : deadline;
+  if (request === fetch) {
+    // Detect a listening socket even if it never sends an HTTP response.
+    const host = url.hostname === '[::1]' ? '::1' : url.hostname;
+    const port = Number(url.port || (url.protocol === 'https:' ? 443 : 80));
+    return new Promise((resolvePort, reject) => {
+      const socket = connect({ host, port, signal: probeSignal });
+      socket.once('connect', () => { socket.destroy(); resolvePort(true); });
+      socket.once('error', error => {
+        if (signal?.aborted) reject(signal.reason);
+        else if (error.code === 'ECONNREFUSED') resolvePort(false);
+        else reject(new Error('Could not confirm the local preview port is free.', { cause: error }));
+      });
+    });
+  }
+  let response;
+  try {
+    response = await request(url.href, { redirect: 'manual', signal: probeSignal });
+  } catch {
+    signal?.throwIfAborted();
+    return false;
+  }
+  await response?.body?.cancel().catch(() => {});
+  signal?.throwIfAborted();
+  return true;
+}
+
+export async function assertManagedPreview(config, { request = fetch, signal } = {}) {
+  signal?.throwIfAborted();
+  const url = new URL(config.url);
+  if (!['http:', 'https:'].includes(url.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) throw new Error('A managed preview must use a local preview URL.');
+  const [repo, cwd] = await Promise.all([realpath(config.repo), realpath(config.start.cwd)]);
+  const sub = relative(repo, cwd);
+  if (sub === '..' || sub.startsWith(`..${sep}`) || isAbsolute(sub)) throw new Error('Preview directory must be inside the reviewed repository.');
+  if (await managedPreviewPortOccupied(url, request, signal)) throw new Error('Preview port is already in use. Stop that preview before starting a new review.');
+  return sub;
+}
+
+export async function waitForPreview(url, { timeoutMs = 30000, intervalMs = 250, signal } = {}) {
+  const deadline = performance.now() + timeoutMs;
   let lastError = 'no response';
-  while (Date.now() - started < timeoutMs) {
+  for (let remaining = Math.ceil(deadline - performance.now()); remaining > 0; remaining = Math.ceil(deadline - performance.now())) {
+    signal?.throwIfAborted();
     try {
-      const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(Math.min(5000, timeoutMs)) });
+      const requestDeadline = AbortSignal.timeout(Math.min(5000, remaining));
+      const response = await fetch(url, { redirect: 'follow', signal: signal ? AbortSignal.any([signal, requestDeadline]) : requestDeadline });
+      await response.body?.cancel().catch(() => {});
+      signal?.throwIfAborted();
       if (response.status < 400) return { status: response.status, finalUrl: response.url };
       lastError = `HTTP ${response.status}`;
     } catch (error) {
+      signal?.throwIfAborted();
       lastError = error.message;
     }
-    await new Promise(resolveWait => setTimeout(resolveWait, intervalMs));
+    const pause = Math.min(intervalMs, Math.floor(deadline - performance.now()));
+    if (pause > 0) await delay(pause, undefined, { signal }).catch(error => { signal?.throwIfAborted(); throw error; });
   }
+  signal?.throwIfAborted();
   throw new Error(`Preview did not become ready within ${timeoutMs}ms (${lastError}).`);
 }
 

@@ -6,7 +6,7 @@ import { mkdtemp, readFile, rm, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 import sample from '../examples/happyclaw-site/experience.json' with { type: 'json' };
-import { createRun, loadRun, saveCapture, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveVisualReview } from '../packages/harness-core/store.js';
+import { createRun, loadRun, saveCapture, confirmFinding, savePlan, saveExecution, saveEvaluation, saveJudgment, saveVisualReview } from '../packages/harness-core/store.js';
 import { evaluateCaptures } from '../packages/harness-core/evaluate.js';
 import { workflowState, assertWithinLimits } from '../packages/harness-core/workflow.js';
 
@@ -198,4 +198,32 @@ test('execution scope and brief are bound, including canvas provenance and note 
   const altered=structuredClone(run);altered.manifest.confirmation.note='Altered scope';
   await assert.rejects(verifiedExecutionBrief(altered),/Confirmed scope changed/);
   await savePlan(directory,'F1');assert.match(await verifiedExecutionBrief(await loadRun(directory)),/Request provenance:/);
+});
+
+test('a cancelled isolated execution blocks recapture and acceptance while preserving rejection', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'pd-harness-execution-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const { directory } = await createRun({ spec: structuredClone(sample), url: 'http://127.0.0.1:4321/', outputRoot: root, id: 'cancelled' });
+  const before = capture('before', 'HappyClaw');
+  const after = capture('after', 'Outcome');
+  await saveCapture(directory, 'before', before);
+  await confirmFinding(directory, 'F1', 'supported', 'Still current.');
+  await savePlan(directory, 'F1');
+  await saveExecution(directory, { exitCode: 0, cancelled: true });
+  await assert.rejects(saveCapture(directory, 'after', after), /cancelled/);
+
+  // Older versions could already have saved comparison evidence after cancellation.
+  const { manifest } = await loadRun(directory);
+  manifest.captures.after = after;
+  await writeFile(join(directory, 'run.json'), JSON.stringify(manifest));
+  assert.equal(workflowState(manifest).stage, 'execution-failed');
+  await saveEvaluation(directory, evaluateCaptures(before, after));
+  await saveFixtureReview(directory, {
+    schemaVersion: '0.1', skillId: 'visual-qa-evaluator', reviewer: { type: 'human', name: 'Fixture', version: '1' },
+    reviewedAt: '2026-09-21T00:00:00.000Z', verdict: 'pass', screenshotRefs: ['before/desktop.png', 'after/desktop.png'], findings: [],
+    rationale: 'Legacy comparison fixture.', limitations: ['Fixture evidence only.']
+  });
+  await assert.rejects(saveJudgment(directory, 'accept'), /cancelled/);
+  await saveJudgment(directory, 'reject', 'Execution was cancelled.');
+  assert.equal((await loadRun(directory)).manifest.judgment.decision, 'reject');
 });

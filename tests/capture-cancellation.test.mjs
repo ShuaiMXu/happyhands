@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {captureAccessibility} from '../packages/harness-core/accessibility.js';
-import {captureBrowserPlan} from '../packages/harness-core/browser.js';
+import {captureBrowser, captureBrowserPlan} from '../packages/harness-core/browser.js';
 import {assertBaselineModelCapacity} from '../packages/workbench/baseline-diagnosis.js';
 test('accessibility deadline remains bounded when the page cannot execute its timer',async()=>{
  const result=await captureAccessibility({evaluate:()=>new Promise(()=>{})},20);
@@ -17,4 +17,5 @@ test('model capacity counts configured targets before capture without truncating
 test('cancelled capture refuses to start even before validating a plan',async()=>{
  const controller=new AbortController();controller.abort(new Error('User cancelled capture'));
  await assert.rejects(captureBrowserPlan({signal:controller.signal}),/User cancelled capture/);
+ await assert.rejects(captureBrowser({signal:controller.signal}),/User cancelled capture/);
 });

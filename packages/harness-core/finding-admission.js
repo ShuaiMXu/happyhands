@@ -1,4 +1,4 @@
-import {HERO_SURFACE} from './remediation.js';
+import {HERO_SURFACE} from './remediation-validation.js';
 
 // Clear findings only. A skill citation is a reasoning source, never proof that
 // a third-party UI adopted a house style or that a screenshot contains a defect.

@@ -66,3 +66,16 @@ test('a pass cannot omit planned after states even when their baseline failed to
  const passing=review('visual-qa-evaluator','pass');passing.screenshotRefs=['before/desktop.png','after/desktop.png'];
  assert.throws(()=>assertVisualReview(passing,missing),/every planned after state/);
 });
+
+test('an unreached after state permits a needs-evidence record with the real originals', () => {
+  const missing = {
+    captures: {
+      before: { states: [{ stateId: 'menu', configurationId: 'mobile', screenshot: 'before/menu--mobile.png' }] },
+      after: { states: [{ stateId: 'menu', configurationId: 'mobile', reached: false, error: 'Menu did not open' }] }
+    }
+  };
+  const incomplete = review('visual-qa-evaluator', 'needs-evidence');
+  incomplete.screenshotRefs = ['before/menu--mobile.png'];
+  assert.equal(assertVisualReview(incomplete, missing).verdict, 'needs-evidence');
+  assert.throws(() => assertVisualReview({ ...incomplete, verdict: 'pass' }, missing), /every planned after state/);
+});
