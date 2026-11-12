@@ -1,0 +1,89 @@
+tests/reference-resources.test.mjs
+  s_c3a809bd8a1ec1::t_dd9ebd623068f4 51-79
+skills/review-video/references/evidence-contract.md
+  s_c3a809bd8a1ec1::t_0db220c4bf419e 44
+  s_c3a809bd8a1ec1::t_4ec76b9812b9b3 42
+  s_c3a809bd8a1ec1::t_cc1416b48cdb00 21,33
+  s_c3a809bd8a1ec1::t_cc965a184d1b60 34
+  s_c3a809bd8a1ec1::t_ec2211276162b0 1-20,22-32,35-41,43,45-54,56-64,66
+  s_c3a809bd8a1ec1::t_e2c17fcdc2e1a9 55,65,67
+skills/review-video/SKILL.md
+  s_c3a809bd8a1ec1::t_4ec76b9812b9b3 33-34
+  s_c3a809bd8a1ec1::t_a5f066b58b358e 1-32,35-51
+skills/happyhands/SKILL.md
+  s_c3a809bd8a1ec1::t_5dedbc616d0e25 14-15
+  s_c3a809bd8a1ec1::t_116f4a19c2a685 3,10
+  s_c3a809bd8a1ec1::t_42dd25ca8df1d0 11
+packages/harness-core/reference-resources.js
+  s_c3a809bd8a1ec1::t_dd9ebd623068f4 9-10,31,33
+  s_c3a809bd8a1ec1::t_7f12fd6c7996bf 8,13,17-30,32,34-38,66-67,73-76,108-109
+  s_c3a809bd8a1ec1::t_e4f3ede2d1d6cc 11-12
+docs/lightweight.md
+  s_c3a809bd8a1ec1::t_893406f4777dc1 12
+  s_c3a809bd8a1ec1::t_2f4b4a163ed769 45,49-58
+  s_c3a809bd8a1ec1::t_5354b9eca27579 59
+distribution/lite/package.json
+  s_c3a809bd8a1ec1::t_893406f4777dc1 3
+tests/lite-distribution.test.mjs
+  s_c3a809bd8a1ec1::t_208e3c19a9ff6c 17,26-37
+tests/video-review.test.mjs
+  s_c3a809bd8a1ec1::t_801a4a00a5d685 1-4,7,9-13,21-42,44-52,80
+  s_c3a809bd8a1ec1::t_0db220c4bf419e 54-70,77-79
+  s_c3a809bd8a1ec1::t_d88094ad90272d 6,53,71-76
+  s_c3a809bd8a1ec1::t_cc965a184d1b60 81-87
+  s_c3a809bd8a1ec1::t_860959c3b2045f 5
+  s_c3a809bd8a1ec1::t_6c0165700f8298 14-20
+  s_c3a809bd8a1ec1::t_2681bb1d79048b 8
+  s_c3a809bd8a1ec1::t_f99142abf5769c 43
+skills/review-video/scripts/video-review.mjs
+  s_c3a809bd8a1ec1::t_ec2211276162b0 1,4-42,46-49,51-54,56-58,72-78,86-89,93-99,101-111,113-115,122-128,130-131,136,139
+  s_c3a809bd8a1ec1::t_6c0165700f8298 82
+  s_c3a809bd8a1ec1::t_04494c1f23b00a 3,55,129
+  s_c3a809bd8a1ec1::t_35b86f47b9b122 92
+  s_c3a809bd8a1ec1::t_860959c3b2045f 116
+  s_c3a809bd8a1ec1::t_cc1416b48cdb00 62-71,90-91,112,118-121
+  s_c3a809bd8a1ec1::t_d88094ad90272d 132-135,137-138,141
+  s_c3a809bd8a1ec1::t_722b61a8644c93 60-61
+  s_c3a809bd8a1ec1::t_0db220c4bf419e 43-45,80,85,100,117,140
+  s_c3a809bd8a1ec1::t_4ec76b9812b9b3 59
+  s_c3a809bd8a1ec1::t_e2c17fcdc2e1a9 2
+  s_c3a809bd8a1ec1::t_2681bb1d79048b 50,79,81,83-84
+tests/taste-profile-cleanup.test.mjs
+  s_c3a809bd8a1ec1::t_130f9e7f00ec0f 70-72
+skills/happyhands/bin/happyhands.mjs
+  s_c3a809bd8a1ec1::t_2f4b4a163ed769 24
+skills/happyhands/references/workflow.md
+  s_c3a809bd8a1ec1::t_2f4b4a163ed769 10,18-25
+README.md
+  s_c3a809bd8a1ec1::t_893406f4777dc1 36,41
+README.zh-CN.md
+  s_c3a809bd8a1ec1::t_893406f4777dc1 36,41
+docs/remaining-work-2026-11-12.zh-CN.md
+  s_c3a809bd8a1ec1::t_7e32c836c17b2d 1-21
+tests/video-entry.test.mjs
+  s_c3a809bd8a1ec1::t_116f4a19c2a685 1-22
+scripts/harness.mjs
+  s_c3a809bd8a1ec1::t_932147b3df259e 169
+  s_c3a809bd8a1ec1::t_116f4a19c2a685 164-165,181-185
+  s_c3a809bd8a1ec1::t_fd488b85a2986b 186-187
+skills/review-video/rules.json
+  s_c3a809bd8a1ec1::t_a5f066b58b358e 1-19
+distribution/lite/package-lock.json
+  s_c3a809bd8a1ec1::t_bce4b5a3b3e4a1 3,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "17ef22e285adc2252880ce109fc127db61b22466",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
