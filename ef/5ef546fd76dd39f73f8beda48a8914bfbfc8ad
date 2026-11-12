@@ -1,0 +1,167 @@
+packages/harness-core/design-system.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 9,15-45
+docs/architecture.md
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 75,77,79,94-95,101
+packages/harness-core/onboard.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 6-9,145-186,188-189,191-194,198,201-202,204
+tests/hero-evidence.test.mjs
+  s_c3a809bd8a1ec1::t_81a35b41ffa88d 26
+  s_c3a809bd8a1ec1::t_01d611a6b6e484 17
+  s_c3a809bd8a1ec1::t_e60794e929614e 1-16,18-25,27-28
+scripts/harness.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 12,20,22,28-66,68-80,134,138,150,178-183,187,195,237-238,240-245,248-255,258,287-293,308-309,363-364,378,380-381,385,407
+skills/happyhands/references/workflow.md
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 17
+  s_c3a809bd8a1ec1::t_0cb0eaff3552e7 14
+packages/harness-core/finding-admission.js
+  s_c3a809bd8a1ec1::t_78d7f06bbf0981 1
+packages/harness-core/entry.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 11,13,56-60,107-114,116,121
+tests/workbench-service.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 20-38,89,96-97,101-114
+packages/workbench/jobs.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 83-90
+packages/harness-core/verification.js
+  s_c3a809bd8a1ec1::t_29a31126c943e2 10-15,87-91,120,122
+packages/experience-core/component-reuse.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 5-6,13
+tests/visual-review.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 69-81
+tests/remediation.test.mjs
+  s_c3a809bd8a1ec1::t_9c4de772f97ad0 144-147,158,160
+  s_c3a809bd8a1ec1::t_4ae3be4c39e94e 134-142,164
+  s_c3a809bd8a1ec1::t_579f02a82517ee 109,115-116,143,148-157,159,161-163
+tests/helpers/hero-store-fixture.mjs
+  s_c3a809bd8a1ec1::t_81a35b41ffa88d 47
+  s_c3a809bd8a1ec1::t_01d611a6b6e484 34,36-37,44,55
+  s_c3a809bd8a1ec1::t_754a693cd397c3 1-33,35,38-43,45-46,48-54,56-58
+docs/next-steps.md
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 6
+packages/harness-core/browser.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 17-23,30-31,33,36,44,50,54-56,58,330-337,339-340,348-350,353,399,406
+tests/doctor.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-106
+tests/export.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 49-50
+tests/review-modules-browser.mjs
+  s_c3a809bd8a1ec1::t_579f02a82517ee 12
+  s_c3a809bd8a1ec1::t_a3cdcaa84c1915 1-11,13-41
+packages/workbench/service.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 9-10,29-30,70-71,125,131,137,151-168,248,250,563-564,688-697,699-707,711-717,721-725,731-737,782
+tests/baseline-model.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 5,54-58
+tests/agents.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 4,189-224
+  s_c3a809bd8a1ec1::t_2a55f8af72564e 225
+tests/harness.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 9,202-228
+  s_c3a809bd8a1ec1::t_42b6852b4e1838 229
+tests/helpers/test-gitconfig
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1
+tests/headless-start.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 29-37
+tests/helpers/isolated-git.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-6
+tests/pull-request.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 6,63-70
+  s_c3a809bd8a1ec1::t_b5f4625828786f 71
+scripts/build-lite.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-2,8-9,12-17,19-36,42
+docs/lightweight.md
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 15,36,55-67
+packages/harness-core/remediation-validation.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-3,7,14-15,19-50
+  s_c3a809bd8a1ec1::t_0cb0eaff3552e7 4-6,8-13,16-18
+skills/happyhands/lib/preflight.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-116
+tests/verification.test.mjs
+  s_c3a809bd8a1ec1::t_7e44d214c10e27 30-45
+docs/experience-remediation.md
+  s_c3a809bd8a1ec1::t_bc31b84644b6e1 97
+  s_c3a809bd8a1ec1::t_9c4de772f97ad0 54-56,68,77-96
+tests/onboard.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 5-6,10,135-164
+  s_c3a809bd8a1ec1::t_8974ab8dc10ed0 165
+apps/designer/page-review/index.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 54,214,216,218,229-232,235
+packages/harness-core/diagnose-product.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-86
+packages/harness-core/workflow.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 15-18,20-21,23-24,26-39
+packages/harness-core/review-discovery.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 4,129
+skills/happyhands/bin/happyhands.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 4,6,15-20,24
+packages/harness-core/visual-review.js
+  s_c3a809bd8a1ec1::t_81a35b41ffa88d 46,56-57
+  s_c3a809bd8a1ec1::t_29a31126c943e2 37-39,41-43
+  s_c3a809bd8a1ec1::t_0cb0eaff3552e7 1,5
+  s_c3a809bd8a1ec1::t_19031f5a3e7735 2,40,48-51,54-55
+  s_c3a809bd8a1ec1::t_9c4de772f97ad0 52-53
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 92-95,98,104-105
+  s_c3a809bd8a1ec1::t_01d611a6b6e484 33-36
+packages/harness-core/remediation.js
+  s_c3a809bd8a1ec1::t_0cb0eaff3552e7 4-6
+tests/diagnose-product.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-100
+tests/workbench-job-io.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 8-29
+packages/harness-core/continue-review.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-100
+apps/designer/review-action.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 44,49,52,144-145
+docs/engineering-reassessment-2026-11-11.md
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-26
+tests/run-integrity.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 7,9,77-105,110-134
+tests/whole-page-browser.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 7-9,19-22,25,33-36
+apps/designer/main.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 99
+docs/product-brief.md
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 7,9
+packages/harness-core/store.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 13,16,55-56,58,65-115,117-136,139-142,192-214,259-262,475-484,497-498,574-576,755-756,773
+tests/bootstrap.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 238-251
+tests/capture-cancellation.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 4,20
+packages/harness-core/headless-models.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 3-4,14
+packages/workbench/pull-request.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 4,11-12,14-17,23,36,82,87
+docs/harness.md
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 128,255,300-303
+packages/harness-core/runner.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 11,13,32-35,37-52,58-68,71,75-76,82,85,168-179,200-201,236,238,252,256-257
+packages/harness-core/export.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 22-23,112
+tests/component-reuse-plan.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 15-17,20
+tests/lite-distribution.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 18-20
+package.json
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 16
+tests/continue-review.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-91
+packages/harness-core/baseline-diagnosis-record.js
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 20
+tests/continuation-integrity.test.mjs
+  s_c3a809bd8a1ec1::t_45ac0af98f2dab 1-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "ef5ef546fd76dd39f73f8beda48a8914bfbfc8ad",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
