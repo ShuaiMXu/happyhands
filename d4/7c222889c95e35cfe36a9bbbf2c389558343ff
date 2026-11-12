@@ -1,0 +1,30 @@
+tests/star-history.test.mjs
+  s_c3a809bd8a1ec1::t_25aedc6c8321ef 1-82
+.github/workflows/star-growth.yml
+  s_c3a809bd8a1ec1::t_6d206cc3cfb1f6 40-41,55
+  s_c3a809bd8a1ec1::t_5b2fe3b126ec57 43-49,54
+scripts/update-star-history.mjs
+  s_c3a809bd8a1ec1::t_37872fd4e3e28e 4,37-48
+assets/readme/star-history-dark.svg
+  s_c3a809bd8a1ec1::t_af0378a4efeb23 3,7-13
+assets/readme/star-history-light.svg
+  s_c3a809bd8a1ec1::t_6b20f8d84f4bbb 3,7-13
+assets/readme/star-history.json
+  s_c3a809bd8a1ec1::t_a774dc648e52fa 3-5,70,74,78-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "d47c222889c95e35cfe36a9bbbf2c389558343ff",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
