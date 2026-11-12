@@ -1,0 +1,20 @@
+docs/integration-review-2026-11-12.md
+  s_c3a809bd8a1ec1::t_302ccde1a5b522 21,25
+  s_c3a809bd8a1ec1::t_c4f8970632e786 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "99d7c81ad98110d535b77d5155d26743ff4729fe",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
