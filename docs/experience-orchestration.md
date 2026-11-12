@@ -19,6 +19,7 @@ This map describes actual Harness providers. A Skill supplies methods; a host st
 - `designGuidance.taste=public-page` selects Taste public-page critique/layout; `app-screen` selects app-screens. Mixed website and studio work should use separate scoped runs rather than one inappropriate route.
 - `designGuidance.intent=polish|layout|animate` adds the corresponding implementation reference. These are not three simultaneous adapters. Stage a new scoped run when a different intent is required.
 - Own rules activate through explicit `remediation.profile=happyhands` and adoption reason. Other projects can use `project`; their brand is not silently replaced.
+- The [homepage Hero rules](experience-remediation.md#happyhands-官网-hero) activate through `remediation.surface=homepage-hero` on the owned profile. A bound browser check and independent review cover the approved orbit, reduced motion and single glass mark.
 - OJO's complete bundle remains available. Required component, icon, grid and motion references are named in the execution contract. Generic 12-column/8pt examples never override adopted project values.
 - Case references are historical context, not fresh evidence or automatic approval. No automatic upstream script execution, human judgment, merge or deployment is implied.
 

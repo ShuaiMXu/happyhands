@@ -1,8 +1,8 @@
-import {assertMethodChecks} from './remediation-validation.js';
-import { wholePageReviewCoverage, missingAfterStates } from './whole-page.js';
+import {assertMethodChecks,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation-validation.js';
+import { wholePageReviewCoverage, missingAfterStates, captureRouteKey } from './whole-page.js';
 import Ajv from 'ajv/dist/2020.js';
 import schema from '../../visual-review.schema.json' with { type: 'json' };
-import { captureEntries, captureOriginals } from './capture-state.js';
+import { captureEntries, captureOriginals, captureKey } from './capture-state.js';
 
 const validate = new Ajv({ allErrors: true }).compile(schema);
 
@@ -27,6 +27,40 @@ export function assertVisualReview(review, manifest) {
   }
   if(review.verificationDigest && review.verificationDigest!==manifest.verificationEvidence?.digest)throw Error('Review verification evidence changed.');
   const records=manifest.verificationRecords||[];
+  if(review.skillId==='visual-qa-evaluator'&&review.verdict==='pass'&&manifest.plan?.remediation?.ruleIds.includes(HERO_MOTION_RULE)){
+    const check=records.find(record=>record.id===HERO_VERIFICATION_ID&&record.stage==='normal-interaction'&&record.status==='pass'&&record.images.length>=2);
+    const heroAfter=captureEntries(manifest.captures.after).filter(entry=>entry.screenshot&&isHomepageHero(entry));
+    const expected=captureEntries(manifest.captures.before).filter(isHomepageHero);
+    // Baseline targets keep their original route/viewport expectation. New or
+    // newly reachable after targets also require their own motion evidence.
+    const required=[...new Map([...heroAfter,...expected].map(entry=>[captureKey(entry.stateId,entry.configurationId),entry])).values()];
+    if(!required.length)throw Error('Passing Homepage Hero QA requires captured homepage evidence.');
+    const verifiedHero=required.map(before=>{
+      const after=heroAfter.find(entry=>entry.stateId===before.stateId&&entry.configurationId===before.configurationId);
+      if(!after||captureRouteKey(after)!==captureRouteKey(before)||after.width!==before.width||after.height!==before.height)throw Error('Passing Homepage Hero QA requires the captured homepage route and viewport in every expected state and configuration.');
+      return after;
+    });
+    if(!check||verifiedHero.some(entry=>!check.stateIds.includes(entry.stateId))) {
+      throw Error('Passing Homepage Hero QA requires passing source-bound hero-motion browser evidence for the captured homepage.');
+    }
+    const assignedFrames=new Set(),assignedHashes=new Set();
+    for(const entry of verifiedHero){
+      const motion=check.result?.heroMotion;
+      const contexts=motion?.version===1&&Array.isArray(motion.contexts)?motion.contexts.filter(context=>context.stateId===entry.stateId&&context.configurationId===entry.configurationId):[];
+      const context=contexts[0],indexes=context?.frameIndexes;
+      if(contexts.length!==1||context.motionObserved!==true||!Array.isArray(indexes)||indexes.length<2||new Set(indexes).size!==indexes.length||indexes.some(index=>!Number.isInteger(index)||index<0||index>=check.images.length))throw Error('Passing Homepage Hero QA requires one motion-observed context with distinct frame indexes for every expected state and configuration.');
+      if(indexes.some(index=>assignedFrames.has(index)))throw Error('Homepage Hero configurations require their own original frame sequences.');
+      indexes.forEach(index=>assignedFrames.add(index));
+      const frames=indexes.map(index=>check.images[index]);
+      if(!Number.isInteger(entry.width)||!Number.isInteger(entry.height)||frames.some(image=>image.width!==entry.width||image.height!==entry.height||!/^[a-f0-9]{64}$/.test(image.sha256))||new Set(frames.map(image=>image.sha256)).size<2)throw Error('Passing Homepage Hero QA requires at least two distinct original frames matching each captured configuration viewport.');
+      if(frames.some(image=>assignedHashes.has(image.sha256)))throw Error('Homepage Hero configurations require their own original frame sequences.');
+      frames.forEach(image=>assignedHashes.add(image.sha256));
+      const stateKey=captureKey(entry.stateId,entry.configurationId)+':'+entry.screenshot;
+      if(![HERO_MOTION_RULE,'HH-HERO-MARK'].every(ruleId=>review.methodChecks.some(row=>row.ruleId===ruleId&&row.stateKey===stateKey&&row.status==='pass'))) {
+        throw Error('The verified homepage Hero states require explicit passes for motion and the single glass mark.');
+      }
+    }
+  }
   if(records.length){
     if(review.verificationDigest!==manifest.verificationEvidence?.digest || records.some(record=>!review.verificationRefs?.includes(record.id)))throw Error('Review must acknowledge every assigned verification record.');
     if((review.verificationRefs||[]).some(id=>!records.some(record=>record.id===id)))throw Error('Unknown verification reference.');

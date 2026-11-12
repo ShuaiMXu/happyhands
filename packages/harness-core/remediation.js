@@ -1,23 +1,31 @@
 import {readFile,writeFile,lstat,unlink} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {remediationProfile,assertExecutionResult,methodStateEntries} from './remediation-validation.js';
-export {remediationProfile,assertExecutionResult,methodStateEntries,assertMethodChecks} from './remediation-validation.js';
+import {captureEntries} from './capture-state.js';
+import {remediationProfile,assertExecutionResult,methodStateEntries,HERO_SURFACE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation-validation.js';
+export {remediationProfile,assertExecutionResult,methodStateEntries,assertMethodChecks,HERO_SURFACE,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation-validation.js';
 
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const encode=value=>JSON.stringify(value,null,2)+'\n';
 const files={contract:'remediation-contract.json',skill:'remediation-SKILL.md',result:'remediation-result.json'};
 export const RESULT_FILE='.harness-remediation-result.json';
-
 export async function remediationDefinition(profile){
   if(!profile)return null;
   const skill=await readFile(new URL('../../skills/experience-remediation/SKILL.md',import.meta.url),'utf8');
   const catalog=JSON.parse(await readFile(new URL('../../skills/experience-remediation/rules.json',import.meta.url),'utf8'));
-  return {version:catalog.version,workflow:catalog.workflow,profile,skill,skillHash:digest(skill),rules:catalog.rules.filter(r=>r.profile==='project'||profile.profile==='happyhands')};
+  return {version:catalog.version,workflow:catalog.workflow,profile,skill,skillHash:digest(skill),rules:catalog.rules.filter(r=>(r.profile==='project'||profile.profile==='happyhands')&&(!r.surface||r.surface===profile.surface))};
 }
 export async function stageRemediation(run,findingId){
-  const profile=remediationProfile(run.manifest.onboarding?.config?.designGuidance?.remediation);
+  const config=run.manifest.onboarding?.config;
+  const profile=remediationProfile(config?.designGuidance?.remediation);
   if(!profile)return null;
+  if(profile.surface===HERO_SURFACE){
+    const check=config.verificationChecks?.find(check=>check.id===HERO_VERIFICATION_ID&&check.stage==='normal-interaction'&&check.screenshots?.length>=2);
+    const states=captureEntries(run.manifest.captures?.before);
+    if(!check||!states.some(entry=>entry.screenshot&&check.stateIds.includes(entry.stateId)&&isHomepageHero(entry))) {
+      throw Error('Homepage Hero remediation requires a captured homepage state assigned to the hero-motion normal-interaction check with at least two original frames.');
+    }
+  }
   const definition=await remediationDefinition(profile);
   const contract={...definition,issueIds:run.manifest.repair?.findingIds||[findingId||'BOOTSTRAP'],sourceCommit:run.manifest.onboarding?.repository?.commit||null};
   const bytes=encode(contract);

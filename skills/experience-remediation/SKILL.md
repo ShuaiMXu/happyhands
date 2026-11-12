@@ -25,6 +25,10 @@ Current-page AI slop and detail review → shared-component correction and curre
 6. Check default, hover, pressed, selected, open, focus, disabled and relevant loading/error/success states. Do not invent asynchronous states for static content. For dropdowns check long labels, chevrons, checkmarks, item gaps, menu boundaries, scrolling, keyboard selection, Escape and focus return.
 7. Write the structured execution result required by the Harness. Every rule and delegated issue must have one result; fixed items name actual changed files. Preserved and false-positive decisions require evidence and a reason. Blocked items stay visible. Reading a method is not completion.
 
+## HappyHands homepage Hero
+
+When the bound profile includes `surface: homepage-hero`, apply the two Hero rules to the actual HappyHands portal homepage states. Treat the existing cover spiral as the approved motion exception. Keep the archive covers, orbit, center clearance, and existing content and actions. Check perspective, opening tilt, pointer response and scroll exit using timed frames and actual browser evidence. Examine the glass header while covers pass behind it. The central glass mark has one silhouette with the highlight clipped inside it. Check both themes and desktop and phone. Reduced motion freezes the covers, WebGL failure uses the cover fallback, and the offscreen animation stops. Record unobserved motion as needs-evidence; the bound `hero-motion` specialist check is required for a passing review.
+
 ## Independent acceptance
 
 The reviewer does not edit. Inspect originals and supplied verification records, not only the executor's account. Check every rule on every assigned state, including layout/grid relationships and shared consumers. A pass requires complete coverage with no unresolved failures or missing evidence. Record limitations and exceptions; never infer unseen interaction behavior from screenshots. Preserve existing source/hash, visual QA and human-judgment gates.

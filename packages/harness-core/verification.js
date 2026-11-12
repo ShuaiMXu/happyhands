@@ -7,6 +7,12 @@ import {captureEntries,captureOriginals} from './capture-state.js';
 export const verificationHash=value=>createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
 const ID=/^[a-z][a-z0-9-]{0,47}$/;
 const LIMIT=256*1024;
+function pngDimensions(bytes){
+  if(bytes.length<33||!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||bytes.readUInt32BE(8)!==13||bytes.toString('ascii',12,16)!=='IHDR')throw Error('Verification original has no valid PNG dimensions.');
+  const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);
+  if(!width||!height||width>100000||height>100000)throw Error('Verification original has invalid PNG dimensions.');
+  return {width,height};
+}
 export function validateVerificationChecks(checks=[]) {
   if(!Array.isArray(checks)||checks.length>8)throw Error('verificationChecks must contain at most eight checks.');
   const ids=new Set();
@@ -78,7 +84,11 @@ export async function readVerificationEvidence(directory,manifest) {
       if(++imageCount>12||!/^image-[0-9]+\.png$/.test(image.name)||image.path!==`verification/${record.artifactId}/${image.name}`)throw Error('Invalid verification image.');
       const data=await readVerificationFile(directory,image.path,12*1024*1024);
       if(verificationHash(data)!==image.sha256||!data.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))throw Error('Verification image changed or is not PNG.');
-      images.push(image);
+      const dimensions=pngDimensions(data);
+      if((image.width!==undefined&&image.width!==dimensions.width)||(image.height!==undefined&&image.height!==dimensions.height))throw Error('Verification image dimensions changed.');
+      // Legacy ordinary records did not store dimensions; derive them from the
+      // hash-checked original rather than trusting result.json declarations.
+      images.push({...image,...dimensions});
     }
     const result=JSON.parse(raw);if(result.status!==record.status)throw Error('Verification result status does not match index.');
     records.push({...record,images,result});
@@ -107,8 +117,9 @@ export async function saveVerificationEvidence(directory,{binding,records}) {
       const images=[];
       for(const image of record.images||[]){
         if(++count>12||!Buffer.isBuffer(image)||image.length>12*1024*1024||!image.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))throw Error('Verification needs at most 12 bounded original PNGs.');
+        const dimensions=pngDimensions(image);
         const name=`image-${images.length}.png`;await writeFile(join(folder,name),image,{flag:'wx'});
-        images.push({name,path:`verification/${artifactId}/${name}`,sha256:verificationHash(image)});
+        images.push({name,path:`verification/${artifactId}/${name}`,sha256:verificationHash(image),...dimensions});
       }
       await writeFile(join(folder,'result.json'),raw,{flag:'wx'});
       stored.push({id:record.id,artifactId,path:`verification/${artifactId}/result.json`,sha256:verificationHash(raw),status:record.status,stage:record.stage,method:record.method,limitations:record.limitations,stateIds:record.stateIds,checkHash:record.checkHash,preview:record.preview,images});
