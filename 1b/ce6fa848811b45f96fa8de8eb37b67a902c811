@@ -1,0 +1,22 @@
+packages/workbench/verification.js
+  s_c3a809bd8a1ec1::t_9f31bb810af7e9 9,34-35
+tests/verification.test.mjs
+  s_c3a809bd8a1ec1::t_a8ead683a65a4a 24
+  s_c3a809bd8a1ec1::t_afd506bb43b525 106-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "1bce6fa848811b45f96fa8de8eb37b67a902c811",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
