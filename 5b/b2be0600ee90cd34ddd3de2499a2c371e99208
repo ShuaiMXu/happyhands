@@ -1,0 +1,32 @@
+docs/integration-review-2026-11-12.md
+  s_c3a809bd8a1ec1::t_38096aed12856c 1-28
+docs/lightweight.md
+  s_c3a809bd8a1ec1::t_c9b88b89ede91e 12
+  s_c3a809bd8a1ec1::t_38096aed12856c 3-4
+README.md
+  s_c3a809bd8a1ec1::t_c9b88b89ede91e 36,41
+docs/next-steps.md
+  s_c3a809bd8a1ec1::t_38096aed12856c 6-7,13
+distribution/lite/package.json
+  s_c3a809bd8a1ec1::t_4a6a81cc6831ad 3
+README.zh-CN.md
+  s_c3a809bd8a1ec1::t_c9b88b89ede91e 36,41
+distribution/lite/package-lock.json
+  s_c3a809bd8a1ec1::t_f63a3e5815bd8b 3,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "5bb2be0600ee90cd34ddd3de2499a2c371e99208",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
