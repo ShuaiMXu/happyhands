@@ -1,5 +1,7 @@
 # Lightweight Alpha
 
+Alpha.3 packages the engineering integration, including optional repository/URL preflight and the `continue` entry. The accepted real-product case remains the Alpha.2 setup repair; the new engineering checks are not a new design-quality or cross-model result. See the [integration review](integration-review-2026-11-12.md) for merged scope and remaining issue acceptance.
+
 The `happyhands` Skill packages the existing Harness engine, its pinned design methods and six runtime dependencies. It does not include the workbench frontend, React/tldraw, browser binaries or the complete website resource library. It uses the existing run format and source, execution, independent-review and human-judgment gates. Lightweight `start`, `init` and `onboard` store records in `~/.happyhands/runs` by default, outside the product repository. `HAPPYHANDS_RUNS_DIR` selects another state directory; an explicit `--out DIRECTORY` takes precedence. Keep an explicit output outside the target or ignore it deliberately before source-bound execution. The installer never edits Git ignore rules. Generated Spec/config/Capture Plan files also belong outside the target unless deliberately tracked or ignored. The source CLI retains its existing `.harness/runs` default.
 
 ## Install
@@ -7,7 +9,7 @@ The `happyhands` Skill packages the existing Harness engine, its pinned design m
 From the product repository, with Node.js 22.15+ and npm installed:
 
 ```sh
-npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.2/happyhands-lite-0.1.0-alpha.2.tgz happyhands install
+npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.3/happyhands-lite-0.1.0-alpha.3.tgz happyhands install
 ```
 
 Git, Chrome/Edge and an authenticated coding agent are also needed for the repair loop. The package is distributed as a public GitHub Release asset, so installing it does not require GitHub Packages authentication. The install command downloads the package and npm runtime dependencies; it runs `npm ci --ignore-scripts` using the bundled shrinkwrap. Existing installations and linked destination directories are rejected. For an upgrade, select a separate `--destination PATH`, review it, then switch your agent to the chosen installation; this Alpha does not replace existing drafts or Skills automatically.
