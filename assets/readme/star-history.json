@@ -1,8 +1,8 @@
 {
   "repository": "ShuaiMXu/happyhands",
-  "generatedAt": "2026-11-12T03:27:24.352Z",
-  "totalStars": 436,
-  "starredInLast7Days": 314,
+  "generatedAt": "2026-11-12T07:30:16.637Z",
+  "totalStars": 439,
+  "starredInLast7Days": 302,
   "method": "Cumulative starred_at dates of current stargazers. Removed stars are not reconstructed; this is not a historical net-count ledger.",
   "series": [
     {
@@ -67,19 +67,19 @@
     },
     {
       "date": "2026-11-09",
-      "stars": 354
+      "stars": 353
     },
     {
       "date": "2026-11-10",
-      "stars": 389
+      "stars": 388
     },
     {
       "date": "2026-11-11",
-      "stars": 429
+      "stars": 428
     },
     {
       "date": "2026-11-12",
-      "stars": 436
+      "stars": 439
     }
   ]
 }

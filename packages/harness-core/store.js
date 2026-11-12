@@ -10,7 +10,7 @@ import {readVerificationEvidence,verificationHash} from './verification.js';
 import { captureEntries } from './capture-state.js';
 import { assertVisualReview } from './visual-review.js';
 import { randomUUID, createHash } from 'node:crypto';
-import { lstat, mkdir, mkdtemp, readdir, readFile, rename, rm, rmdir, unlink, writeFile, realpath } from 'node:fs/promises';
+import { lstat, mkdir, readdir, readFile, rename, rm, rmdir, unlink, writeFile, realpath } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { assertExperienceSpec, bootstrapBrief, codexBrief, recordJudgment, approvedFoundationFrom, foundationApprovalReference, assertFoundationApproval } from '../experience-core/index.js';
 import { DEFAULT_LIMITS, executionBlock, visualReviewFor } from './workflow.js';
@@ -52,10 +52,12 @@ export function runFilePath(directory, relativePath) {
   return join(directory, value);
 }
 
-// Publish the owner and its unique token in one atomic rename. Removing only
-// that owner's marker and then the empty directory cannot remove a newer lock.
+// mkdir is an exclusive create on every supported platform. In particular,
+// Windows rename(directory, legacyPidFile) can replace that existing file.
 const LOCK_FILE = 'run.lock';
 const LOCK_OWNER = /^(\d+)-[0-9a-f-]{36}$/;
+const LOCK_REAPER = /^reaping-(\d+)-[0-9a-f-]{36}$/;
+const LOCK_BUSY = ['EPERM', 'EACCES', 'EBUSY'];
 
 function processAlive(pid) {
   try { process.kill(pid, 0); return true; }
@@ -63,30 +65,48 @@ function processAlive(pid) {
 }
 
 async function removeLockMarker(lockPath, marker) {
-  if (marker) await unlink(join(lockPath, marker)).catch(error => {
-    if (error.code !== 'ENOENT') throw error;
-  });
-  await rmdir(lockPath).catch(error => {
-    if (!['ENOENT', 'ENOTEMPTY', 'EEXIST', 'ENOTDIR'].includes(error.code)) throw error;
-  });
+  // Only one contender can rename this exact owner's marker. Others must leave
+  // the empty/publication window and an in-progress reaper alone. Move the whole
+  // claimed directory away before deleting it, so cleanup cannot erase a new owner.
+  const reaper = `reaping-${process.pid}-${randomUUID()}`;
+  try { await rename(join(lockPath, marker), join(lockPath, reaper)); }
+  catch (error) {
+    if (['ENOENT', 'ENOTDIR', ...LOCK_BUSY].includes(error.code)) return false;
+    throw error;
+  }
+  const retired = `${lockPath}.retired-${randomUUID()}`;
+  for (let attempt = 0; ; attempt++) {
+    try { await rename(lockPath, retired); break; }
+    catch (error) {
+      if (!LOCK_BUSY.includes(error.code) || attempt >= 10) throw error;
+      await new Promise(wait => setTimeout(wait, 10 * (attempt + 1)));
+    }
+  }
+  await rm(retired, { recursive: true, force: true, maxRetries: 10, retryDelay: 20 });
+  return true;
 }
 
 async function lockOwner(lockPath) {
   const stat = await lstat(lockPath).catch(error => {
+    if (LOCK_BUSY.includes(error.code)) return 'unknown';
     if (error.code !== 'ENOENT') throw error;
     return null;
   });
+  if (stat === 'unknown') return stat;
   if (!stat) return null;
   if (stat.isDirectory()) {
     const entries = await readdir(lockPath).catch(error => {
+      if (LOCK_BUSY.includes(error.code)) return null;
       if (!['ENOENT', 'ENOTDIR'].includes(error.code)) throw error;
       return [];
     });
-    const match = entries.length === 1 && entries[0].match(LOCK_OWNER);
+    // A creator may not have published its marker yet; never reclaim this gap.
+    if (!entries || !entries.length) return 'unknown';
+    const match = entries.length === 1 && (entries[0].match(LOCK_OWNER) || entries[0].match(LOCK_REAPER));
     if (entries.length && !match) throw new Error('Unrecognized run lock contents.');
     const pid = match ? Number(match[1]) : null;
     if (pid > 0 && processAlive(pid)) return pid;
-    await removeLockMarker(lockPath, match ? entries[0] : null);
+    if (!await removeLockMarker(lockPath, entries[0])) return 'unknown';
     return null;
   }
   if (!stat.isFile()) throw new Error('Unrecognized run lock type.');
@@ -100,14 +120,15 @@ async function lockOwner(lockPath) {
     return null;
   } catch (error) {
     if (['ENOENT', 'EISDIR'].includes(error.code)) return null;
-    if (['EPERM', 'EACCES'].includes(error.code)) {
+    if (LOCK_BUSY.includes(error.code)) {
       // Darwin and Windows can report a directory unlink as a permission error.
       // A contender may have installed its directory after we read the legacy file.
       const current = await lstat(lockPath).catch(error => {
         if (error.code !== 'ENOENT') throw error;
         return null;
       });
-      if (!current || current.isDirectory()) return null;
+      if (!current) return null;
+      return 'unknown';
     }
     throw error;
   }
@@ -119,18 +140,18 @@ export async function withRunLock(directory, operation, { maxAttempts = 100, int
 
 async function withLedgerLock(directory, name, operation, {maxAttempts, intervalMs}) {
   const lockPath = join(directory, name);
-  const staged = await mkdtemp(join(directory, '.run-lock-'));
   const marker = `${process.pid}-${randomUUID()}`;
   let acquired = false;
   try {
-    await writeFile(join(staged, marker), '', { flag: 'wx' });
     for (let attempt = 0; ; attempt++) {
       try {
-        await rename(staged, lockPath);
+        await mkdir(lockPath);
+        try { await writeFile(join(lockPath, marker), '', { flag: 'wx' }); }
+        catch (error) { await rmdir(lockPath).catch(() => {}); throw error; }
         acquired = true;
         break;
       } catch (error) {
-        if (!['EEXIST', 'ENOTEMPTY', 'ENOTDIR', 'EPERM', 'EACCES'].includes(error.code)) throw error;
+        if (!['EEXIST', 'ENOTEMPTY', 'ENOTDIR', ...LOCK_BUSY].includes(error.code)) throw error;
         const owner = await lockOwner(lockPath);
         if (attempt >= maxAttempts) throw new Error(owner ? `Another harness writer (pid ${owner}) is writing to this run; retry when it finishes.` : 'Could not acquire the run lock; retry the command.');
         if (owner) await new Promise(wait => setTimeout(wait, intervalMs));
@@ -139,7 +160,6 @@ async function withLedgerLock(directory, name, operation, {maxAttempts, interval
     return await operation();
   } finally {
     if (acquired) await removeLockMarker(lockPath, marker).catch(() => {});
-    else await rm(staged, { recursive: true, force: true }).catch(() => {});
   }
 }
 

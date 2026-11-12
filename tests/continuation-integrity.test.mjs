@@ -79,7 +79,7 @@ test('a committed linked worktree can continue with fresh gates and intact refer
   const changed = await inspectRepository(worktree);
   await writeFile(f.configPath, JSON.stringify({...f.config, repo: worktree}));
   const child = await loadRun(await continueReview({...f, directory: f.parent.directory}));
-  assert.equal(child.manifest.onboarding.repository.root, worktree);
+  assert.equal(await realpath(child.manifest.onboarding.repository.root), await realpath(worktree));
   assert.equal(child.manifest.onboarding.repository.commit, changed.commit);
   assert.notEqual(changed.commit, (await loadRun(f.parent.directory)).manifest.onboarding.repository.commit);
   assert.equal(child.manifest.captures.before, null);

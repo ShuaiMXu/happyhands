@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { spawn, execFile } from 'node:child_process';
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { promisify } from 'node:util';
 import sample from '../examples/happyclaw-site/experience.json' with { type: 'json' };
 import { captureOnce, createRun, loadRun, runFilePath, saveCapture, saveSkillResult, withRunLock } from '../packages/harness-core/store.js';
 
@@ -101,6 +102,100 @@ test('an empty legacy lock is left in place while its owner may be writing', asy
   await writeFile(lock, '');
   await assert.rejects(withRunLock(directory, () => assert.fail('entered a live lock'), { maxAttempts: 3, intervalMs: 1 }), /Another harness writer/);
   assert.equal(await readFile(lock, 'utf8'), '');
+});
+
+test('an empty current lock cannot be reclaimed before its owner publishes its marker', async t => {
+  const { directory } = await fixture(t, 'empty-current');
+  const lock = join(directory, 'run.lock');
+  await mkdir(lock);
+  await assert.rejects(withRunLock(directory, () => assert.fail('entered an unpublished lock'), {maxAttempts: 3, intervalMs: 1}), /Another harness writer/);
+  // Publish after the refused contender, then make sure the active owner is
+  // still protected. Neither attempt may remove or replace its directory.
+  const marker = `${process.pid}-11111111-1111-1111-1111-111111111111`;
+  await writeFile(join(lock, marker), '');
+  await assert.rejects(withRunLock(directory, () => assert.fail('entered a live current lock'), {maxAttempts: 3, intervalMs: 1}), /Another harness writer/);
+  assert.equal(await readFile(join(lock, marker), 'utf8'), '');
+});
+
+test('a live reclaimer marker is protected and a dead reclaimer can be recovered', async t => {
+  const { directory } = await fixture(t, 'reclaim-owner');
+  const lock = join(directory, 'run.lock');
+  await mkdir(lock);
+  const marker = `reaping-${process.pid}-11111111-1111-1111-1111-111111111111`;
+  await writeFile(join(lock, marker), '');
+  await assert.rejects(withRunLock(directory, () => assert.fail('entered a live reclaimer'), {maxAttempts: 3, intervalMs: 1}), /Another harness writer/);
+  assert.equal(await readFile(join(lock, marker), 'utf8'), '');
+  await rm(lock, {recursive: true});
+  await mkdir(lock);
+  await writeFile(join(lock, 'reaping-999999999-11111111-1111-1111-1111-111111111111'), '');
+  assert.equal(await withRunLock(directory, () => 'recovered'), 'recovered');
+});
+
+test('an unrecognized current lock fails closed and retains its contents', async t => {
+  const { directory } = await fixture(t, 'unknown-owner');
+  const lock = join(directory, 'run.lock');
+  await mkdir(lock);
+  await writeFile(join(lock, 'unknown-owner'), 'preserve');
+  await assert.rejects(withRunLock(directory, () => assert.fail('entered an unknown owner')), /Unrecognized run lock contents/);
+  assert.equal(await readFile(join(lock, 'unknown-owner'), 'utf8'), 'preserve');
+});
+
+test('separate processes reclaim a stale owner and release to new owners without overlapping', async t => {
+  const { root, directory } = await fixture(t, 'process-contention');
+  const lock = join(directory, 'run.lock');
+  await mkdir(lock);
+  await writeFile(join(lock, '999999999-11111111-1111-1111-1111-111111111111'), '');
+  const events = join(root, 'owners.ndjson');
+  const worker = join(root, 'contender.mjs');
+  await writeFile(worker, `
+import {withRunLock} from ${JSON.stringify(new URL('../packages/harness-core/store.js', import.meta.url).href)};
+import {appendFile} from 'node:fs/promises';
+import {setTimeout as delay} from 'node:timers/promises';
+for(let index=0;index<3;index++)await withRunLock(process.argv[2],async()=>{
+ await appendFile(process.argv[3],JSON.stringify({pid:process.pid,event:'enter'})+'\\n');
+ await delay(3);
+ await appendFile(process.argv[3],JSON.stringify({pid:process.pid,event:'exit'})+'\\n');
+},{maxAttempts:2000,intervalMs:2});
+`);
+  const processes = await Promise.allSettled(Array.from({length: 6}, async () => {
+    const started = performance.now();
+    try {
+      const result = await promisify(execFile)(process.execPath, [worker, directory, events], {timeout: 30000, windowsHide: true});
+      return {...result, elapsed: performance.now() - started};
+    } catch (error) { error.elapsed = performance.now() - started; throw error; }
+  }));
+  try {
+    for (const result of processes) assert.equal(result.status, 'fulfilled', result.reason?.stack);
+    const records = (await readFile(events, 'utf8')).trim().split('\n').map(JSON.parse);
+    assert.equal(records.length, 36);
+    assert.equal(new Set(records.map(record => record.pid)).size, 6);
+    let owner = null;
+    for (const record of records) {
+      if (record.event === 'enter') { assert.equal(owner, null, 'no other process owns the critical section'); owner = record.pid; }
+      else { assert.equal(owner, record.pid, 'only the current owner releases'); owner = null; }
+    }
+    assert.equal(owner, null);
+  } catch (error) {
+    // All children have reached a terminal state. Read the failure scene only
+    // now; successful runs add no polling or filesystem work to the contention.
+    const inspectFile = async path => {
+      try { return {contents: await readFile(path, 'utf8')}; }
+      catch (failure) { return {code: failure.code, error: failure.message}; }
+    };
+    let currentLock;
+    try {
+      const entries = await readdir(lock);
+      const owners = {};
+      for (const entry of entries) owners[entry] = await inspectFile(join(lock, entry));
+      currentLock = {entries, owners};
+    } catch (failure) { currentLock = {code: failure.code, error: failure.message}; }
+    const children = processes.map(result => {
+      const value = result.status === 'fulfilled' ? result.value : result.reason;
+      return {status: result.status, code: result.status === 'fulfilled' ? 0 : value.code ?? null, signal: value.signal ?? null, killed: value.killed ?? false, stdout: value.stdout ?? '', stderr: value.stderr ?? '', elapsed: value.elapsed};
+    });
+    error.message += '\nSix-process failure diagnostics: ' + JSON.stringify({children, events: await inspectFile(events), lock: currentLock});
+    throw error;
+  }
 });
 
 test('a skill result with an unsafe id cannot write outside the run directory', async t => {
