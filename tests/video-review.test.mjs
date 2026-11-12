@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {join,basename,dirname} from 'node:path';
 import {collectVideo,reviewVideo,validateManifest,technicalChecks,runVideoReview,videoExitCode} from '../skills/review-video/scripts/video-review.mjs';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSAAAAABJRU5ErkJggg==','base64');
 const probe={streams:[{codec_type:'video',codec_name:'h264',width:1920,height:1080,r_frame_rate:'60/1',sample_aspect_ratio:'1:1'},{codec_type:'audio',codec_name:'aac'}],format:{duration:'2.005'}};
@@ -64,8 +64,9 @@ test('recoverable decoder errors stop collection from passing and retain partial
 });
 test('a valid candidate cannot hide a technically invalid original from collection or independent review',async t=>{
  const f=await fixture(t),original=f.runTool;
- f.runTool=async(binary,args)=>binary==='ffprobe'&&args.at(-1).includes('/before/')?JSON.stringify({...probe,streams:[{...probe.streams[0],width:1280},probe.streams[1]]}):original(binary,args);
- const result=await collectVideo({...f});assert.equal(result.technical.before.status,'fail');assert.equal(result.technical.before.decode,'pass');assert.equal(result.technical.after.status,'pass');assert.equal(result.technical.after.decode,'pass');assert.equal(videoExitCode(result),2);
+ let invalidOriginalProbes=0;
+ f.runTool=async(binary,args)=>{if(binary==='ffprobe'&&basename(dirname(args.at(-1)))==='before'){invalidOriginalProbes++;return JSON.stringify({...probe,streams:[{...probe.streams[0],width:1280},probe.streams[1]]});}return original(binary,args);};
+ const result=await collectVideo({...f});assert.equal(invalidOriginalProbes,1,'the original was actually made invalid');assert.equal(result.technical.before.status,'fail');assert.equal(result.technical.before.decode,'pass');assert.equal(result.technical.after.status,'pass');assert.equal(result.technical.after.decode,'pass');assert.equal(videoExitCode(result),2);
  await assert.rejects(submit(f,await reportFor(f)),/Failed or missing technical/);
 });
 test('the reusable video entry routes help and rejects unknown or duplicate options',async()=>{
