@@ -1,0 +1,19 @@
+docs/remaining-work-2026-11-12.zh-CN.md
+  s_c3a809bd8a1ec1::t_2bc7b39135b5d0 10,16-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "f84ea70018ae78a6ddbddb05e18e396b818f90e8",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
