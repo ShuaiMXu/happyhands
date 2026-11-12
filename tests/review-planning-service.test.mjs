@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
+import {waitForJob as finish} from './helpers/wait-for-job.mjs';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';import {join} from 'node:path';import {tmpdir} from 'node:os';
 import {createWorkbench} from '../packages/workbench/service.js';import {createRun,saveOnboarding} from '../packages/harness-core/store.js';import {reviewCandidates} from '../packages/harness-core/review-discovery.js';import {configurationsForState} from '../packages/harness-core/capture-state.js';import {createHash} from 'node:crypto';
 const commit='a'.repeat(40),url='http://127.0.0.1:4321/';
@@ -21,7 +22,6 @@ async function fixture(t,overrides={}){
   },...overrides
  });t.after(()=>service.close());return {root,run,service,calls,configPath,setRepository:value=>{repository=value;}};
 }
-async function finish(service,id){for(let n=0;n<300;n++){const job=await service.jobs.get(id);if(!['queued','running','cancelling'].includes(job.status))return job;await new Promise(resolve=>setTimeout(resolve,10));}throw Error('Timed out');}
 async function discover(f){const job=await finish(f.service,(await f.service.discoverPlan({runId:'parent-run'})).id);assert.equal(job.status,'succeeded',job.error);return job.result.proposal;}
 test('discovery is source-bound, stops owned preview and does not mutate parent evidence',async t=>{
  const f=await fixture(t),before=await readFile(join(f.run.directory,'run.json')),proposal=await discover(f);

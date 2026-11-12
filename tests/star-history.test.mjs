@@ -5,6 +5,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
 
 const exec = promisify(execFile);
 const assets = ['star-history.json', 'star-history-light.svg', 'star-history-dark.svg'];
@@ -36,7 +37,7 @@ globalThis.Date = class extends NativeDate {
 };
 `);
   return {
-    run: (overrides = {}) => exec(process.execPath, ['--import', mock, script], {
+    run: (overrides = {}) => exec(process.execPath, ['--import', pathToFileURL(mock).href, script], {
       cwd: root,
       env: {...process.env, HH_STAR_FIXTURE: JSON.stringify({timestamps, count: timestamps.length, now: '2026-11-12T01:23:00Z', ...overrides})},
     }),

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile, readFile, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 import { promisify } from 'node:util';
@@ -232,8 +232,9 @@ test('an agent that ran and failed keeps its worktree and records the execution'
     error => error
   );
   assert.match(failure.message, /exited \d+.*retained for inspection/s);
-  const worktrees = (await execFileAsync('git', ['worktree', 'list'], { cwd: root })).stdout.replaceAll('\\', '/');
-  assert.ok(worktrees.includes(join(run.directory, 'worktree').replaceAll('\\', '/')), 'the worktree is retained for inspection');
+  const worktrees = (await execFileAsync('git', ['worktree', 'list', '--porcelain', '-z'], { cwd: root })).stdout.split('\0').filter(item => item.startsWith('worktree ')).map(item => item.slice(9));
+  const actualRoots = await Promise.all(worktrees.map(path => realpath(path)));
+  assert.ok(actualRoots.includes(await realpath(join(run.directory, 'worktree'))), 'the worktree is retained for inspection');
   const manifest = JSON.parse(await readFile(join(run.directory, 'run.json'), 'utf8'));
   assert.equal(manifest.execution.exitCode, 1);
   assert.equal(manifest.execution.designGuidance.mode,'implementation');

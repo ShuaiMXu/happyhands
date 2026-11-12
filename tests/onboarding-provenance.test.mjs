@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {waitForJob as finish} from './helpers/wait-for-job.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -37,15 +38,6 @@ async function fixture(t, overrides = {}) {
   });
   t.after(async () => { service.close(); await rm(root, { recursive: true, force: true }); });
   return { root, repo, configPath, service, calls, child };
-}
-
-async function finish(service, id) {
-  for (let n = 0; n < 300; n++) {
-    const job = await service.jobs.get(id);
-    if (!['queued', 'running'].includes(job.status)) return job;
-    await new Promise(resolve => setTimeout(resolve, 20));
-  }
-  throw new Error('Onboarding did not finish');
 }
 
 test('a busy baseline port, even returning 404, cannot supply source-bound evidence', async t => {
