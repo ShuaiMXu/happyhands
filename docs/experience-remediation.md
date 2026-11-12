@@ -49,6 +49,52 @@ Select the actual project design source files through the existing project confi
 
 The own Skill also covers information grouping, primary actions, copy removal/retention and shared component consumers. For menus, inspect the real open/selected/focus/disabled and keyboard behavior, not only the trigger. A static card can legitimately have no loading or keyboard interaction; record why it is not applicable rather than manufacturing states.
 
+## HappyHands 官网 Hero
+
+这项约定是显式选入的首页 Hero 任务约束，不说明官网现有发布已经使用 Three.js 或完成了动效验收。用独立的首页 Hero 运行启用，先由目标项目实现能输出下述证据的真实检查器，再配置 `hero-motion` 专项检查。Capture Plan 的首个状态应为 `hero`，指向对应预览的 `/apps/portal/` 或 `/en/apps/portal/`，配置正常桌面与手机尺寸。采集同一页面的 before 与 after，验证时使用 after 的实际预览入口。
+
+下列仅为设计范围配置，不能单独启动或通过 Hero 验收：
+
+```json
+{
+  "designGuidance": {
+    "taste": "public-page",
+    "intent": "animate",
+    "remediation": {
+      "profile": "happyhands",
+      "surface": "homepage-hero",
+      "adoptionReason": "The approved HappyHands homepage cover orbit and glass logo."
+    }
+  }
+}
+```
+
+- `HH-HERO-MOTION` 保留原封面与旋转轨迹，用 Three.js 的透视强化近大远小。检查开场倾斜、鼠标响应、滚动退出与恢复、标题和导航可读性、减少动态效果及 WebGL 降级。这一例外只适用于已采纳的首页旋转封面。
+- `HH-HERO-MARK` 要求中央玻璃 Logo 保持单一轮廓，高光限制在 Logo 内。深浅主题和正常桌面、手机尺寸都检查是否有重影。
+
+诊断和计划加载这两条规则，执行逐条记录决定。After 采集后用现有 `verify` 运行专项检查，再交独立复核。缺少通过的绑定浏览器记录或动态原图时，Hero 复核不能通过。被专项检查覆盖的首屏状态，两条规则都须明确通过。WebGL 绘制和截图序列用于证据，设计完成度由独立评审检查，人工接受仍单独记录。普通 HappyHands 与其他项目的规则清单不变。
+
+项目检查器须使用实际预览地址并在指定输出目录写入 `result.json` 与声明顺序的 PNG 原图；`verificationChecks` 使用 `id:"hero-motion"`、`stage:"normal-interaction"`，并列出实际 `stateIds`、执行命令、方法、限制和截图文件。这里不提供假定已存在的执行命令。2026-11-12 核对的官网 main 中，`tests/homepage-motion-browser.mjs` 仅使用 `SITE_URL` 检查减少动态效果，不支持这里所需的参数、产物和 WebGL 证明；它不能作为本协议的完整检查器。真实 Hero 案例及该检查器仍需另行实现和验收。
+
+Hero 专项检查器还须实现以下新结果契约。示例中的状态、配置和索引必须替换为本次真实运行值；`frameIndexes` 是 `verificationChecks.screenshots` 顺序中从 0 开始的索引，不是文件名。
+
+```json
+{
+  "status": "pass",
+  "heroMotion": {
+    "version": 1,
+    "contexts": [{
+      "stateId": "hero",
+      "configurationId": "desktop-dark",
+      "motionObserved": true,
+      "frameIndexes": [0, 1]
+    }]
+  }
+}
+```
+
+每个 before 首页状态与配置都须在 after 保留相同路由和视口，并有唯一的 `motionObserved:true` 记录。每个上下文至少提供两张不同哈希、由实际 PNG 派生的尺寸与该视口一致的原图，不得跨上下文复用同一组帧。静态主题切换不能冒充观察到动态；未观察到动态就记录 false 或 needs-evidence。缺少这些证据、发生错误跳转或只测桌面，都不能通过完整首页复核。记录和帧仍需独立审阅其真实动作、主题、降级与视觉质量，结构门槛不代替人的判断。
+
 ## Reports and gates
 
 Execution `checks` and `issues` each contain exact IDs, status (`fixed`, `preserved`, `not-applicable`, `blocked`), observed evidence, a concrete decision, actual changed files and verification description. Fixed requires a changed source file. Workflow phase labels are ordering guidance, never additional rule IDs. The reserved report filename is rejected if already tracked by the target; collected reports are removed from both the worktree and its Git index, including malformed reports archived for diagnosis. Blocked stops successful execution. These are executor claims, not independent visual proof.

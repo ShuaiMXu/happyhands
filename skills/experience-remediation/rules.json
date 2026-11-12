@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "rules": [
     {
       "id": "UX-task",
@@ -232,6 +232,24 @@
       "profile": "happyhands",
       "remediation": "Remove duplicate navigation and redundant shells; retain a single clear current-location indicator.",
       "verification": "Navigate between related views and inspect active state, back behavior and small-screen layout."
+    },
+    {
+      "id": "HH-HERO-MOTION",
+      "title": "HappyHands homepage cover orbit and readable foreground",
+      "reference": "upstream/references/motion-system.md",
+      "profile": "happyhands",
+      "surface": "homepage-hero",
+      "remediation": "On the HappyHands homepage only, preserve the existing archive covers, spiral orbit, and Hero content. Use the approved Three.js/WebGL perspective for near-large and far-small covers, a short opening tilt, and gentle pointer depth. Keep the title, actions and glass header readable. This approved exception applies to the orbit under UX-motion and AS-16; keep other motion restrained.",
+      "verification": "Inspect timed browser frames and actual interaction records for opening, pointer response, scroll exit and resume. Check desktop and phone, both themes, static reduced motion, and usable cover fallback when WebGL is unavailable or lost. A still image alone is needs-evidence for motion."
+    },
+    {
+      "id": "HH-HERO-MARK",
+      "title": "Single glass silhouette for the homepage Hero logo",
+      "reference": "upstream/references/icon-guidelines.md",
+      "profile": "happyhands",
+      "surface": "homepage-hero",
+      "remediation": "Keep the original HappyHands mark. Use one silhouette with its highlight clipped within the logo alpha. Remove a duplicated mask, offset shadow or second copy that creates a ghost edge. Scope the repair to the Hero mark.",
+      "verification": "Check the mark at normal desktop and phone sizes in both themes. Inspect its real rendered outline and source layers; verify the edges and sparkle are distinct and there is no second silhouette."
     }
   ],
   "workflow": [

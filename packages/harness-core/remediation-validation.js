@@ -1,11 +1,21 @@
 import {captureEntries,captureKey} from './capture-state.js';
 
 const text=value=>typeof value==='string'&&value.trim().length>=5&&value.length<=16000;
+export const HERO_SURFACE='homepage-hero';
+export const HERO_MOTION_RULE='HH-HERO-MOTION';
+export const HERO_VERIFICATION_ID='hero-motion';
+
+export function isHomepageHero(entry){
+  const value=entry?.finalUrl||entry?.start?.url;
+  if(!value||!URL.canParse(value))return false;
+  return ['/', '/apps/portal', '/en/apps/portal'].includes(new URL(value).pathname.replace(/\/+$/,'')||'/');
+}
 
 export function remediationProfile(value){
   if(value===undefined)return null;
-  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!['profile','adoptionReason'].includes(k))||!['project','happyhands'].includes(value.profile)||!text(value.adoptionReason))throw Error('Remediation requires project/happyhands profile and an explicit adoptionReason.');
-  return {profile:value.profile,adoptionReason:value.adoptionReason};
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!['profile','adoptionReason','surface'].includes(k))||!['project','happyhands'].includes(value.profile)||!text(value.adoptionReason))throw Error('Remediation requires project/happyhands profile and an explicit adoptionReason.');
+  if(value.surface!==undefined&&(value.profile!=='happyhands'||value.surface!==HERO_SURFACE))throw Error('The homepage-hero surface requires the HappyHands owned profile.');
+  return {profile:value.profile,adoptionReason:value.adoptionReason,...(value.surface?{surface:value.surface}:{})};
 }
 
 function exactRows(rows,ids,key){

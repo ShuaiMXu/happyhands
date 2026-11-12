@@ -42,7 +42,9 @@ async function diagnoseBatch(run,diagnosis,entries,{cwd,generate,signal,language
  const session=await mkdtemp(join(cwd,'baseline-'));
  const design=await stageDesignGuidance(session,'review',run.manifest.onboarding?.config?.designGuidance),ojo=await stageOjoGuidance(session,'review');
  const {rubric,skill,designSystem,projectMemory,selectedDesignSources,findingPolicy,ownedUi}=shared;
- const catalog=guidanceCatalog(design,ojo);
+ const catalog=guidanceCatalog(design,ojo,shared.remediation);
+ const scopedMethod=catalog.find(file=>file.path==='remediation-SKILL.md');
+ if(scopedMethod)await writeFile(join(session,scopedMethod.path),scopedMethod.content);
  const originals=[];const args=['exec','-C',session,'--skip-git-repo-check','--ephemeral','-s','read-only','-c','project_doc_max_bytes=0','--json','-o',join(session,'result.json')];
  await mkdir(join(session,'before'),{recursive:true});
  for(const entry of entries){
@@ -71,6 +73,7 @@ Finding admission schema: each finding MUST include findingBasis={policyVersion:
  signal.throwIfAborted();
  const verifyInputs=async()=>{
   await verifyDesignGuidanceSnapshot(session,design);await stageOjoGuidance(session,'review');
+  if(scopedMethod&&await readFile(join(session,scopedMethod.path),'utf8')!==scopedMethod.content)throw Error('Scoped baseline remediation Skill changed.');
   for(const original of originals)if(hash(await readVerificationFile(run.directory,original.reference,24*1024*1024))!==original.sha256||hash(await readVerificationFile(session,original.reference,24*1024*1024))!==original.sha256)throw Error('Baseline original changed during diagnosis.');
   if(await readFile(join(session,'context.json'),'utf8')!==contextBytes||await readFile(join(session,'visual-hierarchy-SKILL.md'),'utf8')!==skill||await readFile(join(session,'prompt.txt'),'utf8')!==prompt)throw Error('Baseline model input changed.');
  };
