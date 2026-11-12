@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, execFile } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -157,17 +157,45 @@ for(let index=0;index<3;index++)await withRunLock(process.argv[2],async()=>{
  await appendFile(process.argv[3],JSON.stringify({pid:process.pid,event:'exit'})+'\\n');
 },{maxAttempts:2000,intervalMs:2});
 `);
-  const processes = await Promise.allSettled(Array.from({length: 6}, () => promisify(execFile)(process.execPath, [worker, directory, events], {timeout: 30000, windowsHide: true})));
-  for (const result of processes) assert.equal(result.status, 'fulfilled', result.reason?.stack);
-  const records = (await readFile(events, 'utf8')).trim().split('\n').map(JSON.parse);
-  assert.equal(records.length, 36);
-  assert.equal(new Set(records.map(record => record.pid)).size, 6);
-  let owner = null;
-  for (const record of records) {
-    if (record.event === 'enter') { assert.equal(owner, null, 'no other process owns the critical section'); owner = record.pid; }
-    else { assert.equal(owner, record.pid, 'only the current owner releases'); owner = null; }
+  const processes = await Promise.allSettled(Array.from({length: 6}, async () => {
+    const started = performance.now();
+    try {
+      const result = await promisify(execFile)(process.execPath, [worker, directory, events], {timeout: 30000, windowsHide: true});
+      return {...result, elapsed: performance.now() - started};
+    } catch (error) { error.elapsed = performance.now() - started; throw error; }
+  }));
+  try {
+    for (const result of processes) assert.equal(result.status, 'fulfilled', result.reason?.stack);
+    const records = (await readFile(events, 'utf8')).trim().split('\n').map(JSON.parse);
+    assert.equal(records.length, 36);
+    assert.equal(new Set(records.map(record => record.pid)).size, 6);
+    let owner = null;
+    for (const record of records) {
+      if (record.event === 'enter') { assert.equal(owner, null, 'no other process owns the critical section'); owner = record.pid; }
+      else { assert.equal(owner, record.pid, 'only the current owner releases'); owner = null; }
+    }
+    assert.equal(owner, null);
+  } catch (error) {
+    // All children have reached a terminal state. Read the failure scene only
+    // now; successful runs add no polling or filesystem work to the contention.
+    const inspectFile = async path => {
+      try { return {contents: await readFile(path, 'utf8')}; }
+      catch (failure) { return {code: failure.code, error: failure.message}; }
+    };
+    let currentLock;
+    try {
+      const entries = await readdir(lock);
+      const owners = {};
+      for (const entry of entries) owners[entry] = await inspectFile(join(lock, entry));
+      currentLock = {entries, owners};
+    } catch (failure) { currentLock = {code: failure.code, error: failure.message}; }
+    const children = processes.map(result => {
+      const value = result.status === 'fulfilled' ? result.value : result.reason;
+      return {status: result.status, code: result.status === 'fulfilled' ? 0 : value.code ?? null, signal: value.signal ?? null, killed: value.killed ?? false, stdout: value.stdout ?? '', stderr: value.stderr ?? '', elapsed: value.elapsed};
+    });
+    error.message += '\nSix-process failure diagnostics: ' + JSON.stringify({children, events: await inspectFile(events), lock: currentLock});
+    throw error;
   }
-  assert.equal(owner, null);
 });
 
 test('a skill result with an unsafe id cannot write outside the run directory', async t => {
