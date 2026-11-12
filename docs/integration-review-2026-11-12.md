@@ -22,6 +22,8 @@ This record reconciles the open core and website pull requests with the three op
 
 The website had no open standalone issues at this review. Core issues #7, #8 and #14 have different deliverables and are not duplicates; combining or closing them would hide unfulfilled acceptance criteria. This review does not delete historical branches, local worktrees or private evidence.
 
+Resource selection already supports local `.md`/`.json`/`.css` files and the website's indexed references, including complete selected snapshots and hashes. It does not import arbitrary remote user URLs: remote retrieval is restricted to the website. The broader source-support checkbox in #7 therefore stays open. An unchecked umbrella criterion can contain implemented work without having completed all its acceptance cases.
+
 The homepage-Hero profile is an explicitly adopted task constraint. Its evidence gates do not establish that the website's current main already ships WebGL motion or a compatible specialist producer. That actual motion implementation and matched real-case acceptance must be reviewed separately; an old reduced-motion browser smoke test cannot supply the required dynamic proof.
 
 ## Version and validation boundaries
