@@ -21,7 +21,7 @@ async function fixture(t,{dirty=false}={}){
   for(const phase of ['before','after']){
     if(phase==='after')await confirmFinding(run.directory,spec.findings[0].id,'supported','Fixture verification');
     await mkdir(join(run.directory,phase));await writeFile(join(run.directory,phase,'menu--mobile.png'),png);
-    await saveCapture(run.directory,phase,{states:[{stateId:'menu',configurationId:'mobile',reached:true,screenshot:`${phase}/menu--mobile.png`}],designSystemSource:{repositoryCommit:'a'.repeat(40),dirty,status:'capture-scan-match',snapshotHash:snapshotHash(snapshot)},verificationPreviewFingerprint:'preview',verificationOriginalHashes:{[`${phase}/menu--mobile.png`]:verificationHash(png)},verificationSource:{version:1,commit:'a'.repeat(40),dirty,contentHash:'b'.repeat(64),fileCount:1}});
+    await saveCapture(run.directory,phase,{states:[{stateId:'menu',configurationId:'mobile',width:1,height:1,start:{url:'http://localhost/menu'},finalUrl:'http://localhost/menu',actions:[],dom:{appearance:{theme:'dark'}},reached:true,screenshot:`${phase}/menu--mobile.png`}],designSystemSource:{repositoryCommit:'a'.repeat(40),dirty,status:'capture-scan-match',snapshotHash:snapshotHash(snapshot)},verificationPreviewFingerprint:'preview',verificationOriginalHashes:{[`${phase}/menu--mobile.png`]:verificationHash(png)},verificationSource:{version:1,commit:'a'.repeat(40),dirty,contentHash:'b'.repeat(64),fileCount:1}});
   }
   await saveEvaluation(run.directory,{status:'fixture'});
   return {run,root,binding:await verificationBinding(run.directory,(await loadRun(run.directory)).manifest)};
@@ -102,6 +102,20 @@ test('configured runner binds source, preview, checks and bounded images and ref
   await runVerificationChecks({...options,execute:async()=>{throw Error('test failure');}});
   assert.equal((await readVerificationEvidence(run.directory,(await loadRun(run.directory)).manifest)).records[0].status,'needs-evidence');
   assert.throws(()=>validateVerificationChecks([{...check,screenshots:['../private.png']}]));
+});
+test('specialist context receives the bound state identity, viewport and observed theme',async t=>{
+  const {run,binding}=await fixture(t);
+  const scoped={...check,args:['check.mjs','{url}','{out}','{context}']};
+  await saveOnboarding(run.directory,{config:{verificationChecks:[scoped]}});
+  let observed;
+  await runVerificationChecks({directory:run.directory,repo:'/fixture',url:'http://localhost',checks:[scoped],inspect:async()=>({commit:binding.source.repositoryCommit,dirty:false}),scan:async()=>snapshot,fingerprint:async()=> 'preview',fingerprintSource:async()=>binding.repository,execute:async(_command,args)=>{
+    observed=JSON.parse(await readFile(args[3]));
+    await writeFile(join(args[2],'result.json'),JSON.stringify({status:'pass'}));
+    await writeFile(join(args[2],'menu.png'),png);
+  }});
+  assert.equal(observed.binding.runId,run.manifest.id);
+  assert.deepEqual(observed.states,[{stateId:'menu',configurationId:'mobile',width:1,height:1,start:{url:'http://localhost/menu'},finalUrl:'http://localhost/menu',appearance:{theme:'dark'},actions:[]}]);
+  assert.equal(Object.hasOwn(observed.states[0],'dom'),false);
 });
 test('exported follow-up remains readable and a later evidence revision removes stale pass from UI',async t=>{
   const {exportedReviewState}=await import('../apps/designer/cowart/review-state.js');

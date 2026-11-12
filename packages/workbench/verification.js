@@ -6,6 +6,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {loadRun} from '../harness-core/store.js';
+import {captureEntries} from '../harness-core/capture-state.js';
 import {inspectRepository} from '../harness-core/onboard.js';
 import {sourceFiles} from '../skill-core/scan.js';
 import {snapshotHash} from '../skill-core/design-system.js';
@@ -30,7 +31,8 @@ export async function runVerificationChecks({directory,repo,url,checks,signal,ex
   for(const check of [...checks].sort((a,b)=>['normal-layout','normal-interaction','auxiliary'].indexOf(a.stage)-['normal-layout','normal-interaction','auxiliary'].indexOf(b.stage))){
     signal?.throwIfAborted();
     const out=join(directory,'verification-staging',randomUUID());await mkdir(out,{recursive:true});
-    const context=join(out,'context.json');await writeFile(context,JSON.stringify({binding,url,out},null,2));
+    const states=captureEntries(run.manifest.captures.after).filter(entry=>check.stateIds.includes(entry.stateId)).map(entry=>({stateId:entry.stateId,configurationId:entry.configurationId,width:entry.width,height:entry.height,start:entry.start,finalUrl:entry.finalUrl,appearance:entry.dom?.appearance,actions:entry.actions}));
+    const context=join(out,'context.json');await writeFile(context,JSON.stringify({binding,url,out,states},null,2));
     const values={url,out,context,harness:fileURLToPath(new URL('../../',import.meta.url))};
     const args=check.args.map(arg=>arg.replace(/\{(url|out|context|harness)\}/g,(_,key)=>values[key]));
     let error=null;
