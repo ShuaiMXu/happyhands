@@ -274,7 +274,13 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
       const outcomePath='reviews/'+name.replace(/\.json$/,'.outcomes.json');
       await writeJson(join(target,outcomePath),reviewOutcomes(original,run.manifest.judgment,run.manifest.experienceAudit?.goal));copied.push(outcomePath);
       if(review.evidenceBinding){
-        await readVisualReviewBinding(run,review,{checkContext:false,checkOriginals:false});
+        const bound=await readVisualReviewBinding(run,review,{checkContext:false,checkOriginals:false});
+        for(const image of bound.review.annotationArtifacts?.images||[]){
+          // Only bound, validated derived outputs join the export allow-list.
+          const bytes=await readVerificationFile(run.directory,image.path,40*1024*1024);
+          await mkdir(join(target,'reviews','annotations'),{recursive:true});
+          await writeFile(join(target,image.path),bytes);copied.push(image.path);
+        }
         const binding=review.evidenceBinding.path;await copyFile(join(run.directory,binding),join(target,binding));copied.push(binding);
       }
     }

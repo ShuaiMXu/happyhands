@@ -1,5 +1,8 @@
 // Interface copy only; imported evidence is retained verbatim.
 export const messages = {
+"原图问题标注": ["原图问题标注", "Annotated originals"],
+"打开标注图": ["打开标注图", "Open annotated image"],
+"标注图是原图的派生副本，不替代原始证据或人工判断。": ["标注图是原图的派生副本，不替代原始证据或人工判断。", "Annotated images are derived copies, not a replacement for original evidence or human judgment."],
 "查看原图": ["查看原图", "Open original"],
 "已查看的截图": ["已查看的截图", "Screenshots reviewed"],
 "搜索页面或设备": ["搜索页面或设备", "Search pages or devices"],
