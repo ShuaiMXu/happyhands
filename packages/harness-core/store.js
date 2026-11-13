@@ -1,3 +1,4 @@
+import {experienceFor,experienceRequired,EXPERIENCE_POLICY,EXPERIENCE_INSTRUCTIONS} from './experience-orchestration.js';
 import {collectExperienceCase,admitExperienceCase,experienceCaseBrief} from './experience-cases.js';
 import {stageRemediation,readRemediation} from './remediation.js';
 import {isReportableFinding} from './finding-admission.js';
@@ -23,7 +24,7 @@ import {assertReviewStorage,bindVisualReview,readVisualReviewBinding} from './vi
 const MANIFEST = 'run.json';
 const SPEC = 'experience.json';
 
-async function writeJson(path, value) {
+export async function writeJson(path, value) {
   // Unique per write, not per process: two concurrent writers inside one
   // process (library callers, tests) would otherwise share a temp name and
   // consume each other's file at the rename.
@@ -198,8 +199,10 @@ async function withLedgerLock(directory, name, operation, {maxAttempts, interval
   }
 }
 
-export async function createRun({ spec, url, outputRoot, id = randomUUID().slice(0, 8), mode = 'review', entry = null }) {
+export async function createRun({ spec, url, outputRoot, id = randomUUID().slice(0, 8), mode = 'review', entry = null, experiencePolicy = null }) {
   assertExperienceSpec(spec);
+  if(experiencePolicy!==null&&experiencePolicy!==EXPERIENCE_POLICY)throw Error('Unsupported experience policy.');
+  if(experiencePolicy&&mode!=='review')throw Error('Experience policy requires an existing review baseline.');
   if (!['review', 'bootstrap'].includes(mode)) throw new Error('Run mode must be review or bootstrap.');
   const parsed = url ? new URL(url) : null;
   if (parsed && !['http:', 'https:'].includes(parsed.protocol)) throw new Error('Capture URL must use http or https.');
@@ -209,6 +212,7 @@ export async function createRun({ spec, url, outputRoot, id = randomUUID().slice
   await mkdir(directory, { recursive: false });
   const manifest = {
     version: '0.1',
+    ...(experiencePolicy?{experiencePolicy}:{}),
     id,
     createdAt: new Date().toISOString(),
     limits: { ...DEFAULT_LIMITS },
@@ -270,6 +274,8 @@ export async function saveContinuation(directory, {onboarding, limits, reference
 export async function saveDiagnosis(directory, diagnosis) {
   return withRunLock(directory, async () => {
     const run = await loadRun(directory);
+    if(experienceRequired(run)&&run.manifest.designDecision)throw Error('Diagnosis is frozen after design decision; continue in a fresh run.');
+    await experienceFor(run);
     const memory=await projectMemoryForReview(run);
     await verifyBaselineDiagnosis(run,diagnosis);
     const report={...diagnosis};
@@ -294,6 +300,7 @@ export async function loadRun(directory) {
   const root = resolve(directory);
   const manifest = JSON.parse(await readFile(join(root, MANIFEST), 'utf8'));
   const spec = assertExperienceSpec(JSON.parse(await readFile(join(root, SPEC), 'utf8')));
+  if(manifest.experiencePolicy!==undefined&&manifest.experiencePolicy!==EXPERIENCE_POLICY)throw Error('Unsupported experience policy.');
   if (manifest.version !== '0.1') throw new Error('Unsupported run version.');
   if (!Array.isArray(manifest.skills)) manifest.skills = [];
   if (!Array.isArray(manifest.visualReviews)) manifest.visualReviews = [];
@@ -500,6 +507,7 @@ export async function saveReviewAttachment(directory, { screenshot, fingerprint,
 export async function saveVisualReview(directory, review, { screenshotHashes = {} } = {}) {
   return withRunLock(directory, async () => {
     const run = await loadRun(directory);
+    if(review.skillId==='visual-qa-evaluator')await experienceFor(run,'decision');
     const verification=await readVerificationEvidence(directory,run.manifest);
     assertVisualReview(review, {...run.manifest,verificationRecords:verification.records});
     const expectedHashes={...screenshotHashes};
@@ -588,6 +596,8 @@ export async function savePlan(directory, findingId) {
     const run = await loadRun(directory);
     if(run.manifest.patternAdmissions?.length&&!run.manifest.foundationApproval)throw Error('Review staged patterns and approve a Foundation version before planning.');
     if(run.manifest.executionContext)throw Error('The execution context is locked. Start a new review to change its plan.');
+    const experience=await experienceFor(run,'decision');
+    const experienceBrief=experience?'\n\n## Task and design decision (operator reasoning to challenge, not user authority)\nRead applied complete method paths relative to this immutable Run: '+run.directory+'\n'+EXPERIENCE_INSTRUCTIONS+'\n'+JSON.stringify(experience)+'\n':'';
     const selectedDesignSources = await designSourceBrief(run);
     const bootstrap = run.manifest.mode === 'bootstrap';
     if (run.manifest.captures.after) throw new Error(`Cannot revise the plan after the ${bootstrap ? 'first render' : 'comparison'} capture.`);
@@ -628,10 +638,11 @@ export async function savePlan(directory, findingId) {
     const remediation=await stageRemediation(run,findingId);
     const {continuationBrief}=await import('./continue-review.js');
     const predecessorContext=await continuationBrief(run);
-    const brief = codexBrief(run.spec, findingId) + confirmedScope + componentReuseBrief(reuse) + designSystemBrief(designSystem) + (run.manifest.foundationApproval ? `\n\nApproved Foundation version: ${run.manifest.foundationApproval.foundationVersion}\nApproval artifact: ${run.manifest.foundationApproval.path}\n` : '')+projectMemoryBrief(memory)+captureScope+requestContext+await experienceCaseBrief(run)+predecessorContext+selectedDesignSources;
+    const brief = codexBrief(run.spec, findingId) + confirmedScope + componentReuseBrief(reuse) + designSystemBrief(designSystem) + (run.manifest.foundationApproval ? `\n\nApproved Foundation version: ${run.manifest.foundationApproval.foundationVersion}\nApproval artifact: ${run.manifest.foundationApproval.path}\n` : '')+projectMemoryBrief(memory)+captureScope+requestContext+await experienceCaseBrief(run)+predecessorContext+experienceBrief+selectedDesignSources;
     await writeFile(join(run.directory, 'codex-brief.md'), brief, 'utf8');
     run.manifest.findingId = findingId;
     run.manifest.plan = { path: 'codex-brief.md', kind: 'fix', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), confirmationHash: projectMemoryDigest(run.manifest.confirmation), componentReuse: {path: reusePath, findingId, status: reuse.status}, createdAt: new Date().toISOString() };
+    if(experience)run.manifest.plan.experience={auditHash:experience.auditHash,decisionHash:experience.decisionHash};
     if(run.manifest.repair)run.manifest.plan.repairRequestHash=run.manifest.repair.hash;
     if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(designSourceRefs(run));
     if(incrementalCapture)run.manifest.plan.incrementalCapturePlan=run.manifest.onboarding.incrementalCapturePlan;
@@ -672,6 +683,7 @@ export async function saveRunMemoryException(directory,input) {
 }
 
 export async function verifiedExecutionBrief(run) {
+  if(experienceRequired(run)){const experience=await experienceFor(run,'decision');if(JSON.stringify(run.manifest.plan.experience)!==JSON.stringify({auditHash:experience.auditHash,decisionHash:experience.decisionHash}))throw Error('Execution design decision changed.');}
   if(run.manifest.repair){await repairRequestContext(run);if(run.manifest.plan?.repairRequestHash!==run.manifest.repair.hash)throw Error('Repair plan no longer matches its request.');}
   const refs=designSourceRefs(run);
   if((refs.length||run.manifest.plan.designSourcesDigest)&&run.manifest.plan.designSourcesDigest!==designSourcesDigest(refs))throw Error('Selected design sources changed after planning. Regenerate and confirm the plan.');
@@ -809,6 +821,7 @@ export async function saveJudgment(directory, decision, reason = '') {
     if (!visualQa) throw new Error('Independent Visual QA is required before human judgment.');
     const block = decision === 'accept' ? executionBlock(run.manifest) : null;
     if (block) throw new Error(block.reason);
+    if(decision==='accept')await experienceFor(run,'decision');
     if(decision==='accept')await readVisualReviewBinding(run,visualQa);
     if(decision==='accept')await readVerificationEvidence(directory,run.manifest);
     if(decision==='accept')await readRemediation(run,{execution:true});

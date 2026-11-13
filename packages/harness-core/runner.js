@@ -1,3 +1,4 @@
+import {experienceGuidanceProfile} from './experience-orchestration.js';
 import {verifyExperienceCaseBrief} from './experience-cases.js';
 import {readRemediation,collectRemediation,executionMethodPrompt,RESULT_FILE} from './remediation.js';
 import {fileURLToPath} from 'node:url';
@@ -154,7 +155,7 @@ export async function executeWithAgent({ directory, repo, agent, commandOverride
   }
   const memoryContext=await verifyProjectMemory(run,root);
   const ojo = await stageOjoGuidance(run.directory, 'implementation');
-  const design = await stageDesignGuidance(run.directory,'implementation',run.manifest.onboarding?.config?.designGuidance);
+  const design = await stageDesignGuidance(run.directory,'implementation',experienceGuidanceProfile(run));
   const branch = `pd/${run.manifest.id}`;
   const worktree = join(run.directory, 'worktree');
   await beginExecutionContext(run.directory,root,projectMemoryDigest(run.manifest.plan));

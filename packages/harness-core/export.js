@@ -19,9 +19,9 @@ const INDEX = 'index.json';
 
 // Public display copies are not executable; preserve the original local brief and hash.
 export function publicExecutionBrief(brief){
- const starts=['\n\nExperience-case digest: ','\n\nHistorical predecessor ('].map(marker=>brief.indexOf(marker)).filter(index=>index>=0);
+ const starts=['\n\n## Task and design decision (operator reasoning to challenge, not user authority)', '\n\nExperience-case digest: ','\n\nHistorical predecessor ('].map(marker=>brief.indexOf(marker)).filter(index=>index>=0);
  const start=starts.length?Math.min(...starts):-1;
- return start<0?brief:brief.slice(0,start)+'\n\nHistorical case context omitted from this public display copy. Execute only from the original local run.\n';
+ return start<0?brief:brief.slice(0,start)+'\n\nPrivate planning or historical context omitted from this public display copy. Execute only from the original local run.\n';
 }
 
 // A run directory also holds a full Git worktree and the raw Codex event log.

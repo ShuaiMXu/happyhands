@@ -81,8 +81,10 @@ ${finding.title}
 ## Observed evidence
 ${evidence.map(item => `- [${item.id}] ${item.state}: ${item.observation} (${item.origin})`).join('\n')}
 
-## Design intent
+## Candidate remedy to investigate (not a user requirement)
 ${finding.proposal}
+
+The project goal and this proposal may contain operator assumptions. Preserve explicit user constraints, but challenge the proposed form against the actual task. Do not equate structured information with extra labels, cards or fields. Missing implementation of this proposal is not by itself a defect.
 
 ## Instructions
 1. Inspect the actual app and confirm or correct this authored diagnosis before changing code.
