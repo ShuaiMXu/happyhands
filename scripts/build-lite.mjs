@@ -22,7 +22,7 @@ export async function buildLite(output){
   await copy(path);
   if(path.startsWith(skillPrefix))await copy(path,path.slice(skillPrefix.length));
  }
- const guides=['docs/harness.md','docs/lightweight.md','docs/finding-admission-policy.md','docs/dsh.md','docs/dsh.zh-CN.md'];
+ const guides=['docs/experience-orchestration.md','docs/harness.md','docs/lightweight.md','docs/finding-admission-policy.md','docs/dsh.md','docs/dsh.zh-CN.md'];
  for(const path of ['scripts/harness.mjs','LICENSE','THIRD_PARTY_NOTICES.md'])await copy(path);
  for(const path of guides){
   const text=await readFile(join(sourceRoot,path),'utf8');

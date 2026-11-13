@@ -195,7 +195,7 @@ test('the public project config records environment names without their values',
 test('project configuration validates and retains explicit Taste/Impeccable preferences without assuming v2 has dials',async t=>{
  const root=await mkdtemp(join(tmpdir(),'guidance-project-'));t.after(()=>rm(root,{recursive:true,force:true}));const path=join(root,'project.json');
  const config={version:'0.1',spec:'experience.json',repo:root,url:'http://127.0.0.1:4100',designGuidance:{taste:'dials-v1',intent:'animate',dials:{DESIGN_VARIANCE:4,MOTION_INTENSITY:2,VISUAL_DENSITY:7}}};await writeFile(path,JSON.stringify(config));const loaded=await loadProjectConfig(path);assert.deepEqual(loaded.designGuidance,config.designGuidance);assert.deepEqual(publicProjectConfig(loaded).designGuidance,config.designGuidance);
- await writeFile(path,JSON.stringify({...config,designGuidance:{taste:'public-page',dials:{DESIGN_VARIANCE:4}}}));await assert.rejects(loadProjectConfig(path),/v2 has no dials/);
+ await writeFile(path,JSON.stringify({...config,designGuidance:{taste:'public-page',dials:{DESIGN_VARIANCE:4}}}));await assert.rejects(loadProjectConfig(path),/web-taste has no dials/);
 });
 
  test('verification scope is rejected before review when its states are absent from the plan', async t => {

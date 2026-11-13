@@ -1,0 +1,17 @@
+web-taste
+=========
+
+This skill is a renamed local copy of tasteskill (upstream skill name:
+design-taste-frontend) version 2.5.1, commit f6b7657.
+
+Upstream: https://github.com/Leonxlnx/taste-skill
+Copyright (c) 2026 Leonxlnx, released under the MIT License (see LICENSE).
+
+Local changes: the skill folder and frontmatter name (web-taste), the
+description wording, prose that referred to the upstream product name,
+and the hook/path references that carried the old folder name. No
+functional or design-rule changes.
+
+Updating from upstream: copy skills/taste-skill/* from the repository
+above, then re-apply the name, description and path substitutions listed
+here.

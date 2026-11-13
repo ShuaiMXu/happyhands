@@ -239,7 +239,7 @@ test('an agent that ran and failed keeps its worktree and records the execution'
   assert.equal(manifest.execution.exitCode, 1);
   assert.equal(manifest.execution.designGuidance.mode,'implementation');
   assert.equal(manifest.execution.designGuidancePacks.mode,'implementation');
-  assert.deepEqual(manifest.execution.designGuidancePacks.packs.map(pack=>pack.id),['taste','impeccable','taste-v2']);
+  assert.deepEqual(manifest.execution.designGuidancePacks.packs.map(pack=>pack.id),['impeccable','web-taste']);
   assert.equal(manifest.execution.designGuidanceIntegrity.status,'verified');
   const guidance=manifest.execution.designGuidance;
   const original=(await readFile(new URL('../skills/vendor/ojo/upstream/SKILL.md',import.meta.url),'utf8')).replaceAll('\r\n','\n');

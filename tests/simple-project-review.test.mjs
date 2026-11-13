@@ -1,3 +1,4 @@
+import {waitForJob} from './helpers/wait-for-job.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm,access} from 'node:fs/promises';
@@ -12,7 +13,7 @@ import {resolveCanvasTarget} from '../packages/workbench/cowart-storage.js';
 import {autoExecuteDirection} from '../packages/workbench/direction-execution.js';
 const command=promisify(execFile);
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
-async function terminal(service,job){for(let n=0;n<400;n++){const current=await service.jobs.get(job.id);if(!['queued','running','cancelling'].includes(current.status))return current;await new Promise(resolve=>setTimeout(resolve,10));}throw Error('Job timeout');}
+const terminal=(service,job)=>waitForJob(service,job.id);
 async function fixture(t,{failed=false}={}){
  const root=await mkdtemp(join(tmpdir(),'simple-review-')),repo=join(root,'project');await mkdir(repo);
  t.after(()=>rm(root,{recursive:true,force:true}));

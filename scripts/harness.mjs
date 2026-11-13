@@ -25,7 +25,10 @@ import { extractFoundationInventory } from '../packages/skill-core/foundation-in
 import {captureWithDesignSystem} from '../packages/harness-core/design-system.js';
 import {saveRepairScope} from '../packages/harness-core/store.js';
 
+import {EXPERIENCE_POLICY,experienceContext,saveExperienceRecord} from '../packages/harness-core/experience-orchestration.js';
+
 const commandOptions = new Map([
+  ['experience', 'run phase input surface'],
   ['init', 'spec url mode out'],
   ['start', 'config out'],
   ['continue', 'run config reason out'],
@@ -138,6 +141,8 @@ pnpm harness foundation-approve --run DIRECTORY --input FILE
 pnpm harness capture --run DIRECTORY --phase before|after [--url URL] [--plan FILE] [--repo DIRECTORY] [--bind-evidence true|false] [--extract-design-system true|false] [--browser chrome|msedge]
 pnpm harness skills
 pnpm harness agents
+pnpm harness experience --run DIRECTORY --phase context [--surface public-page|app-screen]
+pnpm harness experience --run DIRECTORY --phase audit|decision --input FILE
 pnpm harness model-diagnose --run DIRECTORY [--model ID] [--language zh|en]
 pnpm harness model-review --run DIRECTORY [--model ID] [--language zh|en]
 pnpm harness repair-scope --run DIRECTORY (--finding ID | --all true)
@@ -191,13 +196,19 @@ finding, and evaluate reports deterministic render checks without claiming an im
     console.log(await continueReview({directory:required(options,'run'),configPath:required(options,'config'),reason:required(options,'reason'),outputRoot:runOutputRoot(options)}));
     return;
   }
+  if(command==='experience'){
+    const directory=required(options,'run'),phase=required(options,'phase');
+    if(phase==='context'){if(options.input)throw Error('Context does not take --input.');console.log(JSON.stringify(await experienceContext(directory,options.surface||'app-screen'),null,2));}
+    else{if(options.surface)throw Error('Surface belongs in the audit, not a command override.');console.log(JSON.stringify(await saveExperienceRecord(directory,phase,JSON.parse(await readFile(required(options,'input'),'utf8'))),null,2));}
+    return;
+  }
   if(command==='start'){
     const config=await loadProjectConfig(required(options,'config'));
     if(config.mode!=='review'||!config.url)throw Error('Lightweight start requires an existing preview and explicit mode review; use onboard for bootstrap.');
     const repository=await inspectRepository(config.repo);await waitForPreview(config.url,{timeoutMs:config.timeoutMs ?? 10000});
     const spec=JSON.parse(await readFile(config.spec,'utf8'));
     const outputRoot=runOutputRoot(options);await mkdir(outputRoot,{recursive:true});
-    const run=await createRun({spec,url:config.url,outputRoot,mode:'review'});
+    const run=await createRun({spec,url:config.url,outputRoot,mode:'review',experiencePolicy:EXPERIENCE_POLICY});
     await saveOnboarding(run.directory,{status:'ready',mode:'review',config:publicProjectConfig(config),repository,preview:{url:config.url,managed:false},viewports:DEFAULT_VIEWPORTS,completedAt:new Date().toISOString()});
     console.log(run.directory);return;
   }

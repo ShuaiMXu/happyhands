@@ -301,3 +301,8 @@ The operational Skill-to-stage mapping and current-page-first execution order ar
 ## Continuing the same task
 
 `pnpm harness continue --run PREVIOUS --config NEXT_PROJECT --reason TEXT` creates a fresh review from an explicitly chosen clean checkout and running preview. The config retains the parent project and task. Linked Git worktrees of the same repository are accepted. The child retains a hashed predecessor summary and selected reference texts, increments the maximum three-attempt budget and requires fresh capture, diagnosis, confirmation, implementation and review. Repeating the same continuation is idempotent. Local predecessor artifacts are omitted from public exports. See [the lightweight guide](lightweight.md#continue-a-repair) for the source handoff and limits.
+
+
+## Task-specific experience orchestration
+
+New lightweight `start` and `continue` reviews use the [audit → design decision → independent experience review](experience-orchestration.md) gates. Old low-level and workbench records are not retroactively assessed; submit an audit before diagnosis or continue in a new run. Page changes and human acceptance remain separately authorized.

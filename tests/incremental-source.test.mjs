@@ -1,3 +1,4 @@
+import {waitForJob} from './helpers/wait-for-job.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';
@@ -83,7 +84,7 @@ test('onboarding captures only declared affected states and later changes cannot
   const requested=[];let driftAtPreview=false;
   const service=createWorkbench(root,{generate:async()=>{throw Error('Synthetic test: no external model process');},waitForPreview:async()=>{if(driftAtPreview)await writeFile(join(repo,'node_modules','preset','tsconfig.json'),'{"compilerOptions":{"strict":true}}');return {status:200};},captureBrowserPlan:async options=>{requested.push(options.plan);return plannedFixtureCapture(options);}});t.after(()=>service.close());
   const job=await service.onboard({configPath,originRunId:parent.manifest.id});let terminal;
-  for(let attempt=0;attempt<500;attempt++){terminal=await service.jobs.get(job.id);if(!['queued','running'].includes(terminal.status))break;await new Promise(resolve=>setTimeout(resolve,30));}
+  terminal=await waitForJob(service,job.id);
   assert.equal(terminal.status,'succeeded',terminal.error);
   assert.deepEqual(requested[0].states.map(state=>state.id),['home']);assert.equal(requested[0].configurations.length,2);
   let next=await loadRun(join(root,'.harness','runs',terminal.result.runId));const record=await readIncrementalCapturePlan(next,plan);
@@ -98,11 +99,11 @@ test('onboarding captures only declared affected states and later changes cannot
   await assert.rejects(readFile(join(next.directory,'worktree','.git')),error=>error.code==='ENOENT');assert.equal((await loadRun(next.directory)).manifest.execution,null);
   await writeFile(installedConfig,'{}');
   const fullJob=await service.onboard({configPath,originRunId:parent.manifest.id,fullReview:true});let fullTerminal;
-  for(let attempt=0;attempt<500;attempt++){fullTerminal=await service.jobs.get(fullJob.id);if(!['queued','running'].includes(fullTerminal.status))break;await new Promise(resolve=>setTimeout(resolve,30));}
+  fullTerminal=await waitForJob(service,fullJob.id);
   assert.equal(fullTerminal.status,'succeeded',fullTerminal.error);assert.deepEqual(requested[1].states.map(state=>state.id),['home','about']);
   assert.equal((await loadRun(join(root,'.harness','runs',fullTerminal.result.runId))).manifest.onboarding.fullReviewRequested,true);
   driftAtPreview=true;const driftJob=await service.onboard({configPath,originRunId:parent.manifest.id});let driftTerminal;
-  for(let attempt=0;attempt<500;attempt++){driftTerminal=await service.jobs.get(driftJob.id);if(!['queued','running'].includes(driftTerminal.status))break;await new Promise(resolve=>setTimeout(resolve,30));}
+  driftTerminal=await waitForJob(service,driftJob.id);
   assert.equal(driftTerminal.status,'failed');assert.match(driftTerminal.error,/Installed config inputs changed after incremental planning/);
   driftAtPreview=false;await writeFile(installedConfig,'{}');
   await writeFile(join(repo,'src','components','Button.js'),'export const Button = "Correction";');await assertIncrementalRecapture(next,repo,record);
@@ -173,7 +174,7 @@ test('workbench onboarding records the current verified delta and binds it to th
   let captures=0;
   const service=createWorkbench(root,{generate:async()=>{throw Error('Synthetic test: no external model process');},waitForPreview:async()=>({status:200}),captureBrowser:async({directory,phase})=>{captures++;await mkdir(join(directory,phase),{recursive:true});await writeFile(join(directory,phase,'desktop.png'),png);return {viewports:{desktop:{screenshot:`${phase}/desktop.png`,reached:true,dom:{h1:['Fixture'],actions:[],horizontalOverflow:false}}}};}});t.after(()=>service.close());
   const job=await service.onboard({configPath,originRunId:parent.manifest.id});let terminal;
-  for(let attempt=0;attempt<400;attempt++){terminal=await service.jobs.get(job.id);if(!['queued','running'].includes(terminal.status))break;await new Promise(resolve=>setTimeout(resolve,30));}
+  terminal=await waitForJob(service,job.id);
   assert.equal(terminal.status,'succeeded',terminal.error);
   const next=await loadRun(join(root,'.harness','runs',terminal.result.runId)),plan=next.manifest.onboarding.incrementalReview;
   assert.equal(plan.mode,'incremental');assert.deepEqual(plan.changedFiles,['src/components/Button.js']);

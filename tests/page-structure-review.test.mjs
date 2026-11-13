@@ -29,3 +29,18 @@ test('aggregation preserves worst status and prefixes annotation finding links',
  const a=review(),b=review();b.structureChecks[0].status='needs-evidence';a.annotations=[{id:'A1',findingId:'F1'}];b.annotations=[{id:'A1',findingId:'F1'}];
  const out=aggregateStructureReviews([a],b);assert.equal(out.structureChecks[0].status,'needs-evidence');assert.deepEqual(out.annotations.map(a=>[a.id,a.findingId]),[['B1_A1','B1_F1'],['X_A1','X_F1']]);
 });
+
+test('experience and page-structure gates both remain active after integration',async()=>{
+ const {methodStateEntries}=await import('../packages/harness-core/remediation-validation.js');
+ const r=review();r.skillId='visual-qa-evaluator';
+ const m=structuredClone(manifest);m.experiencePolicy='task-design-review@1';m.captures.after={viewports:{desktop:{screenshot:'after/desktop.png'}}};
+ m.plan={remediation:{hash:'a'.repeat(64),ruleIds:['UX-page-structure']}};
+ r.screenshotRefs.push('after/desktop.png');r.remediationHash=m.plan.remediation.hash;
+ r.methodChecks=methodStateEntries(m).map(s=>({ruleId:'UX-page-structure',stateKey:s.key,status:'pass',reason:'Synthetic integration fixture',screenshotRefs:[s.screenshot]}));
+ r.structureChecks.push(...r.structureChecks.map(row=>({...row,screenshot:'after/desktop.png'})));
+ r.experienceAssessments=['task','hierarchy','interaction','design-system','regression'].map(dimension=>({dimension,verdict:'pass',reason:'Synthetic integration fixture',screenshotRefs:[...r.screenshotRefs]}));
+ assert.doesNotThrow(()=>assertVisualReview(r,m));
+ r.structureChecks.pop();assert.throws(()=>assertVisualReview(r,m),/Every original/);
+ r.structureChecks.push({...r.structureChecks[0],screenshot:'after/desktop.png',dimension:'responsive'});
+ r.experienceAssessments[1].verdict='needs-evidence';assert.throws(()=>assertVisualReview(r,m),/cannot override/);
+});

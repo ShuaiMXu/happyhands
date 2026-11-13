@@ -1,3 +1,4 @@
+import {EXPERIENCE_POLICY} from './experience-orchestration.js';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {readFile,writeFile,mkdir,realpath,rename,unlink} from 'node:fs/promises';
@@ -63,7 +64,7 @@ export async function continueReview({directory,configPath,outputRoot,reason}){
     if(Buffer.byteLength(raw)>2*1024*1024)throw Error('Predecessor summary exceeds two MiB. Retain the original review and narrow the next task.');
     const spec={...configuredSpec,evidence:[],findings:[],review:{status:'not-started',before:'Fresh capture required',after:'',judgment:'pending',reason:''}};
     await mkdir(outputRoot,{recursive:true});
-    const next=await createRun({spec,url:config.url,outputRoot});
+    const next=await createRun({spec,url:config.url,outputRoot,experiencePolicy:EXPERIENCE_POLICY});
     const reference={path:'continuation-parent.json',sha256:hash(raw),parentRunId:parent.manifest.id,rootRunId:parent.manifest.onboarding?.continuation?.rootRunId||parent.manifest.id};
     try{
       await writeFile(join(next.directory,reference.path),raw,{flag:'wx'});

@@ -106,10 +106,10 @@ test('independent QA receives the shared rubric, foundation and reproducible inp
     assert.match(options.input,/Normal-first visual review/);
     assert.equal(context.ojoGuidance.mode,'review');
     assert.equal(context.designGuidancePacks.mode,'review');
-    assert.deepEqual(context.designGuidancePacks.packs.map(pack=>pack.id),['taste','impeccable','taste-v2']);
-    const taste=context.designGuidancePacks.packs.find(pack=>pack.id==='taste');
-    const originalTaste=(await readFile(new URL('../skills/vendor/taste/upstream/skills/redesign-skill/SKILL.md',import.meta.url),'utf8')).replaceAll('\r\n','\n');
-    assert.equal(await readFile(join(cwd,context.designGuidancePacks.reference,'taste/upstream/skills/redesign-skill/SKILL.md'),'utf8'),originalTaste);
+    assert.deepEqual(context.designGuidancePacks.packs.map(pack=>pack.id),['impeccable','web-taste']);
+    const taste=context.designGuidancePacks.packs.find(pack=>pack.id==='web-taste');
+    const originalTaste=(await readFile(new URL('../skills/vendor/web-taste/upstream/SKILL.md',import.meta.url),'utf8')).replaceAll('\r\n','\n');
+    assert.equal(await readFile(join(cwd,context.designGuidancePacks.reference,'web-taste/upstream/SKILL.md'),'utf8'),originalTaste);
     assert.ok(options.input.includes(taste.revision));
     assert.match(options.input,/not auto-executed/);
     const originalOjo=(await readFile(new URL('../skills/vendor/ojo/upstream/SKILL.md',import.meta.url),'utf8')).replaceAll('\r\n','\n');
