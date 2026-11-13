@@ -1,10 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assertPageStructureReview,STRUCTURE_DIMENSIONS} from '../packages/harness-core/page-structure-review.js';
+import {assertPageStructureReview,pageStructurePrompt,STRUCTURE_DIMENSIONS} from '../packages/harness-core/page-structure-review.js';
 import {assertVisualReview} from '../packages/harness-core/visual-review.js';
 const manifest = {captures:{before:{viewports:{desktop:{screenshot:'before/desktop.png'}}}}};
 function review() { return {schemaVersion:'0.1',skillId:'visual-hierarchy-reviewer',reviewer:{type:'model',name:'test',version:'1'},reviewedAt:'2026-11-13',verdict:'pass',rationale:'Reviewed original evidence.',limitations:['Synthetic test only.'],screenshotRefs:['before/desktop.png'],findings:[],structureChecks:STRUCTURE_DIMENSIONS.map(d=>({screenshot:'before/desktop.png',dimension:d,status:'pass',observed:'Measured current rendering.',expected:'Preserve adopted contract.',basis:'Project documented contract.',method:'Original screenshot and DOM.'})),annotations:[]}; }
 test('structured review passes schema and runtime validation',()=>assertVisualReview(review(),manifest));
+
+test('prompt separates the exact capture matrix from supplementary verification originals',()=>{
+  const m=structuredClone(manifest);m.plan={remediation:{ruleIds:['UX-page-structure']}};
+  m.captures.after={viewports:{desktop:{screenshot:'after/desktop.png',interactionParts:[{screenshot:'after/menu.png'}]}}};
+  m.verificationEvidence={images:[{path:'verification/fixture/image.png'}]};
+  const prompt=pageStructurePrompt(m);
+  const matrix=JSON.parse(prompt.match(/capture-only matrix: (\{.*?\})\./)[1]);
+  assert.deepEqual(matrix.screenshots,['before/desktop.png','after/desktop.png','after/menu.png']);
+  assert.deepEqual(matrix.dimensions,STRUCTURE_DIMENSIONS);
+  assert.match(prompt,/must NOT add structureChecks rows/);
+  const r=review();r.screenshotRefs.push('after/desktop.png','after/menu.png','verification/fixture/image.png');
+  r.structureChecks=matrix.screenshots.flatMap(screenshot=>STRUCTURE_DIMENSIONS.map(dimension=>({...r.structureChecks[0],screenshot,dimension})));
+  assertPageStructureReview(r,m);
+  r.structureChecks.push({...r.structureChecks[0],screenshot:'verification/fixture/image.png'});
+  assert.throws(()=>assertPageStructureReview(r,m),/unknown/);
+});
 test('missing dimensions and duplicate contexts are rejected',()=>{const r=review();r.structureChecks.pop();assert.throws(()=>assertPageStructureReview(r,manifest),/Every original/);r.structureChecks.push(r.structureChecks[0]);assert.throws(()=>assertPageStructureReview(r,manifest),/duplicate/);});
 test('unknown evidence and unresolved checks cannot pass',()=>{const r=review();r.structureChecks[0].screenshot='invented.png';assert.throws(()=>assertPageStructureReview(r,manifest),/unknown/);r.structureChecks[0].screenshot='before/desktop.png';r.structureChecks[0].status='needs-evidence';assert.throws(()=>assertPageStructureReview(r,manifest),/prevents/);r.verdict='needs-evidence';assertPageStructureReview(r,manifest);});
 test('findings require valid original-image boxes',()=>{const r=review();r.verdict='fail';r.findings=[{id:'F1',screenshotRefs:['before/desktop.png']}];assert.throws(()=>assertPageStructureReview(r,manifest),/annotation/);r.annotations=[{id:'A1',findingId:'F1',screenshot:'before/desktop.png',label:'Small action target',box:{x:.1,y:.2,width:.3,height:.4}}];assertPageStructureReview(r,manifest);r.annotations[0].box.width=1;assert.throws(()=>assertPageStructureReview(r,manifest),/coordinates/);});

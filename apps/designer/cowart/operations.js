@@ -1,4 +1,6 @@
 import {createControl} from '../../../packages/ui/controls.js';
+import {designIntentOptions} from '../../../packages/skill-core/design-intents.js';
+import {editedDesignProfile} from './design-profile.js';
 import { createReviewForm } from './review-form.js';
 import {judgmentWithdrawalView} from '../judgment-withdrawal-view.js';
 import { t, getLanguage } from '../i18n.js';
@@ -72,13 +74,15 @@ export function openOperations(run, selection = {}) {
   const note=createControl('p');note.textContent=t('参考方法用于诊断和自动修复，最终结果由你审阅。');designSettings.append(note);
   function designSelect(title,values){const select=createControl('select');for(const [value,text] of values){const option=createControl('option');option.value=value;option.textContent=t(text);select.append(option);}designSettings.append(label(title,select));return select;}
   const designTaste=designSelect('Taste 使用方式',[['existing','保留现有产品风格'],['app-screen','应用界面与报告'],['public-page','公开网站艺术方向'],['dials-v1','布局、动效与密度参数']]);
-  const designIntent=designSelect('本轮设计重点',[['polish','细节打磨'],['layout','布局与层级'],['animate','动效与反馈']]);
+  const designIntent=designSelect('本轮设计重点',designIntentOptions);
   const dialFields={},dialGroup=createControl('div');designSettings.append(dialGroup);
   for(const [key,title] of [['DESIGN_VARIANCE','布局变化（1–10）'],['MOTION_INTENSITY','动效强度（1–10）'],['VISUAL_DENSITY','页面密度（1–10）']]){const input=createControl('input');input.type='number';input.min='1';input.max='10';input.placeholder=t('留空保留原技能默认值');dialFields[key]=input;dialGroup.append(label(title,input));}
   const initialDesign=run?.manifest.onboarding?.config?.designGuidance;
+  // Explicit legacy profiles remain selectable when editing an existing run.
+  if(initialDesign?.taste==='legacy-v2'){const option=createControl('option');option.value='legacy-v2';option.textContent=t('旧版 Taste v2（兼容）');designTaste.append(option);}
   if(initialDesign){designTaste.value=initialDesign.taste;designIntent.value=initialDesign.intent;for(const [key,input] of Object.entries(dialFields))input.value=initialDesign.dials?.[key]??'';}
   designTaste.onchange=()=>{dialGroup.hidden=designTaste.value!=='dials-v1';};designTaste.onchange();
-  const designProfile=()=>({taste:designTaste.value,intent:designIntent.value,...(designTaste.value==='dials-v1'?{dials:Object.fromEntries(Object.entries(dialFields).filter(([,input])=>input.value!=='').map(([key,input])=>[key,Number(input.value)]))}:{})});
+  const designProfile=()=>editedDesignProfile(initialDesign,designTaste.value,designIntent.value,Object.fromEntries(Object.entries(dialFields).filter(([,input])=>input.value!=='').map(([key,input])=>[key,Number(input.value)])));
   const project=selection.project||run?.spec.project;
   if(project){task.value=project.task||'';name.value=project.name||'';goal.value=project.goal||'';audience.value=project.audience||'';}
   let detectedRepository='',manualPreview=false;

@@ -147,7 +147,7 @@ body.workspace-page {
 #fullscreen-shell:not(.cowart-mode) .pd-sidebar { border-radius: var(--ff-radius-panel) 0 0 var(--ff-radius-panel); }
 #fullscreen-shell:not(.cowart-mode) .pd-inspector { border-radius: 0 var(--ff-radius-panel) var(--ff-radius-panel) 0; }
 
-.workspace-page :is(.wb-button, .studio-button, .button, .page-review button:not([data-slot=checkbox]), .wb-dialog button:not([data-slot=checkbox])) {
+.workspace-page :is(.wb-button, .studio-button, .button, .page-review button:not([data-slot=checkbox],[data-slot=select-trigger]), .wb-dialog button:not([data-slot=checkbox],[data-slot=select-trigger])) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -163,7 +163,7 @@ body.workspace-page {
   line-height: 1.5;
   cursor: pointer;
 }
-.workspace-page :is(.wb-button, .studio-button, .button, .page-review button:not([data-slot=checkbox]), .wb-dialog button:not([data-slot=checkbox])):hover:not(:disabled) { background: var(--ff-hover); transform: none; }
+.workspace-page :is(.wb-button, .studio-button, .button, .page-review button:not([data-slot=checkbox],[data-slot=select-trigger]), .wb-dialog button:not([data-slot=checkbox],[data-slot=select-trigger])):hover:not(:disabled) { background: var(--ff-hover); transform: none; }
 .workspace-page :is(.wb-button-primary, .button.primary) { background: var(--ff-ink); color: var(--ff-surface); }
 .workspace-page :is(.wb-button-primary, .button.primary):hover:not(:disabled) { background: var(--ff-primary-hover); }
 .workspace-page :is(.wb-button, .page-review button)[aria-pressed=true] { background: var(--ff-selected); box-shadow: inset 0 0 0 1px var(--ff-ink); }
@@ -384,7 +384,7 @@ body.workspace-page {
 .visual-review-coverage{margin:16px 0;padding:12px;border:1px solid var(--ff-line,#e6e6e6);border-radius:6px;background:var(--ff-soft,#f5f5f5);font-size:12px;line-height:1.7}
 .visual-review-coverage p{margin:6px 0}
 .review-journey{display:flex;flex-wrap:wrap;gap:6px 18px;list-style:none;margin:0 0 12px;padding:0;color:var(--ff-muted);font-size:12px}.review-journey li[aria-current=step]{color:var(--ff-ink);font-weight:600}
-.workbench-operations details[data-project-setup]>label{display:grid;gap:6px;margin:14px 0}.workbench-operations details[data-project-setup]>p{font-size:13px;line-height:1.8}.workbench-operations details[data-project-setup]>button{margin:12px 0;min-height:44px}.workbench-operations details[data-project-setup]>details{margin:16px 0}
+.workbench-operations details[data-project-setup] label{display:grid;gap:6px;margin:14px 0}.workbench-operations details[data-project-setup]>p{font-size:13px;line-height:1.8}.workbench-operations details[data-project-setup]>button{margin:12px 0;min-height:44px}.workbench-operations details[data-project-setup]>details{margin:16px 0}
 .workbench-operations .project-start{display:block;width:100%}
 
 .review-planning-dialog fieldset { border:1px solid var(--wb-border,#ddd); margin:12px 0; padding:12px; min-width:0; }

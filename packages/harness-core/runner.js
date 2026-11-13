@@ -207,7 +207,7 @@ export async function executeWithAgent({ directory, repo, agent, commandOverride
     // The full patch is immutable evidence: written once at execution time,
     // exported alongside the rest of the ledger. The workbench's code-diff
     // view reads it; old runs without it degrade to the changed-file list.
-    const patch = await checkedGit(['diff', baseCommit], { cwd: worktree });
+    const patch = await checkedGit(['diff', baseCommit], { cwd: worktree, rawOutput: true });
     await writeFile(join(run.directory, 'diff.patch'), patch, 'utf8');
     const execution = {
       at: new Date().toISOString(),

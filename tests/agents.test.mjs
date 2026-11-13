@@ -169,6 +169,23 @@ async function plannedRun(t, id) {
   return { root, git, run };
 }
 
+test('execution patch preserves Git output and applies cleanly with trailing blank lines',async t=>{
+  const {root,git,run}=await plannedRun(t,'patchbytes');
+  const actor=join(run.directory,'synthetic-patch-agent.mjs');
+  await writeFile(actor,"import {writeFileSync} from 'node:fs'; writeFileSync('a.txt','two\\n\\n');\n");
+  // Explicit synthetic agent: Git's shell alias provides a cross-platform
+  // launcher while the registered adapter arguments remain unchanged.
+  const quote=value=>"'"+value.replaceAll('\\','/').replaceAll("'","'\\''")+"'";
+  await git('config','alias.exec','!'+quote(process.execPath)+' '+quote(actor));
+  const result=await executeWithAgent({directory:run.directory,repo:root,commandOverride:'git'});
+  const worktree=join(run.directory,'worktree'),patch=join(run.directory,'diff.patch');
+  const actual=await readFile(patch,'utf8');
+  const expected=(await execFileAsync('git',['diff',result.baseCommit],{cwd:worktree})).stdout;
+  assert.equal(actual,expected,'the patch is a transport artifact, not trimmed display text');
+  assert.ok(actual.endsWith('\n'));
+  await git('apply','--check',patch);
+});
+
 test('a missing agent binary rolls the isolation artifacts back so the run stays retryable', async t => {
   const { root, git, run } = await plannedRun(t, 'exec0001');
   await assert.rejects(
