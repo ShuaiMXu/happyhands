@@ -1,5 +1,16 @@
 # Operational experience orchestration
 
+## 2026-11-13：web-taste 替换默认 Taste
+
+用户明确要求：官网与落地页必须以 web-taste 作为主要设计与执行方法，使用 public-page 路由；OJO、Impeccable 为补充方法，独立审查也读取 web-taste。产品操作界面不自动套用宣传页规则。
+
+新运行的 existing、app-screen、public-page 默认接入完整 web-taste 本地版本（Taste 2.5.1，基于 f6b76575f949707b4e3c37cd86cb44b0b98643e8）。来源和更名说明见 skills/vendor/web-taste/source.json 与 upstream/NOTICE。旧 taste／taste-v2 原文及已有运行快照不改写；仅通过显式 dials-v1／legacy-v2 选择旧方法。
+
+诊断、执行与独立审查共用当前版本的来源快照，包含真实二进制素材的字节校验。完整原文保留，按实际表面读取相关完整方法。官网生成规则不自动适用于产品操作界面；不强制新增整屏章节、Hero、照片数量、随机配色或动效，不移除真实联系方式和必要的样例／交易说明。用户目标、批准设计系统和选定 Design.md 的适配判断优先。上游 Stop hook 与脚本不自动安装或执行，其 GATE 结果不替代 Harness 独立审查和人工接受。
+
+历史章节中的旧默认路由以本节为准。这次只替换方法接入，不宣称 Issue #26 的完整编排方案已经实现。
+
+
 This map describes actual Harness providers. A Skill supplies methods; a host stage executes and checks artifacts. Reading a Skill is not execution evidence. Project-approved sources and confirmed scope take precedence over generic style suggestions.
 
 | Stage | Methods to read in full | Actual provider | Required result / gate |
@@ -35,6 +46,6 @@ A batch is complete only with source-bound baseline, actual task/state evidence,
 
 ## Anti-slop Skill identity and placement
 
-`design-taste-frontend` is the locally installed name for the Taste v2 anti-slop frontend method. The Harness already vendors a pinned Taste v2 package. It now explicitly routes public pages through the complete `tells.md` in diagnosis, implementation and independent review. App screens use the complete app-screen run and its generated-dashboard tells instead. No duplicate local package or parallel executor is introduced.
+`web-taste` is the current user-selected method. New diagnosis, implementation and independent review use its pinned complete local variant and Harness adapter. Public-page work reads the complete copy, voice, system, layout and section references; working interfaces retain task-specific grouping and density without public-page quotas. Earlier `design-taste-frontend` / Taste v2 snapshots remain available only through explicit legacy profiles; no parallel executor or acceptance store is introduced.
 
 Diagnosis identifies observable task harm or an adopted-rule violation. Implementation records the concrete repair/preservation in the existing per-rule result. Independent review checks the rendered after state and whether simplification removed useful information. OJO supplies control/icon/grid recipes and Impeccable supplies the selected repair method. Our operational Skill owns scope, ordering and report coverage. New unadopted suggestions remain proposals rather than automatic repair obligations.

@@ -1,5 +1,14 @@
 # Taste / Impeccable 接入现有 Harness
 
+## 2026-11-13：web-taste 替换默认 Taste
+
+新运行的 existing、app-screen、public-page 默认接入完整 web-taste 本地版本（Taste 2.5.1，基于 f6b76575f949707b4e3c37cd86cb44b0b98643e8）。来源和更名说明见 skills/vendor/web-taste/source.json 与 upstream/NOTICE。旧 taste／taste-v2 原文及已有运行快照不改写；仅通过显式 dials-v1／legacy-v2 选择旧方法。
+
+诊断、执行与独立审查共用当前版本的来源快照，包含真实二进制素材的字节校验。完整原文保留，按实际表面读取相关完整方法。官网生成规则不自动适用于产品操作界面；不强制新增整屏章节、Hero、照片数量、随机配色或动效，不移除真实联系方式和必要的样例／交易说明。用户目标、批准设计系统和选定 Design.md 的适配判断优先。上游 Stop hook 与脚本不自动安装或执行，其 GATE 结果不替代 Harness 独立审查和人工接受。
+
+历史章节中的旧默认路由以本节为准。这次只替换方法接入，不宣称 Issue #26 的完整编排方案已经实现。
+
+
 两套设计方法和 OJO 共用现有证据、范围、计划、隔离修改、重新采集、独立 QA 和人工判断。它们没有新增平行工作台或执行流程。现有项目默认保持原品牌与组件体系，通过 Taste 新版主入口 / App Screen、Impeccable Audit/Critique/Polish 改善实际任务；布局、动效和艺术方向按明确偏好选择。
 
 ## 完整内容与版本

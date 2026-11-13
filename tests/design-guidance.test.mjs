@@ -1,104 +1,16 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {mkdtemp,cp,readFile,writeFile,rm,readdir,mkdir,symlink,rename} from 'node:fs/promises';import {join,dirname} from 'node:path';import {tmpdir} from 'node:os';import {createHash} from 'node:crypto';
-import {loadDesignGuidance,stageDesignGuidance,designGuidancePrompt,designGuidanceProfile} from '../packages/skill-core/design-guidance.js';
-const vendor=new URL('../skills/vendor/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-async function temporary(t){const directory=await mkdtemp(join(tmpdir(),'design-guidance-'));t.after(()=>rm(directory,{recursive:true,force:true}));return directory;}
-async function copyVendors(directory){for(const id of ['taste','impeccable','taste-v2'])await cp(new URL(id+'/',vendor),join(directory,id),{recursive:true});}
-test('complete Taste and Impeccable packages preserve all original resources and license notices',async()=>{
- const bundle=await loadDesignGuidance();assert.deepEqual(bundle.packs.map(pack=>[pack.metadata.id,pack.documents.length]),[['taste',46],['impeccable',65],['taste-v2',41]]);
- const taste=bundle.packs[0],impeccable=bundle.packs[1];assert.equal(taste.documents.filter(file=>/\/SKILL.md$/.test(file.path)).length,14);assert.ok(taste.documents.some(file=>file.path.endsWith('/scripts/inspect.mjs')));assert.ok(taste.documents.some(file=>file.path.endsWith('/library/directions.json')));
- assert.ok(impeccable.documents.some(file=>file.path==='upstream/NOTICE.md'));assert.ok(impeccable.documents.some(file=>file.path.endsWith('/reference/animate.md')));assert.ok(impeccable.documents.some(file=>file.path.endsWith('/reference/layout.md')));
- for(const pack of bundle.packs)for(const file of pack.documents){const content=(await readFile(new URL(pack.metadata.id+'/'+file.path,vendor),'utf8')).replaceAll('\r\n','\n');assert.equal(file.content,content);assert.equal(file.sha256,hash(content));}
- assert.equal(taste.metadata.license,'MIT');assert.equal(impeccable.metadata.license,'Apache-2.0');
-});
-test('default existing-product review routes full audit/critique without public-page house style or edit playbooks',async()=>{
- const review=await loadDesignGuidance('review');assert.deepEqual(review.packs[0].metadata.readFirst,['ADAPTER.md']);assert.deepEqual(review.packs[2].metadata.readFirst,['ADAPTER.md','upstream/skills/taste-skill/SKILL.md','upstream/skills/taste-skill/references/app-screens.md']);
- const first=review.packs[1].metadata.readFirst;assert.ok(first.some(path=>path.endsWith('audit.md')));assert.ok(first.some(path=>path.endsWith('critique.md')));assert.ok(!first.some(path=>path.endsWith('polish.md')));assert.match(review.metadata.availability,/not independently proven/);
-});
-test('explicit public-page, layout/animate and legacy dial profiles route without rewriting upstream skill defaults',async()=>{
- const publicPage=await loadDesignGuidance('implementation',{taste:'public-page',intent:'layout'});assert.ok(publicPage.packs[2].metadata.readFirst.some(path=>path.endsWith('taste-skill/SKILL.md')));assert.ok(publicPage.packs[1].metadata.readFirst.some(path=>path.endsWith('layout.md')));
- const dial=await loadDesignGuidance('implementation',{taste:'dials-v1',intent:'animate',dials:{DESIGN_VARIANCE:3,MOTION_INTENSITY:2,VISUAL_DENSITY:7}});assert.ok(dial.packs[0].metadata.readFirst.some(path=>path.endsWith('taste-skill-v1/SKILL.md')));assert.ok(dial.packs[1].metadata.readFirst.some(path=>path.endsWith('animate.md')));assert.equal(dial.metadata.profile.dials.VISUAL_DENSITY,7);
- assert.match(dial.packs[0].documents.find(file=>file.path.endsWith('taste-skill-v1/SKILL.md')).content,/DESIGN_VARIANCE: 8/);assert.notEqual(dial.metadata.bundleHash,publicPage.metadata.bundleHash);
- assert.throws(()=>designGuidanceProfile({taste:'public-page',dials:{DESIGN_VARIANCE:3}}),/v2 has no dials/);
- for(const value of [null,[],{taste:'../outside'},{intent:'publish'},{taste:'dials-v1',dials:{MOTION_INTENSITY:11}},{taste:'dials-v1',dials:{VISUAL_DENSITY:'3'}},{taste:'dials-v1',dials:{unknown:1}},{command:'node'}])assert.throws(()=>designGuidanceProfile(value));
-});
-test('atomic snapshots retain complete sources, recover concurrent publication and reject changed evidence',async t=>{
- const directory=await temporary(t),bundles=await Promise.all(Array.from({length:4},()=>stageDesignGuidance(directory,'review'))),bundle=bundles[0];
- for(const current of bundles)assert.deepEqual(current.metadata,bundle.metadata);assert.deepEqual(await readdir(join(directory,'design-guidance/v1')),[bundle.metadata.bundleHash]);
- for(const pack of bundle.packs)for(const file of pack.documents)assert.equal(await readFile(join(directory,bundle.metadata.reference,pack.metadata.id,file.path),'utf8'),file.content);
- const prompt=designGuidancePrompt(bundle,directory);assert.match(prompt,/read-only/);assert.match(prompt,/not auto-executed/);assert.ok(prompt.includes(bundle.metadata.bundleHash));
- await writeFile(join(directory,bundle.metadata.reference,'taste/upstream/skills/taste-skill/scripts/inspect.mjs'),'changed');await assert.rejects(stageDesignGuidance(directory,'review'),/snapshot changed/);
-});
-test('modified vendor source, manifest inventories and external symlinks fail before staging',async t=>{
- const directory=await temporary(t);await copyVendors(directory);const path=join(directory,'taste/upstream/skills/redesign-skill/SKILL.md');const original=await readFile(path);
- await writeFile(path,'changed');await assert.rejects(loadDesignGuidance('review',{},directory),/hash mismatch/);await writeFile(path,original);
- const sourceFile=join(directory,'taste/source.json'),source=JSON.parse(await readFile(sourceFile));source.files[0].path='../outside';await writeFile(sourceFile,JSON.stringify(source));await assert.rejects(loadDesignGuidance('review',{},directory),/source inventory/);
- await cp(new URL('taste/source.json',vendor),sourceFile);
- if(process.platform==='win32'){
-  const outside=join(directory,'external');await rename(dirname(path),outside);await symlink(outside,dirname(path),'junction');
- }else{
-  const outside=join(directory,'external.txt');await writeFile(outside,original);await rm(path);await symlink(outside,path);
- }
- await assert.rejects(loadDesignGuidance('review',{},directory),/outside its bundle/);
-});
-test('adapter and profile changes alter provenance; text checkout line endings do not',async t=>{
- const directory=await temporary(t);await copyVendors(directory);const before=await loadDesignGuidance('review',{},directory);
- for(const pack of before.packs){for(const file of pack.documents){await writeFile(join(directory,pack.metadata.id,file.path),file.content.replaceAll('\n','\r\n'));}const path=join(directory,pack.metadata.id,'source.json');await writeFile(path,(await readFile(path,'utf8')).replaceAll('\n','\r\n'));}
- assert.equal((await loadDesignGuidance('review',{},directory)).metadata.bundleHash,before.metadata.bundleHash);
- await writeFile(join(directory,'taste/ADAPTER.md'),before.packs[0].adapter+'\nTest routing clarification.\n');assert.notEqual((await loadDesignGuidance('review',{},directory)).metadata.bundleHash,before.metadata.bundleHash);
- await assert.rejects(loadDesignGuidance('unknown'),/Unknown/);
-});
-test('interrupted snapshots remain intact and cannot hide missing published files',async t=>{
- const directory=await temporary(t),bundle=await loadDesignGuidance(),pending=join(directory,'design-guidance/v1','.pending-'+bundle.metadata.bundleHash+'-interrupted');await mkdir(pending,{recursive:true});await writeFile(join(pending,'bundle.json'),'partial');
- const staged=await stageDesignGuidance(directory,'review');assert.equal(await readFile(join(pending,'bundle.json'),'utf8'),'partial');await rm(join(directory,staged.metadata.reference,'impeccable/upstream/LICENSE'));await assert.rejects(stageDesignGuidance(directory,'review'),/snapshot changed.*missing/);
-});
+import{mkdtemp,cp,readFile,writeFile,rm,readdir,mkdir,symlink}from'node:fs/promises';import{join}from'node:path';import{tmpdir}from'node:os';import{createHash}from'node:crypto';
+import{loadDesignGuidance,stageDesignGuidance,verifyDesignGuidanceSnapshot,designGuidancePrompt,designGuidanceProfile}from'../packages/skill-core/design-guidance.js';
+const vendor=new URL('../skills/vendor/',import.meta.url),hash=x=>createHash('sha256').update(x).digest('hex');
+async function temporary(t){let d=await mkdtemp(join(tmpdir(),'design-guidance-'));t.after(()=>rm(d,{recursive:true,force:true}));return d;}
+async function copyVendors(d){for(const id of['impeccable','web-taste'])await cp(new URL(id+'/',vendor),join(d,id),{recursive:true});}
+test('current default preserves complete web-taste variant and byte-exact binary assets with provenance',async()=>{const b=await loadDesignGuidance(),p=b.packs.find(p=>p.metadata.id==='web-taste');assert.deepEqual(b.packs.map(p=>p.metadata.id),['impeccable','web-taste']);assert.equal(p.metadata.revision,'f6b76575f949707b4e3c37cd86cb44b0b98643e8');assert.equal(p.metadata.license,'MIT');assert.equal(p.documents.length,1633);assert.ok(p.documents.some(d=>d.path==='upstream/NOTICE'&&/renamed local copy/.test(d.content)));assert.ok(p.documents.some(d=>d.path==='upstream/scripts/gate.mjs'));let binary=0;for(const d of p.documents){const raw=await readFile(new URL(p.metadata.id+'/'+d.path,vendor));if(d.encoding==='binary'){binary++;assert.ok(Buffer.isBuffer(d.content));assert.deepEqual(d.content,raw);assert.equal(hash(raw),d.sha256);}else{assert.equal(d.content,raw.toString('utf8').replaceAll('\r\n','\n'));assert.equal(hash(d.content),d.sha256);}}assert.ok(binary>0);});
+test('both execution and independent review use web-taste with task-aware routes and read-only review',async()=>{for(const mode of['review','implementation']){for(const taste of['existing','app-screen','public-page']){const b=await loadDesignGuidance(mode,{taste,intent:'layout'}),p=b.packs.find(p=>p.metadata.id==='web-taste'),i=b.packs.find(p=>p.metadata.id==='impeccable');assert.ok(p.metadata.readFirst.includes('upstream/SKILL.md'));assert.ok(p.metadata.readFirst.includes('upstream/references/system.md'));assert.equal(p.metadata.readFirst.includes('upstream/references/sections.md'),taste==='public-page');for(const path of p.metadata.readFirst.filter(x=>x.startsWith('upstream/')))assert.ok(p.documents.some(d=>d.path===path&&d.content.length>100));assert.match(p.adapter,/not mandatory changes or universal defects in app screens/);assert.match(p.adapter,/Stop hook is preserved as source data/);assert.match(p.adapter,/comply with a proposed structure and still regress/);assert.ok(i.metadata.readFirst.some(x=>x.endsWith(mode==='review'?'critique.md':'layout.md')));assert.ok(!i.metadata.readFirst.some(x=>x.endsWith(mode==='review'?'polish.md':'audit.md')));}}});
+test('legacy profiles are explicit and keep unmodified original packages without routing current defaults to them',async()=>{const legacy=await loadDesignGuidance('review',{taste:'legacy-v2'});assert.deepEqual(legacy.packs.map(p=>[p.metadata.id,p.documents.length]),[['taste',46],['impeccable',65],['taste-v2',41]]);assert.equal(legacy.packs[0].documents.filter(x=>x.path.endsWith('/SKILL.md')).length,14);assert.ok(legacy.packs[2].metadata.readFirst.some(x=>x.endsWith('app-screens.md')));const dial=await loadDesignGuidance('implementation',{taste:'dials-v1',intent:'animate',dials:{MOTION_INTENSITY:2}});assert.ok(dial.packs[0].metadata.readFirst.some(x=>x.endsWith('taste-skill-v1/SKILL.md')));assert.match(dial.packs[0].documents.find(x=>x.path.endsWith('taste-skill-v1/SKILL.md')).content,/DESIGN_VARIANCE: 8/);assert.ok(dial.packs[1].metadata.readFirst.some(x=>x.endsWith('animate.md')));assert.throws(()=>designGuidanceProfile({taste:'public-page',dials:{DESIGN_VARIANCE:3}}),/web-taste has no dials/);for(const v of[null,[],{taste:'../bad'},{command:'node'},{taste:'dials-v1',dials:{MOTION_INTENSITY:11}}])assert.throws(()=>designGuidanceProfile(v));});
+test('atomic snapshots preserve all bytes, concurrent staging and separate old/new evidence',async t=>{const d=await temporary(t),all=await Promise.all([stageDesignGuidance(d,'review'),stageDesignGuidance(d,'review')]),b=all[0];assert.deepEqual(all[1].metadata,b.metadata);assert.deepEqual(await readdir(join(d,'design-guidance/v1')),[b.metadata.bundleHash]);for(const p of b.packs)for(const f of p.documents){let raw=await readFile(join(d,b.metadata.reference,p.metadata.id,f.path));assert.deepEqual(raw,Buffer.isBuffer(f.content)?f.content:Buffer.from(f.content));}const old=await stageDesignGuidance(d,'review',{taste:'legacy-v2'});await verifyDesignGuidanceSnapshot(d,old);await verifyDesignGuidanceSnapshot(d,b);assert.notEqual(old.metadata.reference,b.metadata.reference);let text=designGuidancePrompt(b,d);assert.match(text,/read-only/);assert.match(text,/not auto-executed/);assert.ok(text.includes('web-taste'));const binary=b.packs.find(p=>p.metadata.id==='web-taste').documents.find(f=>f.encoding==='binary');await writeFile(join(d,b.metadata.reference,'web-taste',binary.path),Buffer.from('tampered image'));await assert.rejects(stageDesignGuidance(d,'review'),/snapshot changed/);});
+test('changed text/binary manifests and external symlinks are rejected before use',async t=>{const d=await temporary(t);await copyVendors(d);const path=join(d,'web-taste/upstream/SKILL.md'),original=await readFile(path);await writeFile(path,'changed');await assert.rejects(loadDesignGuidance('review',{},d),/hash mismatch/);await writeFile(path,original);const manifest=join(d,'web-taste/source.json'),source=JSON.parse(await readFile(manifest));source.files[0].path='../outside';await writeFile(manifest,JSON.stringify(source));await assert.rejects(loadDesignGuidance('review',{},d),/source inventory/);await cp(new URL('web-taste/source.json',vendor),manifest);if(process.platform!=='win32'){const outside=join(d,'outside.md');await writeFile(outside,original);await rm(path);await symlink(outside,path);await assert.rejects(loadDesignGuidance('review',{},d),/outside its bundle/);}});
+test('adapter changes affect provenance while text line-ending normalization leaves binary bytes untouched',async t=>{const d=await temporary(t);await copyVendors(d);let before=await loadDesignGuidance('review',{},d),p=join(d,'web-taste/upstream/SKILL.md');await writeFile(p,(await readFile(p,'utf8')).replaceAll('\r\n','\n').replaceAll('\n','\r\n'));assert.equal((await loadDesignGuidance('review',{},d)).metadata.bundleHash,before.metadata.bundleHash);await writeFile(join(d,'web-taste/ADAPTER.md'),before.packs[1].adapter+'\nClarification.\n');assert.notEqual((await loadDesignGuidance('review',{},d)).metadata.bundleHash,before.metadata.bundleHash);await assert.rejects(loadDesignGuidance('unknown'),/Unknown/);});
+test('vendor templates do not become target Foundation sources',async t=>{const d=await temporary(t);await writeFile(join(d,'styles.css'),':root{--brand:green}');for(const id of['taste','taste-v2','impeccable','web-taste']){let p=join(d,'skills/vendor',id,'upstream');await mkdir(p,{recursive:true});await writeFile(join(p,'template.css'),':root{--bad:red}');await writeFile(join(p,'tool.mjs'),'export const tool=true;');}const{sourceFiles}=await import('../packages/skill-core/scan.js');assert.deepEqual((await sourceFiles(d)).files.map(x=>x.path),['styles.css']);});
+test('project UI ownership/adoption boundaries and immutable profile remain present',async t=>{const d=await temporary(t),original=(await readFile(new URL('../skills/happyhands-ui/SKILL.md',import.meta.url),'utf8')).replaceAll('\r\n','\n');for(const mode of['review','implementation']){const b=await stageDesignGuidance(d,mode),p=join(d,b.metadata.reference,'happyhands-ui/SKILL.md');assert.equal(await readFile(p,'utf8'),original);assert.match(designGuidancePrompt(b,d),/does NOT establish target ownership or adoption/);await writeFile(p,'changed');await assert.rejects(stageDesignGuidance(d,mode),/snapshot changed/);}});
 
-test('vendor templates and tool scripts cannot become observed application Foundation sources',async t=>{
- const root=await temporary(t);await writeFile(join(root,'styles.css'),':root{--brand:#009689}');
- for(const id of ['taste','impeccable','taste-v2']){const directory=join(root,'skills/vendor',id,'upstream');await mkdir(directory,{recursive:true});await writeFile(join(directory,'base.css'),':root{--brand:#ff0000}');await writeFile(join(directory,'tool.js'),'export const vendorScript=true;');}
- await mkdir(join(root,'app'));await writeFile(join(root,'app/vendor-component.css'),'.component{color:var(--brand)}');const {sourceFiles}=await import('../packages/skill-core/scan.js');const files=(await sourceFiles(root)).files.map(file=>file.path);
- assert.deepEqual(files.sort(),['app/vendor-component.css','styles.css']);
-});
-
-test('App Screen selection survives staging and review with distinct immutable provenance',async t=>{
- const directory=await temporary(t);
- const app=await stageDesignGuidance(directory,'review',{taste:'app-screen'});
- const existing=await stageDesignGuidance(directory,'review');
- const page=await stageDesignGuidance(directory,'review',{taste:'public-page'});
- assert.notEqual(app.metadata.bundleHash,existing.metadata.bundleHash);assert.notEqual(app.metadata.bundleHash,page.metadata.bundleHash);
- const current=app.packs.find(pack=>pack.metadata.id==='taste-v2');
- assert.equal(current.metadata.revision,'6010f91a9935f1c167dfc500fb1a475681892e6b');
- assert.equal(current.documents.filter(file=>file.path.startsWith('upstream/skills/taste-skill/')).length,38);
- for(const path of current.metadata.readFirst)assert.ok((await readFile(join(directory,app.metadata.reference,'taste-v2',path),'utf8')).length);
- assert.ok(!page.packs[2].metadata.readFirst.some(path=>path.endsWith('app-screens.md')));
- const prompt=designGuidancePrompt(app,directory).replaceAll('\\','/');assert.ok(prompt.includes('taste-v2/upstream/skills/taste-skill/references/app-screens.md'));assert.match(prompt,/public-page run does not apply/);
- await writeFile(join(directory,app.metadata.reference,'taste-v2/upstream/skills/taste-skill/references/app-screens.md'),'abridged');
- await assert.rejects(stageDesignGuidance(directory,'review',{taste:'app-screen'}),/snapshot changed/);
-});
-
-test('project UI profile is preserved in review and implementation snapshots and tampering is rejected',async t=>{
- const directory=await temporary(t);
- const original=(await readFile(new URL('../skills/happyhands-ui/SKILL.md',import.meta.url),'utf8')).replaceAll('\r\n','\n');
- for(const mode of ['review','implementation']){
-  const bundle=await stageDesignGuidance(directory,mode);
-  const path=join(directory,bundle.metadata.reference,'happyhands-ui/SKILL.md');
-  assert.equal(await readFile(path,'utf8'),original);
-  assert.equal(bundle.metadata.uiRulesHash,hash(original));
-  assert.ok(designGuidancePrompt(bundle,directory).includes(path));
-  assert.match(designGuidancePrompt(bundle,directory),/does NOT establish target ownership or adoption/);
-  assert.match(designGuidancePrompt(bundle,directory),/do not claim it adopted them/);
-  await writeFile(path,'truncated');
-  await assert.rejects(stageDesignGuidance(directory,mode),/snapshot changed/);
- }
-});
-
-test('anti-slop routing distinguishes public-page tells from working-interface methods in both modes',async()=>{
- for(const mode of ['review','implementation']){
-  const page=await loadDesignGuidance(mode,{taste:'public-page'}),app=await loadDesignGuidance(mode,{taste:'app-screen'});
-  const pageTaste=page.packs.find(pack=>pack.metadata.id==='taste-v2'),appTaste=app.packs.find(pack=>pack.metadata.id==='taste-v2');
-  assert.ok(pageTaste.metadata.readFirst.some(path=>path.endsWith('/tells.md')));
-  assert.ok(appTaste.metadata.readFirst.some(path=>path.endsWith('/app-screens.md')));
-  assert.ok(!appTaste.metadata.readFirst.some(path=>path.endsWith('/tells.md')));
-  for(const pack of [pageTaste,appTaste])for(const path of pack.metadata.readFirst.filter(path=>path.startsWith('upstream/')))assert.ok(pack.documents.some(doc=>doc.path===path&&doc.content.length>100));
- }
-});
+test('official websites and landing pages carry the mandatory web-taste execution rule',async t=>{const directory=await temporary(t);for(const mode of ['review','implementation']){const b=await stageDesignGuidance(directory,mode,{taste:'public-page'});assert.match(designGuidancePrompt(b,directory),/web-taste is the required primary design and implementation method/);const p=b.packs.find(p=>p.metadata.id==='web-taste');assert.ok(p.metadata.readFirst.includes('upstream/references/layout-v4.md'));assert.ok(p.metadata.readFirst.includes('upstream/references/sections.md'));assert.match(p.adapter,/User-required website route/);}});

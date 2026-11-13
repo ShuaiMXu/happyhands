@@ -41,3 +41,7 @@ The Cowart annotation integration in `apps/designer/cowart/` retains its [MIT co
 The workbench depends on `tldraw` 5.1.1. It is governed by the [tldraw license for that version](https://github.com/tldraw/tldraw/blob/v5.1.1/LICENSE.md), rather than by the licenses of the Cowart integration or other bundled guidance. That license distinguishes development and production use; production use requires the applicable permission or agreement. The application reads `VITE_TLDRAW_LICENSE_KEY` when a key has been obtained. Do not infer a production license from this repository's availability.
 
 Other installed dependencies retain their own license terms. This notice identifies bundled source and the canvas dependency; it is not a grant of a project-wide license or a complete license inventory of every transitive dependency.
+
+## web-taste (current default)
+
+The user-selected local web-taste is a renamed Taste 2.5.1 based on Leonxlnx/taste-skill commit f6b76575f949707b4e3c37cd86cb44b0b98643e8 (MIT). The complete actual local variant is preserved under skills/vendor/web-taste/upstream, including LICENSE, NOTICE, scripts, references and binary assets. Local naming/path changes are recorded in NOTICE; source.json hashes this variant rather than claiming byte identity with upstream. Previous Taste snapshots remain for historical and explicit legacy runs.
