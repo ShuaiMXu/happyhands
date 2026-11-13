@@ -1,0 +1,23 @@
+packages/skill-core/design-guidance.js
+  s_c3a809bd8a1ec1::t_387e339b1437bb 14-15,60,64-65,76,96
+tests/onboard.test.mjs
+  s_c3a809bd8a1ec1::t_11ae691ffd194a 198
+tests/simple-project-review.test.mjs
+  s_c3a809bd8a1ec1::t_64dc7ddfb47fd1 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "7b373bb7a2eabda0d2f52b18dda7698c860c3c64",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
