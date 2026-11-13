@@ -1,3 +1,5 @@
+import {PNG} from 'pngjs';
+import {STRUCTURE_DIMENSIONS} from '../packages/harness-core/page-structure-review.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm,symlink} from 'node:fs/promises';
@@ -91,4 +93,51 @@ test('reindex cannot list a published pass whose bound original changed',async t
   const {root,run}=await fixture(t),outputRoot=join(root,'public');
   const exported=await exportRun({directory:run.directory,outputRoot});await writeFile(join(exported.directory,'after','desktop.png'),'Changed published original');
   assert.deepEqual(await reindex(outputRoot),[]);
+});
+
+async function annotatedFixture(t){
+  const {root,run,review}=await fixture(t,{save:false});
+  const bytes=PNG.sync.write(new PNG({width:120,height:80}));
+  for(const phase of ['before','after'])await writeFile(join(run.directory,phase,'desktop.png'),bytes);
+  review.verdict='fail';
+  review.findings=[{id:'F_ANNOTATED',title:'Synthetic layout defect',observation:'Synthetic overlap for renderer integration only.',impact:2,confidence:'high',screenshotRefs:['after/desktop.png']}];
+  review.annotations=[{id:'A_1',findingId:'F_ANNOTATED',screenshot:'after/desktop.png',label:'Synthetic overlap',box:{x:.2,y:.2,width:.4,height:.4}}];
+  review.structureChecks=review.screenshotRefs.flatMap(screenshot=>STRUCTURE_DIMENSIONS.map(dimension=>({screenshot,dimension,status:'pass',observed:'Synthetic observation',expected:'Synthetic expected layout',basis:'Test fixture only',method:'Synthetic image'})));
+  review.structureChecks.find(row=>row.screenshot==='after/desktop.png'&&row.dimension==='alignment').status='fail';
+  await saveVisualReview(run.directory,review);
+  const saved=await loadRun(run.directory),reference=saved.manifest.visualReviews[0];
+  const bound=await readVisualReviewBinding(saved,reference);
+  return {root,run:saved,reference,bound};
+}
+
+test('saving a structured review renders bound images and export retains them',async t=>{
+  const {root,run,reference,bound}=await annotatedFixture(t);
+  assert.equal(bound.record.annotationArtifactsVersion,1);
+  const [image]=bound.review.annotationArtifacts.images;
+  assert.equal(image.screenshot,'after/desktop.png');assert.deepEqual(image.annotationIds,['A_1']);
+  const svg=await readFile(join(run.directory,image.path),'utf8');assert.match(svg,/<svg/);assert.match(svg,/data:image\/png;base64,/);
+  const exported=await exportRun({directory:run.directory,outputRoot:join(root,'annotated-export')});
+  assert.ok(exported.files.includes(image.path));
+  const copy=await loadRun(exported.directory);
+  assert.equal((await readVisualReviewBinding(copy,reference)).review.annotationArtifacts.images[0].sha256,image.sha256);
+});
+
+test('missing or changed annotation outputs block reuse and export',async t=>{
+  for(const kind of ['missing','changed'])await t.test(kind,async sub=>{
+    const {root,run,reference,bound}=await annotatedFixture(sub);
+    const path=join(run.directory,bound.review.annotationArtifacts.images[0].path);
+    if(kind==='missing')await rm(path);else await writeFile(path,'<svg/>');
+    await assert.rejects(readVisualReviewBinding(run,reference));
+    await assert.rejects(exportRun({directory:run.directory,outputRoot:join(root,'invalid-export')}));
+    assert.equal((await loadRun(run.directory)).manifest.visualReviews[0].verdict,'fail');
+  });
+});
+
+test('no findings produce an explicit empty artifact set without fabricated boxes',async t=>{
+  const {run,review}=await fixture(t,{save:false});review.annotations=[];
+  review.structureChecks=review.screenshotRefs.flatMap(screenshot=>STRUCTURE_DIMENSIONS.map(dimension=>({screenshot,dimension,status:'pass',observed:'Synthetic observation',expected:'Synthetic expected layout',basis:'Test fixture only',method:'Synthetic image'})));
+  await saveVisualReview(run.directory,review);
+  const saved=await loadRun(run.directory),bound=await readVisualReviewBinding(saved,saved.manifest.visualReviews[0]);
+  assert.deepEqual(bound.review.annotationArtifacts,{version:1,images:[]});
+  assert.equal(bound.record.annotationArtifactsVersion,1);
 });

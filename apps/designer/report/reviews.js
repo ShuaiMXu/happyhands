@@ -7,7 +7,7 @@ import {appendVisualCoverage} from '../visual-review-coverage.js';
 import {appendBrandAssessments} from './brand-assessments.js';
 
 const el=(tag,text,className)=>{const node=createControl(tag);if(text)node.textContent=text;if(className)node.className=className;return node;};
-const safeReference=/^(?:reviews\/[a-z0-9-]+\.json|verification\/[a-f0-9-]+\/(?:index\.json|result\.json|image-\d+\.png))$/;
+const safeReference=/^(?:reviews\/annotations\/[a-f0-9]{64}\.svg|reviews\/[a-z0-9-]+\.json|verification\/[a-f0-9-]+\/(?:index\.json|result\.json|image-\d+\.png))$/;
 function evidenceLink(run,path,text){if(!safeReference.test(path||''))return null;const link=el('a',text);link.href=`${run.base}/${path}`;link.target='_blank';link.rel='noopener noreferrer';return link;}
 function details(text,...children){const node=el('details');node.append(el('summary',t(text)),...children);return node;}
 
@@ -22,6 +22,12 @@ export function renderReportReviews(root,run){
   card.append(el('p',t(qa?.verdict==='pass'?'本次计划内的独立复核已通过，仍需你的最终判断。':qa?.verdict==='fail'?'复核发现未解决的问题，请查看下方原因。':'当前尚无有效的独立复核结论，请先补齐证据。'),'report-verdict-lead'));
   if(qa){
     appendVisualCoverage(card,qa);
+    if(qa.annotationArtifacts?.images?.length){
+      const images=details('原图问题标注');images.dataset.detail='annotation-images';
+      images.append(el('p',t('标注图是原图的派生副本，不替代原始证据或人工判断。'),'small-note'));
+      for(const image of qa.annotationArtifacts.images){const link=evidenceLink(run,image.path,`${t('打开标注图')} / ${image.screenshot}`);if(link)images.append(link);}
+      card.append(images);
+    }
     appendReviewResolutions(card,qa,run);
     appendBrandAssessments(card,qa,run);
     for(const finding of qa.findings||[]){const row=el('div',null,'report-review-finding');row.append(el('strong',finding.title),el('p',finding.observation));card.append(row);}
