@@ -1,5 +1,7 @@
 # Taste v2.1.4 in the Creative OS Harness
 
+Current routing (2026-11-13): this is a historical compatibility adapter, selected only by explicit `legacy-v2` / `dials-v1`. New current runs use `web-taste`; descriptions of prior current/default routes below document the legacy method. The upstream source remains unchanged.
+
 The complete 38-file main skill at 6010f91a9935f1c167dfc500fb1a475681892e6b is preserved byte for byte, with upstream LICENSE, README and CHANGELOG. The separate `taste` package retains all 46 files and all 14 original skills at a60a36dc2bb3bb77ccf17f2f62041f5ca8a458b9. Retired/moved entries do not replace their complete originals. Historical content-addressed bundles are not rewritten.
 
 ## Routing

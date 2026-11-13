@@ -1,3 +1,4 @@
+import {experienceRequired,assertExperienceAssessments} from './experience-contract.js';
 import {assertMethodChecks,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation-validation.js';
 import { wholePageReviewCoverage, missingAfterStates, captureRouteKey } from './whole-page.js';
 import Ajv from 'ajv/dist/2020.js';
@@ -18,6 +19,7 @@ function availableScreenshots(manifest) {
 export function assertVisualReview(review, manifest) {
   if (!validate(review)) throw new Error(validate.errors.map(error => `${error.instancePath || '/'} ${error.message}`).join('; '));
   const available = availableScreenshots(manifest);
+  if(review.skillId==='visual-qa-evaluator'&&experienceRequired({manifest}))assertExperienceAssessments(review.experienceAssessments,review.verdict,available);
   if(review.skillId==='visual-qa-evaluator'&&manifest.plan?.remediation){
     if(review.remediationHash!==manifest.plan.remediation.hash)throw Error('Review remediation contract changed.');
     // Production callers populate these records only after checking the bound

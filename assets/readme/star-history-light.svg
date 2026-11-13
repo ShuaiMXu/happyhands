@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 410" role="img" aria-labelledby="title description">
 <title id="title">HappyHands GitHub star growth</title>
-<desc id="description">439 current stars as of 2026-11-12. 302 current stargazers added their star in the preceding seven days. Daily cumulative dates from 2026-10-25. Unstars are not reconstructed.</desc>
+<desc id="description">487 current stars as of 2026-11-13. 275 current stargazers added their star in the preceding seven days. Daily cumulative dates from 2026-10-25. Unstars are not reconstructed.</desc>
 <rect width="1120" height="410" fill="#ffffff"/>
 <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif" font-weight="400">
 <text x="78" y="48" font-size="24" fill="#171717">GitHub stars</text>
-<text x="78" y="108" font-size="48" fill="#171717">439</text>
-<text x="186" y="104" font-size="21" fill="#666666">+302 starred in the last 7 days</text>
-<text x="1056" y="48" text-anchor="end" font-size="18" fill="#666666">Updated 2026-11-12 UTC</text>
-<g font-size="18" fill="#666666"><path d="M78 326H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="332" text-anchor="end">0</text><path d="M78 280H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="286" text-anchor="end">110</text><path d="M78 234H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="240" text-anchor="end">220</text><path d="M78 188H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="194" text-anchor="end">330</text><path d="M78 142H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="148" text-anchor="end">440</text><text x="78" y="358" text-anchor="start">2026-10-25</text><text x="567" y="358" text-anchor="middle">2026-11-03</text><text x="1056" y="358" text-anchor="end">2026-11-12</text></g>
-<path d="M78.00,324.33 L132.33,317.22 L186.67,316.80 L241.00,316.38 L295.33,315.96 L349.67,315.55 L404.00,315.55 L458.33,315.55 L512.67,315.55 L567.00,290.04 L621.33,277.49 L675.67,247.80 L730.00,229.40 L784.33,214.35 L838.67,203.47 L893.00,178.38 L947.33,163.75 L1001.67,147.02 L1056.00,142.42 L1056,326 L78,326 Z" fill="#d65f16" fill-opacity="0.08"/>
-<path d="M78.00,324.33 L132.33,317.22 L186.67,316.80 L241.00,316.38 L295.33,315.96 L349.67,315.55 L404.00,315.55 L458.33,315.55 L512.67,315.55 L567.00,290.04 L621.33,277.49 L675.67,247.80 L730.00,229.40 L784.33,214.35 L838.67,203.47 L893.00,178.38 L947.33,163.75 L1001.67,147.02 L1056.00,142.42" fill="none" stroke="#d65f16" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="1056" cy="142.41818181818184" r="4.5" fill="#d65f16"/>
+<text x="78" y="108" font-size="48" fill="#171717">487</text>
+<text x="186" y="104" font-size="21" fill="#666666">+275 starred in the last 7 days</text>
+<text x="1056" y="48" text-anchor="end" font-size="18" fill="#666666">Updated 2026-11-13 UTC</text>
+<g font-size="18" fill="#666666"><path d="M78 326H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="332" text-anchor="end">0</text><path d="M78 280H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="286" text-anchor="end">130</text><path d="M78 234H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="240" text-anchor="end">260</text><path d="M78 188H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="194" text-anchor="end">390</text><path d="M78 142H1056" stroke="#e5e5e5" stroke-width="0.7"/><text x="60" y="148" text-anchor="end">520</text><text x="78" y="358" text-anchor="start">2026-10-25</text><text x="541.2631578947369" y="358" text-anchor="middle">2026-11-03</text><text x="1056" y="358" text-anchor="end">2026-11-13</text></g>
+<path d="M78.00,324.58 L129.47,318.57 L180.95,318.22 L232.42,317.86 L283.89,317.51 L335.37,317.15 L386.84,317.15 L438.32,317.15 L489.79,317.15 L541.26,295.57 L592.74,284.95 L644.21,259.83 L695.68,244.26 L747.16,231.52 L798.63,222.32 L850.11,201.09 L901.58,188.71 L953.05,174.55 L1004.53,155.80 L1056.00,153.68 L1056,326 L78,326 Z" fill="#d65f16" fill-opacity="0.08"/>
+<path d="M78.00,324.58 L129.47,318.57 L180.95,318.22 L232.42,317.86 L283.89,317.51 L335.37,317.15 L386.84,317.15 L438.32,317.15 L489.79,317.15 L541.26,295.57 L592.74,284.95 L644.21,259.83 L695.68,244.26 L747.16,231.52 L798.63,222.32 L850.11,201.09 L901.58,188.71 L953.05,174.55 L1004.53,155.80 L1056.00,153.68" fill="none" stroke="#d65f16" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1056" cy="153.6769230769231" r="4.5" fill="#d65f16"/>
 <text x="78" y="395" font-size="16" fill="#666666">Source: GitHub / current stargazers, grouped by date</text>
 </g></svg>

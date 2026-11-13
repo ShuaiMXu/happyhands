@@ -435,6 +435,50 @@
           }
         }
       }
+    },
+    "experienceAssessments": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dimension",
+          "verdict",
+          "reason",
+          "screenshotRefs"
+        ],
+        "properties": {
+          "dimension": {
+            "enum": [
+              "task",
+              "hierarchy",
+              "interaction",
+              "design-system",
+              "regression"
+            ]
+          },
+          "verdict": {
+            "enum": [
+              "pass",
+              "fail",
+              "needs-evidence",
+              "not-applicable"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "screenshotRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   }
 }

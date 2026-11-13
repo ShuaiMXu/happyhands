@@ -1,5 +1,7 @@
 # Taste in the Creative OS Harness
 
+Current routing (2026-11-13): this is a historical compatibility adapter, selected only by explicit `legacy-v2` / `dials-v1`. New current runs use `web-taste`; descriptions of prior current/default routes below document the legacy method. The upstream source remains unchanged.
+
 The upstream package, including all 14 skills, scripts, libraries, assets and references, is preserved byte for byte. This adapter connects that method to the existing Harness; it is not an abridged skill.
 
 - Start from the real task, incumbent UI, approved Foundation, references and confirmed change. This is the complete legacy snapshot, retained for reproducibility and explicit legacy methods. Current `existing`, `app-screen` and `public-page` work routes through the separately versioned `taste-v2` package and its adapter, not the retired redesign entry. Optional `dials-v1` reads the entire original dial-driven skill; explicit DESIGN_VARIANCE, MOTION_INTENSITY and VISUAL_DENSITY values override its defaults. Missing values are not invented preferences, and dials are not falsely attributed to current v2.

@@ -1,0 +1,24 @@
+# web-taste in the HappyHands Harness
+
+This is the user's selected local `web-taste`, a renamed Taste 2.5.1 snapshot based on upstream commit f6b76575f949707b4e3c37cd86cb44b0b98643e8. The complete Skill, references, scripts, assets, LICENSE and local NOTICE are preserved. `source.json` inventories the actual local variant, including byte-exact binary assets; the upstream commit does not claim the locally renamed files are upstream originals.
+
+## User-required website route
+
+For official/company websites and landing pages, web-taste is the required primary method for design and execution, and remains in independent review. Select `public-page` before diagnosis, then use its complete applicable references. OJO and Impeccable supplement this route. Older Taste profiles do not silently substitute for it. The user-approved brief and adopted project rules remain authoritative.
+
+## Scope and design judgment
+
+- New `existing`, `app-screen` and `public-page` runs use web-taste instead of the older Taste packages. Historical snapshots remain intact. Explicit `legacy-v2` and `dials-v1` are compatibility routes, not current defaults. Web-taste has no numeric dials.
+- Start with the user's task, current product, approved design system, selected Design.md references and confirmed scope. Classify the surface before applying a rule. The upstream method specializes in professional public websites and landing pages; `app-screen` and working modules of an existing product are not whole marketing pages.
+- Preserve meaningful density, actual business facts, contact details, essential captions, sample/transaction boundaries, original assets and approved brand behavior. Do not delete these to satisfy a generic style check. A retrieved reference is not approval to replace the brand, layout or framework.
+- For a public-page creation or approved redesign, read the complete main Skill and its complete copy, voice, system, layout and section references, then relevant complete asset/motion references. Apply the method to the actual product rather than treating every field, section or card in a template as mandatory.
+- For existing working interfaces, read the complete main Skill for its scope and applicable craft, copy and system references. Its full-screen section rhythm, hero entrances, photo quotas, dealt moments, random palette/layout selection, blanket colour bans, no-caption rule and sample-note removal are contextual public-page recipes, not mandatory changes or universal defects in app screens. Do not force a landing-page treatment onto a calendar, form, editor or task workflow.
+- Before editing, explain information priority, grouping, reading order, main action, density and copy retained/removed in terms of the task. Compare with a lighter or unchanged approach. Implementing a prescribed list of labels is not proof of better UX. Record conflicts with the project and justify applicable choices; do not manufacture research or measured comprehension gains.
+
+## Execution and independent review
+
+- Use the same isolated execution, normal-size original screenshots, actual interaction evidence, independent review and separate human acceptance as the rest of the Harness. OJO, Impeccable and project methods remain active.
+- In review, read and critique only. The upstream build/deal/fix instructions do not authorize editing, fetching assets, changing facts, installing tools or submitting forms. Check against the original task before the executor's self-assessment. A result can comply with a proposed structure and still regress task clarity.
+- The upstream Stop hook is preserved as source data. Do not install or execute it automatically. Do not arm an extra `.web-taste` gate or replace Harness acceptance with an upstream gate. Scripts and templates are available only for explicit, appropriate use within existing permissions and verification budgets. No parallel approval store, agent spawning or global configuration changes.
+- For public-page implementation, execute the applicable web-taste copy, layout and finish-check workflow through the existing Harness verification steps when the target stack and local tooling support it. Reading the Skill alone is not execution. Record each actual command/result; an unavailable or inapplicable check needs an explicit reason and cannot be reported as passed. The preserved tools do not run merely because guidance was loaded. If an upstream checker is used, retain its actual output, limitations and reasoned exceptions. `GATE: OPEN`, `DONE`, a waiver, or a checker pass never means independent design acceptance. A user stop stays a stop; do not invoke a hook or continue page edits after it.
+- Preserve default/hover/pressed/selected/open/focus/disabled and relevant recovery states; use real motion records and reduced-motion checks. Do not infer behavior or user understanding from static screenshots. Report unobserved states as missing evidence, never as passed.
