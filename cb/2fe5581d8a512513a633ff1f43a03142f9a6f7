@@ -1,0 +1,25 @@
+tests/design-guidance.test.mjs
+  s_c3a809bd8a1ec1::t_0d327d7ce991e6 12
+tests/helpers/wait-for-job.mjs
+  s_c3a809bd8a1ec1::t_540e1f17e4ca90 5
+tests/incremental-source.test.mjs
+  s_c3a809bd8a1ec1::t_8356884e89b213 1,87,102,106,177
+tests/simple-project-review.test.mjs
+  s_c3a809bd8a1ec1::t_775094962dc9d5 1,16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "cb2fe5581d8a512513a633ff1f43a03142f9a6f7",
+  "prompts": {},
+  "sessions": {
+    "s_c3a809bd8a1ec1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1862f-3e9c-7361-a6d6-1894f0493907",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
