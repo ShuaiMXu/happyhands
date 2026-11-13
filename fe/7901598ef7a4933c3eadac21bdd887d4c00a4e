@@ -1,0 +1,21 @@
+packages/harness-core/page-structure-review.js
+  s_3a27c851f579ad::t_57eb2aad0744ff 1-56
+tests/helpers/hero-store-fixture.mjs
+  s_3a27c851f579ad::t_e248e547fcd6eb 56-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "fe7901598ef7a4933c3eadac21bdd887d4c00a4e",
+  "prompts": {},
+  "sessions": {
+    "s_3a27c851f579ad": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a063-153c-7450-b049-5241537d4920",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
