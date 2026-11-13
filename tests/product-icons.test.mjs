@@ -7,7 +7,7 @@ test('product icon adaptation is bound for both strict profiles, without a libra
  for(const kind of ['project','happyhands']){
   const contract=await remediationDefinition({...profile,profile:kind});
   const rule=contract.rules.find(r=>r.id==='UX-product-icons');
-  assert.ok(rule);assert.match(rule.remediation,/target product/);assert.match(rule.remediation,/semantic mapping/);
+  assert.ok(rule);assert.match(rule.remediation,/target product/);assert.match(rule.remediation,/action meaning/);
   assert.match(rule.verification,/needs-evidence/);assert.match(contract.skill,/not a maintained blacklist/);
  }
 });
@@ -30,4 +30,13 @@ test('independent icon QA must cover every viewport and cannot pass unresolved e
  rows[1].screenshotRefs=['after/mobile.png'];
  for(const status of ['fail','needs-evidence']){rows[1].status=status;assert.throws(()=>assertMethodChecks(rows,rules,manifest,'pass'),/prevents passing QA/);assert.doesNotThrow(()=>assertMethodChecks(rows,rules,manifest,'needs-evidence'));}
  rows[1].status='not-applicable';rows[1].reason='';assert.throws(()=>assertMethodChecks(rows,rules,manifest,'pass'),/reason/);
+});
+
+test('necessity comes first and a reasoned no-icon review is valid',async()=>{
+ const contract=await remediationDefinition(profile),rule=contract.rules.find(r=>r.id==='UX-product-icons');
+ assert.match(rule.remediation,/First decide whether an icon is necessary/);
+ assert.match(rule.remediation,/never add icons to satisfy this rule/);
+ assert.match(rule.remediation,/Preserve an already suitable existing icon/);
+ const rows=methodStateEntries(manifest).map(s=>({ruleId:'UX-product-icons',stateKey:s.key,status:'not-applicable',reason:'Inspected this text-only screen: labels communicate all actions without extra icons.',screenshotRefs:[s.screenshot]}));
+ assert.doesNotThrow(()=>assertMethodChecks(rows,['UX-product-icons'],manifest,'pass'));
 });

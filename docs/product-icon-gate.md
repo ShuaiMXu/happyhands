@@ -4,9 +4,12 @@ Owner request (2026-11-13): do not use Codex's default icons; adapt icons to the
 
 New strict remediation contracts (catalog 1.2.0) include `UX-product-icons` for both `project` and `happyhands` profiles. This is a review evidence gate, not an icon-library ban or a claim that code can determine semantic quality. Standard libraries and existing product assets may be retained with deliberate product-fit evidence; an unexplained generator fallback cannot pass review.
 
+Necessity comes first: an icon is optional. Omit or remove unnecessary decorative icons. If an icon is useful, ensure semantic and product fit; preserve an existing suitable icon rather than forcing redesign. No-icon/text-only output can pass with an explicit, evidence-based not-applicable explanation.
+
 ## Required evidence
 
-- Target product's family/source and design reference; never substitute workbench styling.
+- Necessity for the user task; no-icon output is valid.
+- When needed, target product's family/source and design reference; never substitute workbench styling.
 - Semantic mapping to each affected action or content role.
 - Stroke/fill, optical size, alignment, spacing and visual family consistency.
 - Applicable responsive/interaction states, accessible labels or decorative hiding.
