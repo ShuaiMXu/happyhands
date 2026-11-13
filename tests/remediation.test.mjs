@@ -22,7 +22,7 @@ test('strict profile requires explicit adoption and preserves legacy profiles',(
 });
 test('project profile retains task/grid/state methods without imposing owned UI preferences',async()=>{
  const project=await remediationDefinition({...profile,profile:'project'}),owned=await remediationDefinition(profile);
- assert.equal(project.rules.length,5);assert.equal(owned.rules.length,29);assert.ok(project.rules.some(r=>r.id==='UX-grid'));assert.ok(owned.rules.some(r=>r.id==='AS-19'));
+ assert.equal(project.rules.length,7);assert.equal(owned.rules.length,31);assert.ok(project.rules.some(r=>r.id==='UX-grid'));assert.ok(owned.rules.some(r=>r.id==='AS-19'));
 });
 test('execution receives the own Skill and specific complete OJO references',async t=>{
  const {run,method}=await fixture(t);const prompt=executionMethodPrompt(method,run.directory,'ojo/verified');
@@ -84,7 +84,7 @@ test('homepage Hero rules are scoped and cannot be planned without captured brow
  assert.throws(()=>remediationProfile({...heroProfile,surface:'anywhere'}),/owned profile/);
  const definition=await remediationDefinition(heroProfile);
  assert.deepEqual(definition.rules.slice(-2).map(rule=>rule.id),['HH-HERO-MOTION','HH-HERO-MARK']);
- assert.equal(definition.rules.length,31);
+ assert.equal(definition.rules.length,33);
  const design={metadata:{reference:'design'},uiRules:'# Owned rules',packs:[]};
  const ojo={metadata:{reference:'ojo'},adapter:'# OJO',documents:[]};
  assert.ok(!guidanceCatalog(design,ojo,await remediationDefinition(profile)).some(file=>file.path==='remediation-SKILL.md'));

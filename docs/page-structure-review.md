@@ -1,0 +1,13 @@
+# Page structure review evidence gate
+
+`UX-page-structure` requires Visual QA to supply `structureChecks` for **every captured before/after original** across five dimensions: `grid`, `spacing`, `alignment`, `components`, `responsive`. Each row has `screenshot`, `dimension`, `status`, `observed`, `expected`, `basis`, and `method`. Status is pass, fail, needs-evidence, or not-applicable. Explain non-applicability rather than silently dropping the dimension. A passing aggregate cannot contain after failures or needs-evidence. Before defects remain recorded as fail rather than being rewritten as passes; passing requires reviewed after evidence and the existing matched-state gates. Surface tiles and interaction originals are included. Old immutable contracts remain readable; new adopted contracts enforce the gate.
+
+Inspect actual container edges, column/gutter relationships, vertical rhythm, component roles/variants and supplied interaction/device states. Record measured CSS pixels with the method and viewport when available; distinguish screenshot estimates. Never invent measurements or assert a universal 8px grid. The expected value must come from the target project's adopted rules or a demonstrable layout/function/accessibility defect. Missing device or interaction evidence is needs-evidence, not proof of correctness. This gate checks coverage and binding, not the truth of aesthetic judgment.
+
+Every reported finding needs an `annotations` entry: `{id, findingId, screenshot, label, box:{x,y,width,height}}`. Coordinates are fractions of the **uncropped original image**, not the viewport. Boxes must remain inside that original. Link the annotation to a finding that cites the same screenshot. Keep raw screenshots unchanged; output a separate annotated copy using these coordinates, numbered problem labels and a legend explaining observed/expected/basis. Do not replace original evidence with a model-redrawn image. The runtime validates original binding and bounds, but does not claim an exported image was rendered or visually reviewed.
+
+Formal finding admission still applies: grid/spacing preferences and heuristic candidates do not automatically become defects. A reviewer may report no defect after checking all dimensions; never manufacture errors merely to fill an output page.
+
+## Verification
+
+`node --test tests/page-structure-review.test.mjs` covers schema, missing/duplicate dimension rows, invalid original references, unresolved statuses, absent annotations and out-of-bounds boxes. These are structural safeguards, not a visual model benchmark or proof of the target UI's quality.
