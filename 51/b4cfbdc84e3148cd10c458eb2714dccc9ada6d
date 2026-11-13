@@ -1,0 +1,22 @@
+docs/product-icon-gate.md
+  h_8f87e56e705bcf 7-8,11-12
+skills/experience-remediation/SKILL.md
+  h_8f87e56e705bcf 34,36
+skills/experience-remediation/rules.json
+  h_8f87e56e705bcf 41-42
+tests/agents.test.mjs
+  h_8f87e56e705bcf 314
+tests/product-icons.test.mjs
+  h_8f87e56e705bcf 10,34-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "51b4cfbdc84e3148cd10c458eb2714dccc9ada6d",
+  "prompts": {},
+  "humans": {
+    "h_8f87e56e705bcf": {
+      "author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
