@@ -28,7 +28,8 @@ test('an expertise release is immutable, review-gated and records exact skill co
 test('activation and rollback keep an audit trail instead of rewriting release files', async t => {
   const {root,registry,report}=await fixture(t);
   await createSkillRelease({root,registryRoot:registry,version:'1.0.0',reviewer:'Owner',reason:'First',regressionReport:report});
-  await createSkillRelease({root,registryRoot:registry,version:'1.1.0',reviewer:'Owner',reason:'Second',regressionReport:report});
+  await assert.rejects(createSkillRelease({root,registryRoot:registry,version:'1.1.0',reviewer:'Owner',reason:'Second',regressionReport:report}),/explicit evolution baseline/);
+  await createSkillRelease({root,registryRoot:registry,version:'1.1.0',baselineVersion:'1.0.0',reviewer:'Owner',reason:'Second',regressionReport:report});
   await activateSkillRelease({root,version:'1.1.0',reviewer:'Owner',reason:'Promote'});
   const rollback=await activateSkillRelease({root,version:'1.0.0',reviewer:'Owner',reason:'Regression found'});
   assert.equal(rollback.previousVersion,'1.1.0');
@@ -89,7 +90,7 @@ test('unbound or corrupted releases cannot replace an active release', async t =
 
 test('process exit before pointer replacement preserves prior version and requires explicit recovery', async t => {
   const {root, registry, report} = await fixture(t);
-  for (const version of ['1.0.0','1.1.0']) await createSkillRelease({root, registryRoot:registry, version, reviewer:'Fixture', reason:'Test', regressionReport:report});
+  for (const version of ['1.0.0','1.1.0']) await createSkillRelease({root, registryRoot:registry, version, baselineVersion:version==='1.1.0'?'1.0.0':undefined, reviewer:'Fixture', reason:'Test', regressionReport:report});
   const previous = await activateSkillRelease({root, version:'1.0.0', reviewer:'Fixture', reason:'Test'});
   const script = `import fs from 'node:fs/promises'; import {syncBuiltinESMExports} from 'node:module';
     fs.rename = async () => process.exit(77); syncBuiltinESMExports();
@@ -106,4 +107,27 @@ test('process exit before pointer replacement preserves prior version and requir
   assert.equal(next.previousVersion,'1.0.0');
   const recorded = JSON.parse(await readFile(join(root,'expertise','activations',next.activationId+'.json'),'utf8'));
   assert.deepEqual(recorded,next);
+});
+
+test('an active method rewrite cannot publish until old/new hashes and counterexamples are bound', async t => {
+  const {root,registry,report}=await fixture(t);
+  const first=await createSkillRelease({root,registryRoot:registry,version:'1.0.0',reviewer:'Fixture',reason:'Baseline',regressionReport:report});
+  await activateSkillRelease({root,version:'1.0.0',reviewer:'Fixture',reason:'Baseline fixture only'});
+  const path=join(registry,'example-reviewer','SKILL.md');
+  await writeFile(path,'# Revised fixture\nPreserve valid labels; reject unsupported candidates.\n');
+  const current=await runRegression(corpus,{registryRoot:registry});
+  current.modelReview={status:'reviewed',reviewer:'Synthetic test reviewer',reason:'Fixture assertion only; not real approval.',evidenceHash:current.evidenceHash};
+  const options={root,registryRoot:registry,version:'2.0.0',reviewer:'Fixture',reason:'Scoped rewrite',regressionReport:current};
+  await assert.rejects(createSkillRelease(options),/evolution record/);
+  const {skillContracts}=await import('../packages/skill-core/release-inputs.js');
+  const contracts=await skillContracts(registry);
+  const evolution={baselineVersion:'1.0.0',evidenceHash:current.evidenceHash,changes:[{
+    id:'example-reviewer',beforeHash:first.skills.find(s=>s.id==='example-reviewer').contractHash,afterHash:contracts.find(s=>s.id==='example-reviewer').contractHash,
+    reason:'Clarify a bounded fixture',observedFailure:'Unsupported candidate was treated as a finding.',preserveBehavior:'Supported scoped repairs still produce plans.',
+    failureCases:['fix-unconfirmed'],preserveCases:['fix-confirmed'],affectedCases:['fix-stale']
+  }]};
+  const release=await createSkillRelease({...options,evolution});
+  assert.equal(release.evolution.status,'reviewed-contract-candidate');
+  assert.equal(release.evolution.qualityClaim,'not-established');
+  assert.equal(JSON.parse(await readFile(join(root,'expertise','active.json'),'utf8')).releaseVersion,'1.0.0');
 });

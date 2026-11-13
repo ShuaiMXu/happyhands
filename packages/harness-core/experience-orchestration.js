@@ -1,3 +1,4 @@
+import {auditReadingMethods, METHOD_POLICY} from '../skill-core/method-policy.js';
 import {EXPERIENCE_POLICY,REVIEW_DIMENSIONS,experienceRequired} from './experience-contract.js';
 export {EXPERIENCE_POLICY,REVIEW_DIMENSIONS,experienceRequired,assertExperienceAssessments} from './experience-contract.js';
 import {createHash} from 'node:crypto';
@@ -63,6 +64,8 @@ const localMethods=['review-product','experience-remediation',...['information-a
 async function stageLocalMethods(directory){
  const root=fileURLToPath(new URL('../../skills/',import.meta.url)),documents=[];
  for(const method of localMethods)for(const path of await filesUnder(join(root,method))){const content=await readFile(join(root,method,path));documents.push({path:method+'/'+path,content,sha256:hash(content)});}
+ const sharedWorkflow=await readFile(join(root,'happyhands/references/workflow.md'));
+ documents.push({path:'happyhands/references/workflow.md',content:sharedWorkflow,sha256:hash(sharedWorkflow)});
  const files=documents.map(({path,sha256})=>({path,sha256})),sha256=digest(files),reference='experience-methods/v1/'+sha256,destination=join(directory,reference);
  await mkdir(dirname(destination),{recursive:true});
  try{await realpath(destination);}catch(error){
@@ -74,7 +77,7 @@ async function stageLocalMethods(directory){
   }finally{await rm(temporary,{recursive:true,force:true});}
  }
  for(const doc of documents)if(hash(await readVerificationFile(directory,reference+'/'+doc.path,2*1024*1024))!==doc.sha256)throw Error('Local experience method snapshot changed.');
- return {reference,sha256,files,readFirst:localMethods.map(path=>reference+'/'+path+'/SKILL.md'),availability:'Complete methods available; not proof of execution.'};
+ return {reference,sha256,files,methodPolicy:METHOD_POLICY,readFirst:auditReadingMethods().map(path=>reference+'/'+path+'/SKILL.md'),availability:'Complete methods available; not proof of execution.'};
 }
 
 async function verifyMethods(run,methods,surface){
@@ -113,7 +116,7 @@ export async function experienceContext(directory,surface='app-screen'){
  const run=await loadRun(directory),bound=await binding(run);
  const design=await stageDesignGuidance(directory,'review',{...run.manifest.onboarding?.config?.designGuidance,taste:surface,dials:undefined});
  const ojo=await stageOjoGuidance(directory,'review'),local=await stageLocalMethods(directory);
- return {localMethods:local,policy:EXPERIENCE_POLICY,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema,decisionSchema,instructions:'Read the complete staged methods and actual sources. Inspect originals; write the audit before formal diagnosis. Record user constraints separately from operator proposals. A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
+ return {localMethods:local,policy:EXPERIENCE_POLICY,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema,decisionSchema,instructions:'Read every complete readFirst method and actual source; consult the remaining staged methods only for a demonstrated task need. Planning and learning share the existing decision/review/candidate records, not additional reports. Contract-only methods are guidance, not executed analyzers. Inspect originals; write the audit before formal diagnosis. Record user constraints separately from operator proposals. A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
 }
 export async function saveExperienceRecord(directory,phase,input){
  if(!['audit','decision'].includes(phase))throw Error('Choose audit or decision.');

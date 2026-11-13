@@ -35,3 +35,11 @@ Before implementation, record the reading order and information grouping that an
 Compare the chosen approach with a lighter change or preserving the existing design. State the expected task benefit, cost, risk and what evidence could refute it. For every selected Design.md or design-system source, identify a real section, the target problem, adoption/rejection, implementation location and verification. Colors, fonts and field counts alone do not constitute adaptation. Keep incomplete discovery explicit and resolve it before editing.
 
 For policy `task-design-review@1`, deliver the decision through `experience --phase decision --input FILE` before `plan`. The confirmed scope and diagnostic record must match. A decision is an operator hypothesis subject to independent challenge, never a new user requirement or human acceptance. If the best supported decision is no change, report that outcome rather than creating work to satisfy the pipeline.
+
+## Execution contract and admission
+
+The bounded handler supplies: A candidate plan from the selected evidence-supported finding and existing constraints.
+
+The professional method still requires: Inspect exact source consumers and record the existing experience decision before implementation. A generated plan is not a verified file patch or acceptance.
+
+Deliver into the current Run's existing experience audit or decision; do not create a competing report. Cite the frozen Skill path and exact rule, original state and source, observed failure, task consequence and the reasoning connecting them. Record preservation/counterevidence. With no demonstrated defect, keep the candidate unadmitted and make no change. `complete` describes this handler's bounded output, not professional review or human acceptance.

@@ -11,9 +11,9 @@ for (let index=0; index<args.length; index+=2) {
 const need = key => { if (!options[key]) throw new Error(`Missing --${key}`); return options[key]; };
 if (command === 'publish') {
   const report = JSON.parse(await readFile(resolve(need('report')), 'utf8'));
-  console.log(JSON.stringify(await createSkillRelease({ version: need('version'), reviewer: need('reviewer'), reason: need('reason'), regressionReport: report }), null, 2));
+  console.log(JSON.stringify(await createSkillRelease({ version: need('version'), reviewer: need('reviewer'), reason: need('reason'), regressionReport: report, baselineVersion: options.baseline, evolution: options.change ? JSON.parse(await readFile(resolve(options.change), 'utf8')) : undefined }), null, 2));
 } else if (command === 'activate' || command === 'rollback') {
   console.log(JSON.stringify(await activateSkillRelease({ version: need('version'), reviewer: need('reviewer'), reason: need('reason') }), null, 2));
 } else {
-  console.log('Usage:\n  pnpm expertise publish --version X.Y.Z --report FILE --reviewer NAME --reason TEXT\n  pnpm expertise activate --version X.Y.Z --reviewer NAME --reason TEXT\n  pnpm expertise rollback --version X.Y.Z --reviewer NAME --reason TEXT');
+  console.log('Usage:\n  pnpm expertise publish --version X.Y.Z --report FILE --reviewer NAME --reason TEXT [--baseline X.Y.Z --change FILE]\n  pnpm expertise activate --version X.Y.Z --reviewer NAME --reason TEXT\n  pnpm expertise rollback --version X.Y.Z --reviewer NAME --reason TEXT');
 }

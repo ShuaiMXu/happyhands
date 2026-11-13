@@ -32,3 +32,7 @@ Read [the shared design-language rubric](../visual-hierarchy-reviewer/rubric.jso
 ## Bundled OJO methodology
 
 Use the [Harness OJO adapter](../../vendor/ojo/ADAPTER.md), then its linked original Skill and relevant references. The runtime records a verified guidance snapshot in this result; design execution and independent QA receive the same pinned source with mode-specific reading routes. Preserve the existing evidence and approval boundaries.
+
+## Execution contract
+
+The bounded handler prepares source-bound matched originals and a review brief; it does not view the images or execute an independent visual judgment. Keep missing states and mismatched configurations visible. Use the existing independent ai-review/attest record for actual task, hierarchy, interaction, design-system and regression conclusions. A successful evidence pairing cannot stand in for an independent review or final acceptance.
