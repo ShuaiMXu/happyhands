@@ -1,6 +1,6 @@
 import {validateSkillEvolution} from './evolution.js';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import {skillContracts,regressionEvidenceHash,inputHash} from './release-inputs.js';
 import {runRegression} from './regression.js';
@@ -29,6 +29,9 @@ export async function createSkillRelease({ root = '.', registryRoot, version, re
   if(inputHash(skills)!==current.registryHash)throw Error('Skill contracts changed during release verification.');
   const active = await readFile(resolve(root, 'expertise', 'active.json'), 'utf8').then(JSON.parse).catch(error => error.code === 'ENOENT' ? null : Promise.reject(error));
   if (active && baselineVersion && baselineVersion !== active.releaseVersion) throw Error('Evolution baseline must match the active release.');
+  const existing = await readdir(resolve(root, 'expertise', 'releases')).catch(error => error.code === 'ENOENT' ? [] : Promise.reject(error));
+  if (existing.includes(version + '.json')) throw Error('Expertise release already exists.');
+  if (!active && !baselineVersion && existing.some(name => name.endsWith('.json') && VERSION.test(name.slice(0, -5)))) throw Error('Existing releases require an explicit evolution baseline before another publication.');
   const baselineId = active?.releaseVersion ?? baselineVersion;
   if (baselineId && !VERSION.test(baselineId)) throw Error('Invalid evolution baseline version.');
   const baselineText = baselineId ? await readFile(resolve(root, 'expertise', 'releases', baselineId + '.json'), 'utf8') : null;

@@ -24,7 +24,7 @@
 1. 在实际 Run 保留失败、误报、拒绝、原图、任务和具体方法引用；未知项不伪装成缺陷。提出项目局部候选，不因一次偏好升级成通用规则。
 2. 改写实际契约/实现；保留失败样例和不应被修改的反例，补受影响回归。反例必须和失败样例不同。人工审阅它们是否真的覆盖该次改写，字段齐全不代表覆盖正确。
 3. 执行现有 `pnpm regression`，用真实报告安排独立复核。已有发布流程仍核验报告与当前代码、案例、契约哈希，并重新执行回归；不能自己填写 passed。
-4. 对已有 active release 的改动，发布时必须提供 evolution JSON。也可用 `--baseline VERSION` 指定一个已存的首次比较基线；有 active 时必须与它一致。没有历史基线的第一次发布只记录 baseline-only，不宣称发生了经证明的学习。
+4. 对已有 active release 的改动，发布时必须提供 evolution JSON。也可用 `--baseline VERSION` 指定一个已存的首次比较基线；有 active 时必须与它一致。没有任何历史 release 的第一次发布只记录 baseline-only；已有 release 但尚未 activate 时，后续发布也必须显式选择 --baseline，不能反复绕过改写校验。首次发布不宣称发生了经证明的学习。
 5. 继续使用 `pnpm expertise publish --version VERSION --report FILE --reviewer NAME --reason TEXT --change CHANGE.json`。记录必须覆盖所有变更契约的 old/new hash，新增/删除的一侧为 null；实现或入口/适配器变化另用 `$implementation`。失败样例、保留反例及受影响案例都必须在本次实际报告中通过。旧/新方法哈希、理由、反例及报告 evidenceHash 一并冻结。
 6. 发布只生成不可变 release，不改变 active。负责人审阅后沿用现有 activate；失败沿用 rollback 和原有审计链。旧 release 仍可回滚。候选不可自动晋升，也不能覆盖失败历史。
 

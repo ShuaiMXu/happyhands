@@ -28,7 +28,8 @@ test('an expertise release is immutable, review-gated and records exact skill co
 test('activation and rollback keep an audit trail instead of rewriting release files', async t => {
   const {root,registry,report}=await fixture(t);
   await createSkillRelease({root,registryRoot:registry,version:'1.0.0',reviewer:'Owner',reason:'First',regressionReport:report});
-  await createSkillRelease({root,registryRoot:registry,version:'1.1.0',reviewer:'Owner',reason:'Second',regressionReport:report});
+  await assert.rejects(createSkillRelease({root,registryRoot:registry,version:'1.1.0',reviewer:'Owner',reason:'Second',regressionReport:report}),/explicit evolution baseline/);
+  await createSkillRelease({root,registryRoot:registry,version:'1.1.0',baselineVersion:'1.0.0',reviewer:'Owner',reason:'Second',regressionReport:report});
   await activateSkillRelease({root,version:'1.1.0',reviewer:'Owner',reason:'Promote'});
   const rollback=await activateSkillRelease({root,version:'1.0.0',reviewer:'Owner',reason:'Regression found'});
   assert.equal(rollback.previousVersion,'1.1.0');
@@ -89,7 +90,7 @@ test('unbound or corrupted releases cannot replace an active release', async t =
 
 test('process exit before pointer replacement preserves prior version and requires explicit recovery', async t => {
   const {root, registry, report} = await fixture(t);
-  for (const version of ['1.0.0','1.1.0']) await createSkillRelease({root, registryRoot:registry, version, reviewer:'Fixture', reason:'Test', regressionReport:report});
+  for (const version of ['1.0.0','1.1.0']) await createSkillRelease({root, registryRoot:registry, version, baselineVersion:version==='1.1.0'?'1.0.0':undefined, reviewer:'Fixture', reason:'Test', regressionReport:report});
   const previous = await activateSkillRelease({root, version:'1.0.0', reviewer:'Fixture', reason:'Test'});
   const script = `import fs from 'node:fs/promises'; import {syncBuiltinESMExports} from 'node:module';
     fs.rename = async () => process.exit(77); syncBuiltinESMExports();
