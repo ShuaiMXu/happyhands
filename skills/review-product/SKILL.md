@@ -22,9 +22,14 @@ Stop before an external deployment unless it has been authorized. A live site ma
 
 ## Complete design guidance packages
 
-Creative OS stages pinned, complete OJO, Taste and Impeccable snapshots into new review/execution runs. Before model design work, read the listed original Skill files and each Harness adapter, then the relevant complete references. Existing product UI uses Taste redesign; explicit public-page work can select v2; explicit dial-based work can select the complete v1 and declared layout variance, motion intensity and visual density. Impeccable Audit/Critique are review methods; Polish/Layout/Animate guide only the confirmed implementation. Keep the current stack, approved Foundation, original content and all relevant states. These packages share the existing scope→plan→isolated change→capture→independent QA→human judgment flow. Do not add a parallel CLI/browser session or acceptance store. Presence in a snapshot proves availability, not model use, completed browser checks or human approval.
+Creative OS stages pinned, complete OJO, web-taste and Impeccable snapshots into new review/execution runs. Before model design work, read the listed original Skill files and each Harness adapter, then the relevant complete references. web-taste replaces the older default Taste route. Its public-website recipes must be adapted to the actual task; working interfaces do not inherit compulsory full-screen sections, hero motion or photo quotas. Explicit legacy-v2 and dials-v1 retain historical methods for compatibility. Impeccable Audit/Critique are review methods; Polish/Layout/Animate guide only the confirmed implementation. Keep the current stack, approved Foundation, original content and all relevant states. These packages share the existing scope→plan→isolated change→capture→independent QA→human judgment flow. Do not add a parallel CLI/browser session or acceptance store. Presence in a snapshot proves availability, not model use, completed browser checks or human approval.
 
 
 ## HappyHands UI profile
 
 For HappyHands-owned interfaces or explicitly adopting projects, read the complete `happyhands-ui/SKILL.md` in the staged design-guidance bundle. It contains the eleven user-approved copy, Radix color, hierarchy and interaction rules. The bundle hashes and preserves this profile alongside the complete vendor skills; do not infer adoption by an external target project.
+
+
+## Required website and landing-page method
+
+For official/company websites and landing pages, web-taste is the required primary design and implementation method. Classify these tasks as public-page before formal diagnosis; read its complete copy, voice, system, layout and section references and applicable asset/motion references. OJO and Impeccable supplement this execution; they do not replace web-taste. Preserve user-approved project rules and evidence boundaries. Do not silently route website/landing-page work through a legacy Taste profile.

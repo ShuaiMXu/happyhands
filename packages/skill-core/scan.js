@@ -25,7 +25,7 @@ export async function sourceFiles(repo, options = {}) {
       const path = join(directory, entry.name);
       // Installed design methods and templates are guidance, not the target UI.
       const sourcePath=relative(root,path).replaceAll('\\','/');
-      if(['skills/vendor/taste','skills/vendor/taste-v2','skills/vendor/impeccable'].includes(sourcePath))continue;
+      if(['skills/vendor/taste','skills/vendor/taste-v2','skills/vendor/impeccable','skills/vendor/web-taste'].includes(sourcePath))continue;
       if (entry.isDirectory()) await walk(path);
       else if (TEXT_EXTENSIONS.has(extname(entry.name).toLowerCase()) || isModuleConfig(sourcePath) || includeDesignDocs && BRAND_DOCUMENT.test(entry.name)) {
         // Check the size before reading: an oversized asset would otherwise be
