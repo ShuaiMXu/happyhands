@@ -1,16 +1,11 @@
+import {sourceFiles} from '../skill-core/scan.js';
+import {selectSkills} from '../skill-core/method-policy.js';
 import {experienceFor} from './experience-orchestration.js';
 import {readFile} from 'node:fs/promises';
 import {executeSkill} from '../skill-core/runner.js';
 import {diagnoseBaseline} from '../workbench/baseline-diagnosis.js';
 import {diagnoseRun} from './diagnosis.js';
 import {loadRun, runFilePath, saveDiagnosis} from './store.js';
-
-const DEFAULT_PROJECT_SKILLS = [
-  'accessibility-reviewer',
-  'responsive-reviewer',
-  'information-architecture-reviewer',
-  'visual-hierarchy-reviewer'
-];
 
 function assertDiagnosisOpen(run) {
   if (run.manifest.confirmation || run.manifest.plan || run.manifest.execution) {
@@ -43,16 +38,14 @@ export async function diagnoseProduct(directory, {
   assertDiagnosisOpen(run);
   await experienceFor(run);
   if (strategy === 'project') {
-    const skills = new Set([
-      ...(selectedSkills ?? DEFAULT_PROJECT_SKILLS),
-      'design-system-drift-detector',
-      'component-state-auditor'
-    ]);
-    for (const id of skills) {
+    const requested = selectedSkills === undefined ? undefined : [...selectedSkills, 'design-system-drift-detector', 'component-state-auditor'];
+    const selection = await selectSkills('diagnose', {registryRoot, requested});
+    const sourceSnapshot = await sourceFiles(repo, {includeDesignDocs:selection.selected.some(({id}) => ['brand-foundation-extractor','pattern-library-curator'].includes(id))});
+    for (const {id} of selection.selected) {
       signal.throwIfAborted();
       const previous = run.manifest.skills.find(item => item.id === id);
       if (!previous || previous.status !== 'complete') {
-        await executeSkill({id, directory, repo, registryRoot, retry: Boolean(previous)});
+        await executeSkill({id, directory, repo, registryRoot, sourceSnapshot, retry: Boolean(previous)});
       }
     }
     run = await loadRun(directory);

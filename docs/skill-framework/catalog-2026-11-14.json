@@ -1,0 +1,1699 @@
+{
+  "schemaVersion": "proposal-1",
+  "date": "2026-11-14",
+  "repository": "ShuaiMXu/happyhands",
+  "sourceRevision": "8fcaf634386582406336a3f580c977d1af43c0ee",
+  "scope": "Tracked Skill entries under skills/; host-installed Skills excluded",
+  "counts": {
+    "entries": 50,
+    "registered": 27,
+    "operationalEntries": 5,
+    "vendorEntries": 18,
+    "bounded": 18,
+    "contractOnly": 9
+  },
+  "entries": [
+    {
+      "id": "S01",
+      "key": "experience-remediation",
+      "name": "experience-remediation",
+      "path": "skills/experience-remediation/SKILL.md",
+      "sha256": "cb0b78c0d1284977013818b3b58b2334985e6723a876e8ae4cd9f249c36bfcee",
+      "lines": 65,
+      "type": "operational",
+      "layer": "L3",
+      "description": "Execute evidence-backed UI and UX remediation using project layout contracts, shared components and complete OJO/Taste/Impeccable methods, then supply per-rule evidence for independent acceptance.",
+      "implementation": {
+        "provider": "CLI / orchestration / profile / video workflow",
+        "assessment": "隔离整改与逐项交付"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留；区分执行协议与方法选择，方法由任务路由，不能始终只用 Polish。",
+      "reviewDepth": "Operational entry contract review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S02",
+      "key": "happyhands-ui",
+      "name": "happyhands-ui",
+      "path": "skills/happyhands-ui/SKILL.md",
+      "sha256": "a12096476106864e5e48286c8a03af34e2f54b6cac64a5f2709a042632b3cdc1",
+      "lines": 63,
+      "type": "operational",
+      "layer": "L1",
+      "description": "Apply HappyHands UI copy, Radix color, typography and interaction rules when implementing or reviewing HappyHands-owned interfaces, or a target project that has explicitly adopted this profile.",
+      "implementation": {
+        "provider": "CLI / orchestration / profile / video workflow",
+        "assessment": "自有产品设计配置"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留为条件 profile；字体、Radix 色阶、圆角等不推广给第三方。",
+      "reviewDepth": "Operational entry contract review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S03",
+      "key": "happyhands",
+      "name": "happyhands",
+      "path": "skills/happyhands/SKILL.md",
+      "sha256": "6ebf8e014d8d5dd617d604d06c978293456c5c33907c14e57d88eda903d6656c",
+      "lines": 41,
+      "type": "operational",
+      "layer": "L0",
+      "description": "Review and repair a concrete UI or product-experience problem using source-bound screenshots, existing project rules, isolated changes and independent review. Route explicitly requested product or promotional video work to the bundled timestamped video workflow.",
+      "implementation": {
+        "provider": "CLI / orchestration / profile / video workflow",
+        "assessment": "单一对外入口"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留入口；将重复流程文字改为公共协议引用，兼容旧命令。",
+      "reviewDepth": "Operational entry contract review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S04",
+      "key": "accessibility-reviewer",
+      "name": "accessibility-reviewer",
+      "path": "skills/product-design/accessibility-reviewer/SKILL.md",
+      "sha256": "ab6f9393fb1fd9c7a6aee0dcca8f1ebb388b1b89a2dc8a62e1a14dd485b361d4",
+      "lines": 28,
+      "type": "registered",
+      "layer": "L4",
+      "description": "Review semantic structure, keyboard behavior, contrast and accessible states using browser and source evidence.",
+      "manifest": {
+        "id": "accessibility-reviewer",
+        "version": "0.3.0",
+        "role": "diagnose",
+        "description": "Review semantic structure, keyboard behavior, contrast and accessible states using browser and source evidence.",
+        "requiredInputs": [
+          "baselineCapture",
+          "repository"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "accessibilityReviewer",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "accessibilityReviewer",
+        "declaredMaturity": "bounded",
+        "assessment": "自动语义与 axe 线索；需另做键盘/辅助技术验证"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "repository"
+      ],
+      "reviewDecision": "保留专业检查器，不能用 complete 代表无障碍合规。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S05",
+      "key": "brand-foundation-extractor",
+      "name": "brand-foundation-extractor",
+      "path": "skills/product-design/brand-foundation-extractor/SKILL.md",
+      "sha256": "03274416f15c4b9857ad6b92f46765442fc3d3be39b21b3b8f39ef7c5145ee87",
+      "lines": 48,
+      "type": "registered",
+      "layer": "L1",
+      "description": "Extract candidate brand principles, voice and visual assets from product source and rendered evidence.",
+      "manifest": {
+        "id": "brand-foundation-extractor",
+        "version": "0.7.0",
+        "role": "foundation",
+        "description": "Extract candidate brand principles, voice and visual assets from product source and rendered evidence.",
+        "requiredInputs": [
+          "repository",
+          "baselineCapture"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "brandFoundationExtractor",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "brandFoundationExtractor",
+        "declaredMaturity": "bounded",
+        "assessment": "显式品牌声明、资产元数据、出处提取"
+      },
+      "contractInputs": [
+        "repository",
+        "baselineCapture"
+      ],
+      "reviewDecision": "保留，与视觉 token 提取共享输入但分开表达品牌含义。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S06",
+      "key": "change-impact-mapper",
+      "name": "change-impact-mapper",
+      "path": "skills/product-design/change-impact-mapper/SKILL.md",
+      "sha256": "e7a52e60716be5f30d9701a5631f3e2f5dc9962cd562a33cec67d31effaa8685",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L4",
+      "description": "Map a code change to affected routes, components, design foundations and critical user tasks.",
+      "manifest": {
+        "id": "change-impact-mapper",
+        "version": "0.1.0",
+        "role": "diagnose",
+        "description": "Map a code change to affected routes, components, design foundations and critical user tasks.",
+        "requiredInputs": [
+          "gitDiff",
+          "designFoundation"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，无实际 diff 影响分析"
+      },
+      "contractInputs": [
+        "gitDiff",
+        "designFoundation"
+      ],
+      "reviewDecision": "优先补齐 source-bound diff/消费者映射；不将占位接口称为增量审阅。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S07",
+      "key": "component-inventory",
+      "name": "component-inventory",
+      "path": "skills/product-design/component-inventory/SKILL.md",
+      "sha256": "f2a0de2fd730063e7903c746b2308c2f1dd320453eb4c0f9f5a4075ac0e24939",
+      "lines": 33,
+      "type": "registered",
+      "layer": "L1",
+      "description": "Build a component inventory with source paths, variants, composition and known consumers.",
+      "manifest": {
+        "id": "component-inventory",
+        "version": "0.8.0",
+        "role": "foundation",
+        "description": "Build a component inventory with source paths, variants, composition and known consumers.",
+        "requiredInputs": [
+          "repository"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "componentInventory",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "componentInventory",
+        "declaredMaturity": "bounded",
+        "assessment": "静态组件、别名与有界消费者图"
+      },
+      "contractInputs": [
+        "repository"
+      ],
+      "reviewDecision": "保留；模块可达不等于组件实际渲染，更不等于已检查页面。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S08",
+      "key": "component-reuse-planner",
+      "name": "component-reuse-planner",
+      "path": "skills/product-design/component-reuse-planner/SKILL.md",
+      "sha256": "420430d15f3a3c5fcb2ca71eccbd4f1f9a659c65ab7bc4fa246333dc7b1f9271",
+      "lines": 28,
+      "type": "registered",
+      "layer": "L3",
+      "description": "Decide whether a proposed change should reuse, extend or introduce a component using the governed project inventory.",
+      "manifest": {
+        "id": "component-reuse-planner",
+        "version": "0.3.0",
+        "role": "plan",
+        "description": "Decide whether a proposed change should reuse, extend or introduce a component using the governed project inventory.",
+        "requiredInputs": [
+          "designFoundation",
+          "finding"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "componentReusePlanner",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "componentReusePlanner",
+        "declaredMaturity": "bounded",
+        "assessment": "复用候选与状态清单"
+      },
+      "contractInputs": [
+        "designFoundation",
+        "finding"
+      ],
+      "reviewDecision": "保留；绑定具体问题及语义适配，合并到同一设计决定交付。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S09",
+      "key": "component-state-auditor",
+      "name": "component-state-auditor",
+      "path": "skills/product-design/component-state-auditor/SKILL.md",
+      "sha256": "740879ae8d3a5f2eada75d4d10bc1c8e9fae8c517345c54fa6280674bd5a08b2",
+      "lines": 50,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Audit documented components against a versioned rubric of the states their class has to be able to express.",
+      "manifest": {
+        "id": "component-state-auditor",
+        "version": "0.3.0",
+        "role": "foundation",
+        "description": "Audit documented components against a versioned rubric of the states their class has to be able to express.",
+        "requiredInputs": [
+          "repository",
+          "designFoundation"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "componentStateAudit",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "componentStateAudit",
+        "declaredMaturity": "bounded",
+        "assessment": "文档状态集合与源码词语的有界比对"
+      },
+      "contractInputs": [
+        "repository",
+        "designFoundation"
+      ],
+      "reviewDecision": "保留为线索；同步控件不强加异步 loading，状态缺词不是运行缺陷。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S10",
+      "key": "consistency-auditor",
+      "name": "consistency-auditor",
+      "path": "skills/product-design/consistency-auditor/SKILL.md",
+      "sha256": "b00e937e134c5de2dcf494b7e9f86620eda152c50dc3011ceeb265a77c05dca5",
+      "lines": 17,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Find review targets caused by repeated ungoverned visual values and compare them with approved project tokens.",
+      "manifest": {
+        "id": "consistency-auditor",
+        "version": "0.1.0",
+        "role": "diagnose",
+        "description": "Find review targets caused by repeated ungoverned visual values and compare them with approved project tokens.",
+        "requiredInputs": [
+          "repository",
+          "designFoundation"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "consistencyAuditor",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "consistencyAuditor",
+        "declaredMaturity": "bounded",
+        "assessment": "重复颜色与圆角字面量统计"
+      },
+      "contractInputs": [
+        "repository",
+        "designFoundation"
+      ],
+      "reviewDecision": "与 drift 共用扫描结果；保留独立 ID，按有意变体排除误报。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "consolidate-deliverable",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S11",
+      "key": "content-design-reviewer",
+      "name": "content-design-reviewer",
+      "path": "skills/product-design/content-design-reviewer/SKILL.md",
+      "sha256": "59233f2b8b9c63a3c4a8e4d32b56458902a64336bd0e842ebf0ffb986c5967b2",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Review interface language, labels and guidance for clarity, consistency and task completion.",
+      "manifest": {
+        "id": "content-design-reviewer",
+        "version": "0.2.0",
+        "role": "diagnose",
+        "description": "Review interface language, labels and guidance for clarity, consistency and task completion.",
+        "requiredInputs": [
+          "baselineCapture",
+          "criticalTask"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "contentDesignReviewer",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "contentDesignReviewer",
+        "declaredMaturity": "bounded",
+        "assessment": "可见字符串与模糊动作标签启发式"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "criticalTask"
+      ],
+      "reviewDecision": "用真实任务加 Impeccable Clarify 补语义审阅；常见“继续”不能自动判错。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "rewrite-contract",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S12",
+      "key": "design-system-drift-detector",
+      "name": "design-system-drift-detector",
+      "path": "skills/product-design/design-system-drift-detector/SKILL.md",
+      "sha256": "b6a6a19d47086e6537c976d071a63c3fecb01042f7128610721197226707b5c9",
+      "lines": 41,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Detect implementation values that diverge from the design foundation as ungoverned values, semantic conflicts or off-scale steps.",
+      "manifest": {
+        "id": "design-system-drift-detector",
+        "version": "0.2.0",
+        "role": "foundation",
+        "description": "Detect implementation values that diverge from the design foundation as ungoverned values, semantic conflicts or off-scale steps.",
+        "requiredInputs": [
+          "repository",
+          "designFoundation"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "designSystemDrift",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "designSystemDrift",
+        "declaredMaturity": "bounded",
+        "assessment": "未治理值、语义冲突、偏离尺度扫描"
+      },
+      "contractInputs": [
+        "repository",
+        "designFoundation"
+      ],
+      "reviewDecision": "保留为 Foundation 对照；仅 observed 时返回 review target。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S13",
+      "key": "error-recovery-reviewer",
+      "name": "error-recovery-reviewer",
+      "path": "skills/product-design/error-recovery-reviewer/SKILL.md",
+      "sha256": "96588928e86eb524858416687572522afbe025abe51b46fe00283b3ff546a242",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Review errors, recovery paths and prevention for a critical user task.",
+      "manifest": {
+        "id": "error-recovery-reviewer",
+        "version": "0.1.0",
+        "role": "diagnose",
+        "description": "Review errors, recovery paths and prevention for a critical user task.",
+        "requiredInputs": [
+          "baselineCapture",
+          "criticalTask"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，未执行异常与恢复路径"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "criticalTask"
+      ],
+      "reviewDecision": "优先提供失败注入/重试/保留输入的实际证据；Harden 作为方法，不能代替执行器。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S14",
+      "key": "experience-score-calibrator",
+      "name": "experience-score-calibrator",
+      "path": "skills/product-design/experience-score-calibrator/SKILL.md",
+      "sha256": "caa6409bee5d3e11265f1fe5289aea5c6649393c79a37d56a561751419233c62",
+      "lines": 28,
+      "type": "registered",
+      "layer": "L5",
+      "description": "Calibrate explainable experience dimensions against reviewed evidence before exposing an aggregate score.",
+      "manifest": {
+        "id": "experience-score-calibrator",
+        "version": "0.1.0",
+        "role": "learn",
+        "description": "Calibrate explainable experience dimensions against reviewed evidence before exposing an aggregate score.",
+        "requiredInputs": [
+          "projectHistory",
+          "judgment"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，无校准实现"
+      },
+      "contractInputs": [
+        "projectHistory",
+        "judgment"
+      ],
+      "reviewDecision": "继续研究态，先积累人类判断与反例，默认不展示分数。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S15",
+      "key": "expertise-candidate-author",
+      "name": "expertise-candidate-author",
+      "path": "skills/product-design/expertise-candidate-author/SKILL.md",
+      "sha256": "4afa0c897d6d249fce8b56af6427a4da75c8b8791e389dac5e97c3d684c5dfae",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L5",
+      "description": "Draft a general expertise candidate from repeated human judgments while preserving context and exceptions.",
+      "manifest": {
+        "id": "expertise-candidate-author",
+        "version": "0.1.0",
+        "role": "learn",
+        "description": "Draft a general expertise candidate from repeated human judgments while preserving context and exceptions.",
+        "requiredInputs": [
+          "judgment",
+          "projectHistory"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，无跨案例归纳实现"
+      },
+      "contractInputs": [
+        "judgment",
+        "projectHistory"
+      ],
+      "reviewDecision": "保留提案职责；多案例、适用性、例外和复核齐备后再晋升。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S16",
+      "key": "fix-planner",
+      "name": "fix-planner",
+      "path": "skills/product-design/fix-planner/SKILL.md",
+      "sha256": "66b268ee5023b33d8fb7838f4c000adb60f64d74b5101df52044cd960e506cf4",
+      "lines": 38,
+      "type": "registered",
+      "layer": "L3",
+      "description": "Turn a confirmed finding into a scoped, reversible change plan constrained by project evidence and approved design foundations.",
+      "manifest": {
+        "id": "fix-planner",
+        "version": "0.1.1",
+        "role": "plan",
+        "description": "Turn a confirmed finding into a scoped, reversible change plan constrained by project evidence and approved design foundations.",
+        "requiredInputs": [
+          "finding",
+          "designFoundation"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "fixPlanner",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "fixPlanner",
+        "declaredMaturity": "bounded",
+        "assessment": "静态 intent/批准约束草稿；新版 decision 在 Harness 另存"
+      },
+      "contractInputs": [
+        "finding",
+        "designFoundation"
+      ],
+      "reviewDecision": "保留；让方法说明与实际 experience decision provider 对齐，不能把 intent 复述叫完整设计。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "rewrite-contract",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S17",
+      "key": "foundation-extractor",
+      "name": "foundation-extractor",
+      "path": "skills/product-design/foundation-extractor/SKILL.md",
+      "sha256": "2331be23918481d0c94feb10fd46585dbd0956964a751c71c12c4c2a21ecea60",
+      "lines": 19,
+      "type": "registered",
+      "layer": "L1",
+      "description": "Inventory design tokens with their declared values, inferred categories and observed theme variants, plus component source files, before proposing a governed Design Foundation.",
+      "manifest": {
+        "id": "foundation-extractor",
+        "version": "0.9.0",
+        "role": "foundation",
+        "description": "Inventory design tokens with their declared values, inferred categories and observed theme variants, plus component source files, before proposing a governed Design Foundation.",
+        "requiredInputs": [
+          "repository"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "foundationExtractor",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "foundationExtractor",
+        "declaredMaturity": "bounded",
+        "assessment": "CSS/静态 JS TS theme 的有界提取"
+      },
+      "contractInputs": [
+        "repository"
+      ],
+      "reviewDecision": "保留；token-normalizer 复用其结果，频率不是语义或批准。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S18",
+      "key": "incremental-review-router",
+      "name": "incremental-review-router",
+      "path": "skills/product-design/incremental-review-router/SKILL.md",
+      "sha256": "adb751a9196fa394b0943026281c2764a5a2328e4289aa0e7068c3c62924a4e1",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L4",
+      "description": "Select the smallest sufficient set of review skills and product states for a project change.",
+      "manifest": {
+        "id": "incremental-review-router",
+        "version": "0.1.0",
+        "role": "review",
+        "description": "Select the smallest sufficient set of review skills and product states for a project change.",
+        "requiredInputs": [
+          "gitDiff",
+          "projectHistory"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，无实际最小检查集路由"
+      },
+      "contractInputs": [
+        "gitDiff",
+        "projectHistory"
+      ],
+      "reviewDecision": "依赖 change-impact-mapper 及可靠消费者图；未知范围明确扩大或阻塞。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S19",
+      "key": "information-architecture-reviewer",
+      "name": "information-architecture-reviewer",
+      "path": "skills/product-design/information-architecture-reviewer/SKILL.md",
+      "sha256": "747a490d1920695197e4525d6bcffc61417346dadfc78a89ecac5951182e8901",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Review navigation, grouping and content structure against a product critical task.",
+      "manifest": {
+        "id": "information-architecture-reviewer",
+        "version": "0.2.0",
+        "role": "diagnose",
+        "description": "Review navigation, grouping and content structure against a product critical task.",
+        "requiredInputs": [
+          "baselineCapture",
+          "criticalTask"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "informationArchitectureReviewer",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "informationArchitectureReviewer",
+        "declaredMaturity": "bounded",
+        "assessment": "landmark/标题级别等静态线索"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "criticalTask"
+      ],
+      "reviewDecision": "保留专长，真正 IA 审阅必须走导航任务；与 Critique 合并问题输出。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "rewrite-contract",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S20",
+      "key": "interaction-reviewer",
+      "name": "interaction-reviewer",
+      "path": "skills/product-design/interaction-reviewer/SKILL.md",
+      "sha256": "b33d902e21861ba90cfb08f5f1d2df3027c95d6cacd0ba25465b69f136747e02",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Review interaction flow, feedback, control behavior and state transitions for a critical product task.",
+      "manifest": {
+        "id": "interaction-reviewer",
+        "version": "0.2.0",
+        "role": "diagnose",
+        "description": "Review interaction flow, feedback, control behavior and state transitions for a critical product task.",
+        "requiredInputs": [
+          "baselineCapture",
+          "criticalTask"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "interactionReviewer",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "interactionReviewer",
+        "declaredMaturity": "bounded",
+        "assessment": "控件可访问名称等静态线索"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "criticalTask"
+      ],
+      "reviewDecision": "保留；补状态转移和键盘实际操作，不能仅看截图完成交互审阅。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "rewrite-contract",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S21",
+      "key": "judgment-distiller",
+      "name": "judgment-distiller",
+      "path": "skills/product-design/judgment-distiller/SKILL.md",
+      "sha256": "5ee5b533e01b9a6c2816fd5916026225ac046e1b7b0a4064250df73987b1f168",
+      "lines": 28,
+      "type": "registered",
+      "layer": "L5",
+      "description": "Turn an accept or reject decision and its rationale into a scoped project-learning candidate.",
+      "manifest": {
+        "id": "judgment-distiller",
+        "version": "0.2.0",
+        "role": "learn",
+        "description": "Turn an accept or reject decision and its rationale into a scoped project-learning candidate.",
+        "requiredInputs": [
+          "judgment",
+          "finding"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "judgmentDistiller",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "judgmentDistiller",
+        "declaredMaturity": "bounded",
+        "assessment": "将真实有效判断转为项目候选"
+      },
+      "contractInputs": [
+        "judgment",
+        "finding"
+      ],
+      "reviewDecision": "保留；reason 可空时只留决定，不从空理由归纳原则；撤回判断不可晋升。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S22",
+      "key": "pattern-library-curator",
+      "name": "pattern-library-curator",
+      "path": "skills/product-design/pattern-library-curator/SKILL.md",
+      "sha256": "860354588c5a83bc8b8147b8bfab98b7241fb1aa47ec1254ba3b679f62e82da3",
+      "lines": 35,
+      "type": "registered",
+      "layer": "L5",
+      "description": "Curate accepted interface patterns into a governed project library with usage guidance and exceptions.",
+      "manifest": {
+        "id": "pattern-library-curator",
+        "version": "0.3.0",
+        "role": "foundation",
+        "description": "Curate accepted interface patterns into a governed project library with usage guidance and exceptions.",
+        "requiredInputs": [
+          "repository",
+          "projectHistory"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "patternLibraryCurator",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "patternLibraryCurator",
+        "declaredMaturity": "bounded",
+        "assessment": "校验接受历史并提取候选；另有只读模型指南草稿"
+      },
+      "contractInputs": [
+        "repository",
+        "projectHistory"
+      ],
+      "reviewDecision": "保留治理职责，来源收集可在 L1 使用；重复截图不能算重复成功案例。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S23",
+      "key": "regression-case-author",
+      "name": "regression-case-author",
+      "path": "skills/product-design/regression-case-author/SKILL.md",
+      "sha256": "56adf419a81890bba25a28d7fcb8e2d732ef342364d9d75e5137d77b57e8deed",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L5",
+      "description": "Convert a reviewed product change into a portable regression case for a skill or evaluator.",
+      "manifest": {
+        "id": "regression-case-author",
+        "version": "0.1.0",
+        "role": "learn",
+        "description": "Convert a reviewed product change into a portable regression case for a skill or evaluator.",
+        "requiredInputs": [
+          "judgment",
+          "baselineCapture",
+          "afterCapture"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，无案例编写处理器"
+      },
+      "contractInputs": [
+        "judgment",
+        "baselineCapture",
+        "afterCapture"
+      ],
+      "reviewDecision": "与现有 case 收集/准入服务衔接；先脱敏、绑定原证据再生成用例。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S24",
+      "key": "responsive-reviewer",
+      "name": "responsive-reviewer",
+      "path": "skills/product-design/responsive-reviewer/SKILL.md",
+      "sha256": "ef373ecb659a8c93a628b2784b34325d7b6c01947b76a6c35ffd9928cc0c72a8",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L4",
+      "description": "Review task continuity, layout and content priority across matched desktop and mobile states.",
+      "manifest": {
+        "id": "responsive-reviewer",
+        "version": "0.2.0",
+        "role": "diagnose",
+        "description": "Review task continuity, layout and content priority across matched desktop and mobile states.",
+        "requiredInputs": [
+          "baselineCapture",
+          "criticalTask"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "responsiveReviewer",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "responsiveReviewer",
+        "declaredMaturity": "bounded",
+        "assessment": "同状态不同 configuration 的结构/溢出比较"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "criticalTask"
+      ],
+      "reviewDecision": "保留；视口对照不能证明所有设备与完整任务连续性。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S25",
+      "key": "skill-regression-evaluator",
+      "name": "skill-regression-evaluator",
+      "path": "skills/product-design/skill-regression-evaluator/SKILL.md",
+      "sha256": "fbd631feafa56d1adce3736a1019002a8005624c72a2ab0951ff722f4a66848e",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L5",
+      "description": "Evaluate a skill version against its regression cases and report first divergences.",
+      "manifest": {
+        "id": "skill-regression-evaluator",
+        "version": "0.1.0",
+        "role": "review",
+        "description": "Evaluate a skill version against its regression cases and report first divergences.",
+        "requiredInputs": [
+          "regressionCases"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，未向 Skill runner 接入 regressionCases"
+      },
+      "contractInputs": [
+        "regressionCases"
+      ],
+      "reviewDecision": "连接现有 regression 工具，保留真实/合成用例区别。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S26",
+      "key": "token-contrast-auditor",
+      "name": "token-contrast-auditor",
+      "path": "skills/product-design/token-contrast-auditor/SKILL.md",
+      "sha256": "49025020073d2e7561dc553a7ef09a54b4b044254483668593bfd9c410a5eb58",
+      "lines": 43,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Compute WCAG contrast for colour pairs the token names or the source state, and report which fail.",
+      "manifest": {
+        "id": "token-contrast-auditor",
+        "version": "0.1.0",
+        "role": "foundation",
+        "description": "Compute WCAG contrast for colour pairs the token names or the source state, and report which fail.",
+        "requiredInputs": [
+          "designFoundation"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "tokenContrast",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "tokenContrast",
+        "declaredMaturity": "bounded",
+        "assessment": "声明配对的颜色对比度计算，跳过不确定 alpha"
+      },
+      "contractInputs": [
+        "designFoundation"
+      ],
+      "reviewDecision": "保留独立计算器；实际图像背景、字号与控件状态需渲染验证。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S27",
+      "key": "token-normalizer",
+      "name": "token-normalizer",
+      "path": "skills/product-design/token-normalizer/SKILL.md",
+      "sha256": "bc7a80dbc709381e15c7c42b6f33852cf517b6de0cdd206a530074314b9b4a38",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L1",
+      "description": "Map raw visual values and aliases into candidate semantic design tokens without silently changing the product.",
+      "manifest": {
+        "id": "token-normalizer",
+        "version": "0.1.0",
+        "role": "foundation",
+        "description": "Map raw visual values and aliases into candidate semantic design tokens without silently changing the product.",
+        "requiredInputs": [
+          "repository",
+          "designFoundation"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，无语义归一化实现"
+      },
+      "contractInputs": [
+        "repository",
+        "designFoundation"
+      ],
+      "reviewDecision": "作为候选设计步骤接 Foundation，不因数值相近自动合并。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S28",
+      "key": "trust-conversion-reviewer",
+      "name": "trust-conversion-reviewer",
+      "path": "skills/product-design/trust-conversion-reviewer/SKILL.md",
+      "sha256": "b3d9a29c2879cf4eba9ddd126e827d920170358dbc3df5cb23c5e2e05eed1996",
+      "lines": 27,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Review whether proof, risk information and next actions support a credible user decision.",
+      "manifest": {
+        "id": "trust-conversion-reviewer",
+        "version": "0.1.0",
+        "role": "diagnose",
+        "description": "Review whether proof, risk information and next actions support a credible user decision.",
+        "requiredInputs": [
+          "baselineCapture",
+          "criticalTask"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "evidenceGate",
+        "maturity": "contract-only"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "evidenceGate",
+        "declaredMaturity": "contract-only",
+        "assessment": "evidenceGate，无行为转化测量"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "criticalTask"
+      ],
+      "reviewDecision": "公开页按需使用；Critique/说服模式辅助，缺分析数据不声称转化提升。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "withhold-executable-claim",
+        "defaultUse": "Method-only until actual provider and required evidence exist"
+      }
+    },
+    {
+      "id": "S29",
+      "key": "visual-hierarchy-reviewer",
+      "name": "visual-hierarchy-reviewer",
+      "path": "skills/product-design/visual-hierarchy-reviewer/SKILL.md",
+      "sha256": "30c4de0c1bfbad459d2018b26d79a3cf4dd95974d2097a347d3a349d1aba48ab",
+      "lines": 33,
+      "type": "registered",
+      "layer": "L2",
+      "description": "Review task hierarchy and product-specific design language using screenshot evidence and a contextual rubric.",
+      "manifest": {
+        "id": "visual-hierarchy-reviewer",
+        "version": "0.4.0",
+        "role": "diagnose",
+        "description": "Review task hierarchy and product-specific design language using screenshot evidence and a contextual rubric.",
+        "requiredInputs": [
+          "baselineCapture",
+          "criticalTask"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "visualHierarchyReviewer",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "visualHierarchyReviewer",
+        "declaredMaturity": "bounded",
+        "assessment": "DOM 标题/动作计数及 rubric 准备；明确 needs-evidence"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "criticalTask"
+      ],
+      "reviewDecision": "保留视觉专业接口，使用实际原图与任务判断；与 Impeccable Critique 共用诊断单。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "rewrite-contract",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S30",
+      "key": "visual-qa-evaluator",
+      "name": "visual-qa-evaluator",
+      "path": "skills/product-design/visual-qa-evaluator/SKILL.md",
+      "sha256": "8cf5623dec481e9c5cc75e40dca450360e7f5d92aac75e5997286b69cd648aa8",
+      "lines": 35,
+      "type": "registered",
+      "layer": "L4",
+      "description": "Compare matched before and after renders for task clarity and visual regressions after a product change.",
+      "manifest": {
+        "id": "visual-qa-evaluator",
+        "version": "0.3.0",
+        "role": "review",
+        "description": "Compare matched before and after renders for task clarity and visual regressions after a product change.",
+        "requiredInputs": [
+          "baselineCapture",
+          "afterCapture",
+          "criticalTask"
+        ],
+        "outputSchema": "skill-result@0.1",
+        "handler": "visualQaEvaluator",
+        "maturity": "bounded"
+      },
+      "implementation": {
+        "provider": "packages/skill-core/handlers.js",
+        "handler": "visualQaEvaluator",
+        "declaredMaturity": "bounded",
+        "assessment": "匹配证据准备，独立模型复核由 workbench ai-review 执行"
+      },
+      "contractInputs": [
+        "baselineCapture",
+        "afterCapture",
+        "criticalTask"
+      ],
+      "reviewDecision": "保留独立角色，分别展示证据准备和实际审阅，执行者不得自签。",
+      "reviewDepth": "Skill contract + manifest + handler path review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S31",
+      "key": "review-product",
+      "name": "review-product",
+      "path": "skills/review-product/SKILL.md",
+      "sha256": "b2bfbf09927c3185f55767d49dda99ea0b820535eebd16b1227de366a8fba459",
+      "lines": 45,
+      "type": "operational",
+      "layer": "L0",
+      "description": "Diagnose and improve one important user task in an existing app, with evidence, a scoped Codex change, and before/after validation.",
+      "implementation": {
+        "provider": "CLI / orchestration / profile / video workflow",
+        "assessment": "既有产品审阅流程"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留 ID，定位为已有产品模式；不再作为另一套并行总入口。",
+      "reviewDepth": "Operational entry contract review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "consolidate-deliverable",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S32",
+      "key": "review-video",
+      "name": "review-video",
+      "path": "skills/review-video/SKILL.md",
+      "sha256": "c3e8b9aacaefb26287dd75ee5aef6a13586e2c0ab5b73a95b998cb6a3f45868d",
+      "lines": 52,
+      "type": "operational",
+      "layer": "MEDIA",
+      "description": "Review and repair a product or promotional video using its real source project, timestamped before/after evidence and independent full-timeline review.",
+      "implementation": {
+        "provider": "CLI / orchestration / profile / video workflow",
+        "assessment": "视频证据与整改"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留为媒体通道；将 18 秒 HappyHands 个案约束迁至案例配置，通用规则引用它。",
+      "reviewDepth": "Operational entry contract review",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "rewrite-contract",
+        "defaultUse": "Task-scoped; no automatic blanket invocation"
+      }
+    },
+    {
+      "id": "S33",
+      "key": "impeccable",
+      "name": "impeccable",
+      "path": "skills/vendor/impeccable/upstream/.agents/skills/impeccable/SKILL.md",
+      "sha256": "58c0252bca04521de87007aeb495f7ec99dc4c7341bc890fe82b6d577573af91",
+      "lines": 86,
+      "type": "vendor",
+      "layer": "L2/L3",
+      "description": "Use when the user wants to design, redesign, shape, critique, audit, polish, clarify, distill, harden, optimize, adapt, animate, colorize, extract, or otherwise improve a frontend interface. Covers websites, landing pages, dashboards, product UI, app shells, components, forms, settings, onboarding, and empty states. Handles UX review, visual hierarchy, information architecture, cognitive load, accessibility, performance, responsive behavior, theming, anti-patterns, typography, fonts, spacing, layout, alignment, color, motion, micro-interactions, UX copy, error states, edge cases, i18n, and reusable design systems or tokens. Also use for bland designs that need to become bolder or more delightful, loud designs that should become quieter, live browser iteration on UI elements, or ambitious visual effects that should feel technically extraordinary. Not for backend-only or non-UI tasks.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "默认提供审阅/整改参考，原生 context/detect/live 未执行"
+      },
+      "contractInputs": null,
+      "reviewDecision": "Audit/Critique 用于诊断，按问题选择 Layout/Distill/Harden/Typeset 等；Polish 收尾。不能把引文视为执行证明。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S34",
+      "key": "ojo",
+      "name": "app-ui-ux-best-practices",
+      "path": "skills/vendor/ojo/upstream/SKILL.md",
+      "sha256": "d0722a59b6a1266cede69b4c5d948c63ca5ce250c5540fd4599c77e20bd7e34b",
+      "lines": 411,
+      "type": "vendor",
+      "layer": "L1/L2/L3",
+      "description": "\"Comprehensive App UI/UX design best practices. Supports two tracks: Convention Track (adopt a proven design language for SaaS/utility products) and Innovation Track (multiple brand-driven design methodologies — Material Metaphor, archetype-driven, narrative-driven, cultural-semiotic — for brand-driven products). Use when users want to: (1) Define visual identity for a new product, (2) Create design specifications and tokens, (3) Establish UI component guidelines, (4) Build a cohesive design language, (5) Review UI/UX quality, (6) Refine existing designs, (7) Audit design quality. Triggers: 'design system', 'UI design', 'UX design', 'visual identity', 'design specs', 'design tokens', 'component guidelines', 'look and feel', 'app design', 'design refine', 'design audit', '视觉设计', '设计规范', '设计系统', 'UI最佳实践', 'UX最佳实践'.\"",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "独立 stageOjoGuidance；主入口、anti-patterns 与阶段参考"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留组件、图标、token、布局及动效方法；具体数值、双轨和风格参数需适配项目。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S35",
+      "key": "taste-v2",
+      "name": "design-taste-frontend",
+      "path": "skills/vendor/taste-v2/upstream/skills/taste-skill/SKILL.md",
+      "sha256": "d955dae4ba8ab2d994f4bb06b4bf412a1d9875433a8597939c391f4bae91dd7a",
+      "lines": 530,
+      "type": "vendor",
+      "layer": "LEGACY",
+      "description": ">-",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "仅 legacy-v2 显式配置优先阅读"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留版本快照和哈希，停止用旧主入口描述当前默认路线。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "archive-compatibility",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S36",
+      "key": "brandkit",
+      "name": "brandkit",
+      "path": "skills/vendor/taste/upstream/skills/brandkit/SKILL.md",
+      "sha256": "9584a127e535c90b686c8dcb5a707ede586dac6791fbf92cfd118c5fea96f9a0",
+      "lines": 844,
+      "type": "vendor",
+      "layer": "ASSET",
+      "description": "Premium brand-kit image generation skill for creating high-end brand-guidelines boards, logo systems, identity decks, and visual-world presentations. Trained for minimalist, cinematic, editorial, dark-tech, luxury, cultural, security, gaming, developer-tool, and consumer-app brand systems. Optimized for intentional logo concepting, refined composition, sparse typography, strong symbolic meaning, premium mockups, art-directed imagery, and flexible grid layouts.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "旧 Taste 包完整保存，非默认 first-read"
+      },
+      "contractInputs": null,
+      "reviewDecision": "按品牌素材任务显式选择；产出图片不等于批准的品牌系统。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S37",
+      "key": "brutalist-skill",
+      "name": "industrial-brutalist-ui",
+      "path": "skills/vendor/taste/upstream/skills/brutalist-skill/SKILL.md",
+      "sha256": "fffbaac8597f07679e9d87145533567658aedba3b5eca6f16a7075a333048caa",
+      "lines": 93,
+      "type": "vendor",
+      "layer": "STYLE",
+      "description": "Raw mechanical interfaces fusing Swiss typographic print with military terminal aesthetics. Rigid grids, extreme type scale contrast, utilitarian color, analog degradation effects. For data-heavy dashboards, portfolios, or editorial sites that need to feel like declassified blueprints.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "归档中的具体风格，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "仅明确选择此方向时加载；装饰编号、终端风格不覆盖工作台规范。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S38",
+      "key": "gpt-tasteskill",
+      "name": "gpt-taste",
+      "path": "skills/vendor/taste/upstream/skills/gpt-tasteskill/SKILL.md",
+      "sha256": "d2dfb60b01f5b45bdc2d25a3c6a7eed04d6ec59715361182c2f49369a3f87a77",
+      "lines": 76,
+      "type": "vendor",
+      "layer": "STYLE",
+      "description": "Elite UX/UI & Advanced GSAP Motion Engineer. Enforces Python-driven true randomization for layout variance, strict AIDA page structure, wide editorial typography (bans 6-line wraps), gapless bento grids, strict GSAP ScrollTriggers (pinning, stacking, scrubbing), inline micro-images, and massive section spacing.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "归档具体构图/GSAP 方法，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "AIDA、随机化、巨间距与滚动效果需任务证据，不能当默认反 slop 方案。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S39",
+      "key": "image-to-code-skill",
+      "name": "image-to-code",
+      "path": "skills/vendor/taste/upstream/skills/image-to-code-skill/SKILL.md",
+      "sha256": "4c060a8064a8b13380bc2ef3d6e6a1d0b1e316aa093cd9807d0ce9e4eeb037fa",
+      "lines": 1229,
+      "type": "vendor",
+      "layer": "ASSET",
+      "description": "Elite website image-to-code skill for Codex. For visually important web tasks, it must first generate the design image(s) itself, deeply analyze them, then implement the website to match them as closely as possible. In Codex, it must prefer large, readable, section-specific images instead of tiny compressed boards, generate fresh standalone images for sections or detail views instead of cropping old ones, avoid lazy under-generation, avoid cards-inside-cards-inside-cards UI, and keep the hero clean, spacious, readable, and visible on a small laptop.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "图像先行的源码重建方法，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "必须明确是设计图/重建任务；生成图不替代基线截图，不强制每次 UI 修复先生成图。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S40",
+      "key": "imagegen-frontend-mobile",
+      "name": "imagegen-frontend-mobile",
+      "path": "skills/vendor/taste/upstream/skills/imagegen-frontend-mobile/SKILL.md",
+      "sha256": "8a33389979f3074fa0926678e266ad2eb9234624472254469fc1ad916b9caa24",
+      "lines": 1466,
+      "type": "vendor",
+      "layer": "ASSET",
+      "description": "Elite mobile app image-generation skill for creating premium, app-native screen concepts and flows. Designed for iOS, Android, and cross-platform mobile products. Prioritizes clean hierarchy, comfortably readable text, strong multi-screen consistency, controlled color palettes, non-generic creative direction, textured surfaces, image-led composition, tasteful custom iconography, and clean phone mockup framing. By default, screens should be shown inside a subtle premium iPhone or similar phone mockup with a visible frame, while the main focus stays on the app content itself. This skill generates images only. It does not write code.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "仅图像概念，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "移动 UI 概念图按需用；手机样机不证明真实代码、状态或可操作性。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S41",
+      "key": "imagegen-frontend-web",
+      "name": "imagegen-frontend-web",
+      "path": "skills/vendor/taste/upstream/skills/imagegen-frontend-web/SKILL.md",
+      "sha256": "6b5c2256522fdba1e3313eafa3d743b960a7b13ec029d3e6586e04b23327c1f8",
+      "lines": 988,
+      "type": "vendor",
+      "layer": "ASSET",
+      "description": "Elite frontend image-direction skill for generating premium, conversion-aware website design references. CRITICAL OUTPUT RULE — generate ONE separate horizontal image FOR EVERY section. A landing page with 8 sections produces 8 images. Never compress multiple sections into one image. Enforces composition variety (not always left-text / right-image), background-image freedom, varied CTAs, varied hero scales (giant / mid / mini minimalist), narrative concept spine, second-read moments, and a single consistent palette across all images. Optimized for landing pages, marketing sites, and product comps that developers or coding models can accurately recreate.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "网页视觉概念图，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "按需要生成参考资产，真实产品数据与证据单独保存；不能把图当实现验收。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S42",
+      "key": "minimalist-skill",
+      "name": "minimalist-ui",
+      "path": "skills/vendor/taste/upstream/skills/minimalist-skill/SKILL.md",
+      "sha256": "769ab38eed137bb22c7c09ee08ebb628e9acf3ad37f138d43f772e3af83933e4",
+      "lines": 87,
+      "type": "vendor",
+      "layer": "STYLE",
+      "description": "Clean editorial-style interfaces. Warm monochrome palette, typographic contrast, flat bento grids, muted pastels. No gradients, no heavy shadows.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "特定极简视觉方向，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "显式方向候选，不能为极简删掉操作所需信息。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S43",
+      "key": "output-skill",
+      "name": "full-output-enforcement",
+      "path": "skills/vendor/taste/upstream/skills/output-skill/SKILL.md",
+      "sha256": "e5bf48b1ae561511439cf71672209a10a88cee0968cc925909ff861dfa0a96a7",
+      "lines": 50,
+      "type": "vendor",
+      "layer": "SUPPORT",
+      "description": "Overrides default LLM truncation behavior. Enforces complete code generation, bans placeholder patterns, and handles token-limit splits cleanly. Apply to any task requiring exhaustive, unabridged output.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "输出完整性建议，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留参考；不得覆盖宿主输出预算、用户范围或强制无关全量代码。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S44",
+      "key": "redesign-skill",
+      "name": "redesign-existing-projects",
+      "path": "skills/vendor/taste/upstream/skills/redesign-skill/SKILL.md",
+      "sha256": "a75d547d04595fe97a5d377dddf145d029d51487a4f2a0a5a9d3b532ca3b84cd",
+      "lines": 182,
+      "type": "vendor",
+      "layer": "STYLE",
+      "description": "Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "既有产品 redesign 方法，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "审计与重设计分清；不得为“补深度”自动加背景图，不能造客户与指标。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S45",
+      "key": "soft-skill",
+      "name": "high-end-visual-design",
+      "path": "skills/vendor/taste/upstream/skills/soft-skill/SKILL.md",
+      "sha256": "e1e32f5e2d420872c6c7332b53d5ff7721946766b78c4822b424c2d512c8fdbc",
+      "lines": 99,
+      "type": "vendor",
+      "layer": "STYLE",
+      "description": "Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make AI designs look cheap or generic.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "具体柔和/agency 视觉方法，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "与 brutalist/minimalist 是互斥方向候选；强制动效和字体不能绕过项目批准。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S46",
+      "key": "stitch-skill",
+      "name": "stitch-design-taste",
+      "path": "skills/vendor/taste/upstream/skills/stitch-skill/SKILL.md",
+      "sha256": "46bdb08fee2dded38b6ba0a051230a502d6ac6e4044afd47592cb40c256028b5",
+      "lines": 185,
+      "type": "vendor",
+      "layer": "ASSET",
+      "description": "Semantic Design System Skill for Google Stitch. Generates agent-friendly DESIGN.md files that enforce premium, anti-generic UI standards — strict typography, calibrated color, asymmetric layouts, perpetual micro-motion, and hardware-accelerated performance.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "Google Stitch 的语义设计文档方法，非默认路由"
+      },
+      "contractInputs": null,
+      "reviewDecision": "需要明确的 Stitch 项目与工具；生成 DESIGN.md 不代表批准，不增加默认动画。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "exclude-default",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S47",
+      "key": "taste-skill-v1",
+      "name": "design-taste-frontend-v1",
+      "path": "skills/vendor/taste/upstream/skills/taste-skill-v1/SKILL.md",
+      "sha256": "43f6f3ed310642931dcebf978a6844d09d6b220c3fa89a177a041d60d06004ed",
+      "lines": 227,
+      "type": "vendor",
+      "layer": "LEGACY",
+      "description": "The original v1 taste-skill, preserved for projects depending on its exact behavior. The current default is `design-taste-frontend` (v2), which is a new skill. Use this v1 install name only if you need exact backward compatibility.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "dials-v1 选取的原始数值方法"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留显式向后兼容；原始字体/库/动效偏好受项目约束，不进入默认执行。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "archive-compatibility",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S48",
+      "key": "taste-skill-v2-experimental",
+      "name": "design-taste-frontend-v2-experimental",
+      "path": "skills/vendor/taste/upstream/skills/taste-skill-v2-experimental/SKILL.md",
+      "sha256": "eed1412f267baabb9329cece8cf6caf1f19c3abfcc5c150da05c6b0b392a72fb",
+      "lines": 1229,
+      "type": "vendor",
+      "layer": "LEGACY",
+      "description": "Old v2 (experimental) of taste-skill, the single-file dial-driven version, preserved for projects depending on its exact behavior. The current default is `design-taste-frontend` (v2). Use this install name only if you need the earlier behavior. Anti-slop frontend rules for landing pages, portfolios, and redesigns, with real design systems when applicable, audit-first redesigns and a strict pre-flight check.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "旧实验版完整保存，未在 first-read 路线选中"
+      },
+      "contractInputs": null,
+      "reviewDecision": "归档隔离；不与 v1/v2/web-taste 同轮混合，不因包内存在就执行。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "archive-compatibility",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S49",
+      "key": "taste-skill",
+      "name": "design-taste-frontend",
+      "path": "skills/vendor/taste/upstream/skills/taste-skill/SKILL.md",
+      "sha256": "ee847084e58f5a81a46120912be9cd15f083570a6ca8f3d1a30372a720633043",
+      "lines": 415,
+      "type": "vendor",
+      "layer": "LEGACY",
+      "description": "tasteskill v2, the anti-slop frontend skill. Art direction for websites, distilled from a study of 247 curated gallery sites (One Page Love, Awwwards Sites of the Day). Deals researched directions (idea, composition, type, palette, photographs, section blueprints) from a library, enforces a strict no-slop house style with a real-browser inspector, and runs a look-and-fix loop on screenshots. Use this whenever you build, design, redesign, restyle, polish or review a landing page, marketing site, portfolio, product page, one-pager, hero or any public-facing web page, in any stack (HTML/CSS, React, Next.js, Vue, Svelte, Astro, Tailwind) — also when the user says a page looks generic, templated, \"AI-made\", sloppy, or asks to make it look designed, premium, award-level or less like every other site. Not for dashboards or app screens.",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "旧 Taste 包中的 v2 主入口，默认已被 web-taste 替换"
+      },
+      "contractInputs": null,
+      "reviewDecision": "与 taste-v2 存在相同 name，必须以路径+revision 唯一标识，禁用模糊名称路由。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "archive-compatibility",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    },
+    {
+      "id": "S50",
+      "key": "web-taste",
+      "name": "web-taste",
+      "path": "skills/vendor/web-taste/upstream/SKILL.md",
+      "sha256": "ec9370f11a204e708440b001de5e5b264946d023318191e7aaad481cb14d76da",
+      "lines": 381,
+      "type": "vendor",
+      "layer": "L3",
+      "description": ">-",
+      "implementation": {
+        "provider": "packages/skill-core/design-guidance.js / ojo-guidance.js",
+        "assessment": "当前主要路线，public-page 额外加载布局与 sections"
+      },
+      "contractInputs": null,
+      "reviewDecision": "保留官网艺术方向；app-screen 也提供参考，但应用任务优先，不能强制图片/大章节配额。",
+      "reviewDepth": "Entry purpose/routing/authority compatibility review; referenced examples/scripts not exhaustively audited",
+      "runtimeExecutedThisAudit": false,
+      "governance": {
+        "status": "proposed-not-applied-to-runtime",
+        "action": "retain",
+        "defaultUse": "Only the exact selected route and task-relevant full references"
+      }
+    }
+  ]
+}

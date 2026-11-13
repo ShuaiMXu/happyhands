@@ -1,3 +1,4 @@
+import {skillCapability} from './method-policy.js';
 const STATUSES = new Set(['complete', 'needs-evidence', 'failed']);
 
 export function skillResult(skill, value, provenance = null) {
@@ -17,6 +18,7 @@ export function skillResult(skill, value, provenance = null) {
     ...value,
     schemaVersion: '0.1',
     skill: { id: skill.id, version: skill.version, role: skill.role },
+    capability: skillCapability(skill),
     runAt: new Date().toISOString(),
     provenance
   };

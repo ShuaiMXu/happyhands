@@ -7,13 +7,7 @@ description: Diagnose and improve one important user task in an existing app, wi
 
 Use this when a developer has a working app but needs help choosing and verifying the next UX improvement. The product may have been built with vibe coding; do not assume the code is poor because of how it was made.
 
-1. Ask for the app or repository and the most important user task. Infer a narrow task from the product if the developer has not specified one; label that inference.
-2. Run the app when possible. Capture the starting commit, page states and desktop/mobile views. Separate what is directly observed from your interpretation.
-3. Write an Experience Spec matching `experience.schema.json`. Every finding must cite evidence IDs. Mark missing evidence; do not fabricate screenshots, analytics, users or conversion results.
-4. Rank findings by impact, confidence and effort, then explain the top choice in ordinary language. Treat the formula as a decision aid rather than an objective UX score. Allow the developer to choose a different issue.
-5. Make one scoped, reversible code change in an isolated branch/worktree. Keep the product goal and working task intact.
-6. Run the app again and visit the same states and viewports. Check the task, hierarchy, interaction, accessibility and regressions. If a comparison cannot be made, report the missing step instead of declaring success.
-7. Present the change and before/after evidence. Capture accept/reject and the developer's reason in the spec. Propose an expertise or evaluator update only after repeated, reviewed judgments; add a regression example.
+The public entry is `happyhands`; this Skill is its product-review method, not a second onboarding or acceptance workflow. Follow the complete [shared workflow](../happyhands/references/workflow.md) for source binding, audit, diagnosis, scoped repair, independent review and final human judgment. Use the user's existing repair authorization; do not insert intermediate human approvals when investigation and repair were delegated. Final acceptance stays human. Historical Experience Specs remain readable without upgrading their evidence or policy in place.
 
 For a shareable viewport comparison, use `pnpm harness compare --run DIRECTORY --state ID --configuration ID` only when the run contains matching, source-bound originals. The command retains pixels and writes provenance; it never establishes an improvement or acceptance. If capture-time hashes, source binding or context are missing, collect fresh evidence in a new run or report the gap. Never hand-edit a manifest to make an old capture eligible. Preserve originals for independent review; a comparison image does not replace them.
 
@@ -22,12 +16,12 @@ Stop before an external deployment unless it has been authorized. A live site ma
 
 ## Complete design guidance packages
 
-Creative OS stages pinned, complete OJO, web-taste and Impeccable snapshots into new review/execution runs. Before model design work, read the listed original Skill files and each Harness adapter, then the relevant complete references. web-taste replaces the older default Taste route. Its public-website recipes must be adapted to the actual task; working interfaces do not inherit compulsory full-screen sections, hero motion or photo quotas. Explicit legacy-v2 and dials-v1 retain historical methods for compatibility. Impeccable Audit/Critique are review methods; Polish/Layout/Animate guide only the confirmed implementation. Keep the current stack, approved Foundation, original content and all relevant states. These packages share the existing scope→plan→isolated change→capture→independent QA→human judgment flow. Do not add a parallel CLI/browser session or acceptance store. Presence in a snapshot proves availability, not model use, completed browser checks or human approval.
+HappyHands stages pinned, complete OJO, web-taste and Impeccable snapshots into new review/execution runs. Before model design work, read the listed original Skill files and each Harness adapter, then the relevant complete references. web-taste replaces the older default Taste route. Its public-website recipes must be adapted to the actual task; working interfaces do not inherit compulsory full-screen sections, hero motion or photo quotas. Explicit legacy-v2 and dials-v1 retain historical methods for compatibility. Impeccable Audit/Critique are review methods; The selected implementation playbook (such as Harden, Typeset or Layout) and final Polish guide only the confirmed implementation. Keep the current stack, approved Foundation, original content and all relevant states. These packages share the existing scope→plan→isolated change→capture→independent QA→human judgment flow. Do not add a parallel CLI/browser session or acceptance store. Presence in a snapshot proves availability, not model use, completed browser checks or human approval.
 
 
 ## HappyHands UI profile
 
-For HappyHands-owned interfaces or explicitly adopting projects, read the complete `happyhands-ui/SKILL.md` in the staged design-guidance bundle. It contains the eleven user-approved copy, Radix color, hierarchy and interaction rules. The bundle hashes and preserves this profile alongside the complete vendor skills; do not infer adoption by an external target project.
+For HappyHands-owned interfaces or explicitly adopting projects, read the complete `happyhands-ui/SKILL.md` in the staged design-guidance bundle. It contains the current user-approved copy, color, hierarchy and interaction rules. The bundle hashes and preserves this profile alongside the complete vendor skills; do not infer adoption by an external target project.
 
 
 ## Required website and landing-page method
@@ -42,3 +36,7 @@ For new lightweight reviews, follow the complete [experience orchestration](../.
 Separate the original user request and hard constraints from operator proposals and assumptions. The audit covers the scoped journey, current-page control/AI slop details, content, hierarchy, grid, interactions, recovery and remaining coverage. Keep experience hypotheses separate from evidence-backed defects. The decision must explain reading order, grouping, action, content burden, component relationships and a lighter/preserve alternative. Existing project rules outrank external references; source observation does not establish approval. A reference must identify an actual source hash and section and explain task-specific adoption, preservation and rejection.
 
 The executor may challenge a bad decision before editing. Independent review starts with the original task and images, then checks the operator rationale; it must separately assess task, hierarchy, interaction, design-system and regression. Field completeness, script passes and agreement with an operator's proposal cannot establish improved experience. Keep every unresolved audit problem visible. Retain all previous failures and obtain a real human decision; do not retrofit old runs or automatically make a global aesthetic ban from one rejected example.
+
+## One deliverable per phase
+
+Foundation, consistency, hierarchy and content methods contribute evidence to the same experience audit; they do not each require a separate user report. Fix and reuse planners contribute to the same experience decision. Retain each result and source hash for provenance, including disagreements and excluded suggestions. A specialist method is selected for a task need, not because its folder exists.

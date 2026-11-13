@@ -1,3 +1,4 @@
+import {validateSkillEvolution} from './evolution.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -12,7 +13,7 @@ function required(value, label) {
   return value.trim();
 }
 
-export async function createSkillRelease({ root = '.', registryRoot, version, reviewer, reason, regressionReport }) {
+export async function createSkillRelease({ root = '.', registryRoot, version, reviewer, reason, regressionReport, evolution, baselineVersion }) {
   if (!VERSION.test(version || '')) throw new Error('Expertise release version must be semantic.');
   required(reviewer, 'Release reviewer'); required(reason, 'Release reason');
   if (regressionReport?.passed!==true || regressionReport.requiresReview!==false) throw new Error('A clean deterministic regression report is required.');
@@ -26,10 +27,19 @@ export async function createSkillRelease({ root = '.', registryRoot, version, re
   if(regressionReport.modelReview.evidenceHash!==current.evidenceHash)throw Error('Independent model review must bind the current regression evidence hash.');
   const skills=await skillContracts(registryRoot);
   if(inputHash(skills)!==current.registryHash)throw Error('Skill contracts changed during release verification.');
+  const active = await readFile(resolve(root, 'expertise', 'active.json'), 'utf8').then(JSON.parse).catch(error => error.code === 'ENOENT' ? null : Promise.reject(error));
+  if (active && baselineVersion && baselineVersion !== active.releaseVersion) throw Error('Evolution baseline must match the active release.');
+  const baselineId = active?.releaseVersion ?? baselineVersion;
+  if (baselineId && !VERSION.test(baselineId)) throw Error('Invalid evolution baseline version.');
+  const baselineText = baselineId ? await readFile(resolve(root, 'expertise', 'releases', baselineId + '.json'), 'utf8') : null;
+  if (active && hash(baselineText) !== active.releaseHash) throw Error('Evolution baseline changed after activation.');
+  const baseline = baselineText ? JSON.parse(baselineText) : null;
+  if (baseline && (baseline.version !== baselineId || !Array.isArray(baseline.skills) || inputHash(baseline.skills) !== baseline.regression?.registryHash)) throw Error('Invalid evolution baseline contract binding.');
+  const learning = validateSkillEvolution({baseline, skills, implementationHash:current.implementationHash, report:current, change:evolution});
   const release = {
     schemaVersion: '0.1', version, createdAt: new Date().toISOString(), reviewer: reviewer.trim(), reason: reason.trim(),
     regression: { corpusVersion: current.corpusVersion, corpusHash: current.corpusHash, implementationHash: current.implementationHash, registryHash:current.registryHash,evidenceHash:current.evidenceHash, reportHash: hash(JSON.stringify(regressionReport)) },
-    modelReview: structuredClone(regressionReport.modelReview), skills
+    modelReview: structuredClone(regressionReport.modelReview), skills, evolution: learning
   };
   const directory = resolve(root, 'expertise', 'releases'); await mkdir(directory, { recursive: true });
   await writeFile(join(directory, `${version}.json`), JSON.stringify(release, null, 2) + '\n', { flag: 'wx' });

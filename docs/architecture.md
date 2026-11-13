@@ -1,6 +1,6 @@
 # Product Designer Harness architecture
 
-The product serves independent developers after an app exists and when they are about to add a new surface. Hypit is a packaging and architecture reference: a domain spec, planner, execution adapters, and validation. Our domain is product experience, not video.
+The product serves independent developers after an app exists and when they are about to add a new surface. Hypit is a packaging and architecture reference: a domain spec, planner, execution adapters, and validation. The primary domain is product experience. The separately scoped video-review adapter uses its own media evidence contract; a successful encode is not a product or motion-quality judgment.
 
 There are two entry routes into the same system:
 
@@ -30,7 +30,7 @@ Same-state desktop/mobile capture
           ↓
 Deterministic checks + independent Visual QA + human decision
           ↓
-Accept/reject + reason ──→ later expertise proposal / regression case
+Final accept/reject + optional note ──→ later expertise proposal / regression case
           ↓
 Approved foundation updates + project memory
 ```
@@ -41,7 +41,7 @@ The **Design Foundation** is the product's evolving source for brand principles,
 
 The minimum approved foundation for page generation contains semantic colour and typography roles, spacing and radius scales, elevation and motion rules, brand voice and assets, core components with variants and interaction states, responsive behaviour, and accessibility constraints. Completeness is contextual: the system records absent coverage rather than filling it with model defaults. The first rendered page is evaluated for task quality and foundation conformance; it is not described as an improvement when no earlier page exists.
 
-The **Run** owns execution state and artifacts. Each run snapshots the spec and records the target URL, selected finding, captures, agent execution, evaluation and decision. It lives under `.harness/runs/<id>/` by default and is ignored by Git. The spec can be versioned in a project; the run is local evidence and must not silently overwrite an earlier comparison.
+The **Run** owns execution state and artifacts. Each run snapshots the spec and records the target URL, selected finding, captures, agent execution, evaluation and decision. Portable runs default to `~/.happyhands/runs`; legacy/workbench storage may use `.harness/runs/<id>/`. Use the actual printed run directory and exclude local evidence from Git. The spec can be versioned in a project; the run is local evidence and must not silently overwrite an earlier comparison.
 
 ## Executable stages
 
@@ -99,3 +99,7 @@ Execution always happens in a **new Git worktree** taken from a clean repository
 One run selects one finding and one task. The selected finding must be explicitly confirmed against the baseline; a stale verdict invalidates any prepared brief. Before/after screenshots must use identical viewport sizes. Acceptance is unavailable until an independent Visual QA attestation passes, and a failing attestation permits only reject. A run whose agent changed the host repository outside its worktree is failed whatever its exit code. A run never converts a repository change into a claim about the live site without verifying deployment source and URL. A failed capture, missing evidence or agent error remains visible in the run; it must not be replaced with a sample success. Human acceptance is recorded separately from deterministic checks. Observed foundation entries are never treated as approved design rules without review.
 
 Version 0.1 runs locally. Bounded model diagnosis and independent visual review are available via Codex in the workbench and the lightweight Skill. Deterministic evaluation still reports structural evidence separately, and a model verdict still needs a human decision. The first source-bound lightweight repair has matching originals, an independent verdict and explicit user acceptance. See the [Alpha.2 roadmap](next-steps.md) for verified cases and remaining cross-agent, onboarding and release work.
+
+## Task-scoped method governance
+
+The executable method policy is in `packages/skill-core/method-policy.js`; see [the implementation and evolution contract](skill-framework/implementation.zh-CN.md). Bounded handlers, professional methods and contract-only placeholders are distinct. The existing Run owns one audit, one design decision, independent review and the final human decision. Archived vendor methods remain explicit compatibility routes, not default instructions.

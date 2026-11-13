@@ -1,6 +1,6 @@
 {
   "id": "interaction-reviewer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "role": "diagnose",
   "description": "Review interaction flow, feedback, control behavior and state transitions for a critical product task.",
   "requiredInputs": [

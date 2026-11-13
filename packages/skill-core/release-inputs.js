@@ -21,7 +21,12 @@ export async function skillContracts(registryRoot){
 }
 export async function regressionImplementationHash(){
   const sources=await entries(fileURLToPath(new URL('../',import.meta.url)),true);
-  return inputHash([...sources,['pnpm-lock.yaml',await engineLockfile()]]);
+  const methods=[];
+  for(const name of ['happyhands','happyhands-ui','review-product','experience-remediation','review-video']) {
+    for(const [path,content] of await entries(fileURLToPath(new URL('../../skills/'+name+'/',import.meta.url)))) methods.push(['skills/'+name+'/'+path,content]);
+  }
+  for(const name of ['ojo','taste','taste-v2','web-taste','impeccable']) for(const file of ['ADAPTER.md','source.json']) methods.push(['skills/vendor/'+name+'/'+file,await readFile(new URL('../../skills/vendor/'+name+'/'+file,import.meta.url),'utf8')]);
+  return inputHash([...sources,...methods,['pnpm-lock.yaml',await engineLockfile()]]);
 }
 export function regressionEvidenceHash(report){
   return inputHash({schemaVersion:report.schemaVersion,corpusVersion:report.corpusVersion,corpusHash:report.corpusHash,implementationHash:report.implementationHash,registryHash:report.registryHash,passed:report.passed,cases:report.cases});
