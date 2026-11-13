@@ -14,6 +14,7 @@ async function fixture(t){const root=await realpath(await mkdtemp(join(tmpdir(),
 test('portable bundle works from a different project and contains complete methods without UI dependencies',async t=>{
  const f=await fixture(t),manifest=await verifyBundle(f.output),pkg=JSON.parse(await readFile(join(f.output,'package.json')));
  assert.ok(manifest.files.some(row=>row.path==='skills/vendor/ojo/upstream/references/component-recipe.md'));
+ assert.ok(manifest.files.some(row=>row.path==='packages/harness-core/page-structure-review.js'),'the bundle includes the structure gate imported by visual review');
  for(const path of ['skills/review-video/SKILL.md','skills/review-video/rules.json','skills/review-video/references/evidence-contract.md','skills/review-video/scripts/video-review.mjs'])assert.ok(manifest.files.some(row=>row.path===path),'the bundle must include the complete video workflow: '+path);
  assert.ok(manifest.files.some(row=>row.path==='docs/lightweight.md'),'the installed Harness guide must retain its lightweight setup reference');
  const harnessGuide=await readFile(join(f.output,'docs/harness.md'),'utf8');

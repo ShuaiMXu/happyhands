@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "rules": [
     {
       "id": "UX-task",
@@ -32,6 +32,22 @@
       "profile": "project",
       "remediation": "Use the adopted icon family and explicit size/alignment; reserve space for dropdown arrows and checkmarks.",
       "verification": "Inspect long labels, open/closed and selected/unselected states; verify no overlap, clipping or duplicate icon."
+    },
+    {
+      "id": "UX-product-icons",
+      "title": "Product-adapted iconography; no unreviewed generator defaults",
+      "reference": "upstream/references/icon-guidelines.md",
+      "profile": "project",
+      "remediation": "First decide whether an icon is necessary for the target product task. Omit or remove unnecessary decorative icons; never add icons to satisfy this rule. Only when an icon is useful, inspect target product sources and approved Foundation, map it to the action meaning, and fit its family/source, stroke/fill, optical size, alignment, states and accessibility. Do not use Codex/generator default icons as a design decision. Preserve an already suitable existing icon with evidence; do not require redesign or custom drawing for its own sake.",
+      "verification": "Independently review necessity before appearance: text-only/no-icon output is valid with an evidence-based explanation. For necessary icons, inspect semantic and product fit, family/source, optical size/alignment, states and accessibility. Unreviewed default choice or missing applicable evidence is fail/needs-evidence. Not-applicable is valid for no-icon scope, including deliberate removal of unnecessary icons, with a concrete reason and original screenshot."
+    },
+    {
+      "id": "UX-page-structure",
+      "title": "Evidence-linked page structure and original-image annotations",
+      "reference": "upstream/references/visual-tokens.md",
+      "profile": "project",
+      "remediation": "Inspect the target product grid, spacing, alignment, component usage and responsive states on each original capture. Preserve adopted design rules rather than imposing universal 8px spacing or column counts. Link each supported structural defect to its original screenshot and finding with normalized bounds; retain unknown or unobserved dimensions as needs-evidence.",
+      "verification": "Review grid/spacing/alignment/components/responsive separately for every assigned original. Require concrete observations and original-image annotations for supported defects; no missing dimension or unresolved evidence may pass. Derived overlays aid navigation but do not replace originals, source binding or actual interaction evidence."
     },
     {
       "id": "UX-motion",

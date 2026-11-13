@@ -311,7 +311,7 @@ writeFileSync('.harness-remediation-result.json',${malformed?"'{'":"JSON.stringi
   const worktree=join(run.directory,'worktree');
   assert.equal((await execFileAsync('git',['ls-files','--','.harness-remediation-result.json'],{cwd:worktree})).stdout.trim(),'');
   await assert.rejects(readFile(join(worktree,'.harness-remediation-result.json')),/ENOENT/);
-  const archived=await readFile(join(run.directory,'remediation-result.json'),'utf8');assert.equal(malformed?archived:JSON.parse(archived).checks.length,malformed?'{':5);
+  const archived=await readFile(join(run.directory,'remediation-result.json'),'utf8');assert.equal(malformed?archived:JSON.parse(archived).checks.length,malformed?'{':JSON.parse(await readFile(join(run.directory,'remediation-contract.json'),'utf8')).rules.length);
   const manifest=JSON.parse(await readFile(join(run.directory,'run.json'),'utf8'));
   assert.equal(manifest.execution.exitCode,malformed?1:0);assert.equal(manifest.execution.dirty,false);
   assert.doesNotMatch(await readFile(join(run.directory,'diff.patch'),'utf8'),/harness-remediation-result/);

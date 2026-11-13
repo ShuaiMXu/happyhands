@@ -53,6 +53,8 @@ export async function heroStoreFixture({kind='valid',configs=defaultConfigs}={})
   current=await loadRun(run.directory);
   const bundle=await readVerificationEvidence(run.directory,current.manifest);
   const review={schemaVersion:'0.1',skillId:'visual-qa-evaluator',reviewer:{type:'human',name:'Synthetic fixture, no real acceptance',version:'1'},reviewedAt:new Date().toISOString(),verdict:'pass',screenshotRefs:['before','after'].flatMap(phase=>current.manifest.captures[phase].states.map(e=>e.screenshot).filter(Boolean)).concat(bundle.records.flatMap(r=>r.images.map(i=>i.path))),findings:[],rationale:'Synthetic gate audit only.',limitations:['No browser/model was run.'],remediationHash:current.manifest.plan.remediation.hash,verificationDigest:bundle.digest,verificationRefs:['hero-motion'],methodChecks:current.manifest.plan.remediation.ruleIds.flatMap(ruleId=>methodStateEntries(current.manifest).map(s=>({ruleId,stateKey:s.key,status:['redirect','newly-reachable'].includes(kind)&&s.screenshot.includes(configs.at(-1).id)&&ruleId.startsWith('HH-HERO')?'not-applicable':'pass',reason:'Synthetic gate test only.',screenshotRefs:[s.screenshot]})))};
+  review.structureChecks=['before','after'].flatMap(phase=>current.manifest.captures[phase].states.filter(e=>e.screenshot).flatMap(e=>['grid','spacing','alignment','components','responsive'].map(dimension=>({screenshot:e.screenshot,dimension,status:'pass',observed:'Synthetic fixture only',expected:'Synthetic fixture only',basis:'Synthetic gate fixture',method:'No real product judgment'}))));
+  review.annotations=[];
   return {manifest:await saveVisualReview(run.directory,review),bundle};
  }finally{await rm(root,{recursive:true,force:true});}
 }

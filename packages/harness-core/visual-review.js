@@ -1,3 +1,4 @@
+import {assertPageStructureReview,PAGE_STRUCTURE_RULE} from './page-structure-review.js';
 import {experienceRequired,assertExperienceAssessments} from './experience-contract.js';
 import {assertMethodChecks,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation-validation.js';
 import { wholePageReviewCoverage, missingAfterStates, captureRouteKey } from './whole-page.js';
@@ -122,5 +123,6 @@ export function assertVisualReview(review, manifest) {
   }
   if (review.verdict === 'pass' && review.findings.length) throw new Error('A passing visual review cannot contain unresolved findings.');
   if (review.verdict === 'fail' && !review.findings.length) throw new Error('A failing visual review requires at least one finding.');
+  if (review.structureChecks || review.annotations || (review.skillId === 'visual-qa-evaluator' && manifest.plan?.remediation?.ruleIds.includes(PAGE_STRUCTURE_RULE))) assertPageStructureReview(review, manifest);
   return review;
 }
