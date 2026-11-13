@@ -32,6 +32,11 @@ test('portable bundle works from a different project and contains complete metho
  // the extracted npm artifact, so source-checkout resolution cannot hide omissions.
  await symlink(join(repo,'node_modules'),join(packedRoot,'node_modules'),process.platform==='win32'?'junction':'dir');
  const unrelated=join(f.root,'video-consumer');await mkdir(unrelated);
+ for(const flag of ['--help','-h']){
+  const help=await exec(process.execPath,[join(packedRoot,'bin/happyhands.mjs'),flag],{cwd:unrelated});
+  assert.match(help.stdout,/HappyHands lightweight Skill/);
+  assert.match(help.stdout,/pnpm harness capture/);
+ }
  const video=JSON.parse((await exec(process.execPath,[join(packedRoot,'bin/happyhands.mjs'),'video','help'],{cwd:unrelated})).stdout);
  assert.equal(video.status,'help');assert.equal(video.independentReview,'required');
  assert.ok(video.commands.some(command=>command.startsWith('collect ')));

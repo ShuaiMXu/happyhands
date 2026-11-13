@@ -7,7 +7,8 @@ const skillRoot=fileURLToPath(new URL('../',import.meta.url));
 async function root(){try{await access(join(skillRoot,'scripts/harness.mjs'));return skillRoot;}catch{return resolve(skillRoot,'../..');}}
 function options(args){const result={};for(let i=0;i<args.length;i+=2){if(!/^--[a-z-]+$/.test(args[i])||!args[i+1]||args[i+1].startsWith('--'))throw Error('Expected --option VALUE.');const key=args[i].slice(2);if(Object.hasOwn(result,key))throw Error('Duplicate option: '+key);result[key]=args[i+1];}return result;}
 try{
- const [command='help',...args]=process.argv.slice(2),runtime=await root();
+ const [requestedCommand='help',...args]=process.argv.slice(2),runtime=await root();
+ const command=['--help','-h'].includes(requestedCommand)?'help':requestedCommand;
  if(command==='install'){
   const opts=options(args);if(Object.keys(opts).some(key=>!['agent','scope','destination'].includes(key)))throw Error('Install supports --agent, --scope and --destination.');
   console.log(JSON.stringify(await installSkill({source:runtime,agent:opts.agent,scope:opts.scope,destination:opts.destination}),null,2));
