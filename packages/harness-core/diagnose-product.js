@@ -1,3 +1,4 @@
+import {experienceFor} from './experience-orchestration.js';
 import {readFile} from 'node:fs/promises';
 import {executeSkill} from '../skill-core/runner.js';
 import {diagnoseBaseline} from '../workbench/baseline-diagnosis.js';
@@ -40,6 +41,7 @@ export async function diagnoseProduct(directory, {
   signal.throwIfAborted();
   let run = await loadRun(directory);
   assertDiagnosisOpen(run);
+  await experienceFor(run);
   if (strategy === 'project') {
     const skills = new Set([
       ...(selectedSkills ?? DEFAULT_PROJECT_SKILLS),

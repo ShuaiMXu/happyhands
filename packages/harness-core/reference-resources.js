@@ -67,7 +67,7 @@ export async function selectResource({directory,id,document,file,url,fetcher=fet
  if([id,file,url].filter(Boolean).length!==1)throw Error('Select exactly one --id, --file or --url.');
  return withRunLock(directory,async()=>{
   const run=await loadRun(directory);
-  if(run.manifest.diagnosis||run.manifest.confirmation||run.manifest.plan||run.manifest.execution)throw Error('Reference selection is frozen after diagnosis; start a fresh review.');
+  if(run.manifest.experienceAudit||run.manifest.diagnosis||run.manifest.confirmation||run.manifest.plan||run.manifest.execution)throw Error('Reference selection is frozen after diagnosis or experience audit; start a fresh review.');
   if((run.manifest.selectedReferences||[]).length>=12)throw Error('Select at most twelve references.');
   let bytes,source,extension='.md';
   if(url){

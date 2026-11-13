@@ -1,0 +1,39 @@
+{
+  "version": "1",
+  "purpose": "Bounded reasoning regression examples, not executable visual judgments or human acceptance fixtures",
+  "cases": [
+    {
+      "id": "operator-prescribed-fields",
+      "source": "https://github.com/ShuaiMXu/happyhands/issues/26",
+      "provenance": "User rejected the local Domaroo candidate; latest independent review was not run. This is a case summary, not a replacement for private original evidence.",
+      "task": "Find an upcoming renewal, understand comparable cost and decide the next action",
+      "operatorProposal": "Add separate labels and fields to make the information structured",
+      "knownProblem": "The proposal was embedded into the task before deciding reading order and grouping. Field presence and functional checks did not establish task or visual improvement.",
+      "mustChallenge": [
+        "Whether labels and values are too far apart to read together",
+        "Whether equal visual weight obscures urgency, price/term and primary action",
+        "Whether added content burden improves any actual user decision",
+        "Whether a lighter reordering or preservation is better"
+      ],
+      "mustNotInfer": [
+        "That the operator proposal is a user requirement",
+        "That a latest independent reviewer passed the rejected candidate",
+        "That every table, label or structured layout is bad",
+        "That synthetic protocol tests prove a model recognized the visual defect"
+      ]
+    },
+    {
+      "id": "comparable-options-table",
+      "provenance": "Synthetic positive boundary example, not a real accepted case",
+      "task": "Compare several alternatives with equal billing terms",
+      "appropriateDecision": "A table can align term, actual total cost and action across options when comparison is the user's task. Keep necessary facts, appropriate density and accessible reading order.",
+      "mustVerify": [
+        "Equal-term comparison and honest units",
+        "Clear relation between each option, cost and action",
+        "Actual keyboard, selected and disclosure states where applicable",
+        "Reading burden against a lighter alternative and matched original evidence"
+      ],
+      "cannotProve": "Field count, a chosen component format or synthetic rows cannot prove real experience quality"
+    }
+  ]
+}

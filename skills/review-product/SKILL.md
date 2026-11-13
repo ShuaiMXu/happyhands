@@ -33,3 +33,12 @@ For HappyHands-owned interfaces or explicitly adopting projects, read the comple
 ## Required website and landing-page method
 
 For official/company websites and landing pages, web-taste is the required primary design and implementation method. Classify these tasks as public-page before formal diagnosis; read its complete copy, voice, system, layout and section references and applicable asset/motion references. OJO and Impeccable supplement this execution; they do not replace web-taste. Preserve user-approved project rules and evidence boundaries. Do not silently route website/landing-page work through a legacy Taste profile.
+
+
+## Required task and design handoff
+
+For new lightweight reviews, follow the complete [experience orchestration](../../docs/experience-orchestration.md). After a read-only pre-audit, select and read the actual project design documents and relevant Design.md/design-system references. Run `experience --phase context --surface public-page|app-screen` to stage complete methods and obtain the live audit/decision schemas and evidence references. Record `experience --phase audit --input FILE` before formal diagnosis, then `experience --phase decision --input FILE` after scope confirmation and before `plan`.
+
+Separate the original user request and hard constraints from operator proposals and assumptions. The audit covers the scoped journey, current-page control/AI slop details, content, hierarchy, grid, interactions, recovery and remaining coverage. Keep experience hypotheses separate from evidence-backed defects. The decision must explain reading order, grouping, action, content burden, component relationships and a lighter/preserve alternative. Existing project rules outrank external references; source observation does not establish approval. A reference must identify an actual source hash and section and explain task-specific adoption, preservation and rejection.
+
+The executor may challenge a bad decision before editing. Independent review starts with the original task and images, then checks the operator rationale; it must separately assess task, hierarchy, interaction, design-system and regression. Field completeness, script passes and agreement with an operator's proposal cannot establish improved experience. Keep every unresolved audit problem visible. Retain all previous failures and obtain a real human decision; do not retrofit old runs or automatically make a global aesthetic ban from one rejected example.

@@ -19,7 +19,7 @@ test('lightweight start creates the first existing ledger, snapshots real projec
  const {stdout}=await exec(process.execPath,[cli,'start','--config',join(root,'project.json')],{cwd:repo,env:{...process.env,HAPPYHANDS_RUNS_DIR:join(root,'user-runs')}});
  assert.equal((await git('status','--porcelain')).stdout,'','run state must not dirty an otherwise clean target without an ignore file');
  assert.ok(stdout.trim().startsWith(join(root,'user-runs')));
- const run=await loadRun(stdout.trim());assert.equal(run.manifest.onboarding.repository.dirty,false);assert.equal(run.manifest.onboarding.config.designSources[0].path,'DESIGN.md');assert.equal(run.manifest.captures.before,null);assert.notEqual(workflowState(run.manifest).stage,'accepted');assert.equal(run.manifest.foundationInventory,null);
+ const run=await loadRun(stdout.trim());assert.equal(run.manifest.experiencePolicy,'task-design-review@1');assert.equal(run.manifest.onboarding.repository.dirty,false);assert.equal(run.manifest.onboarding.config.designSources[0].path,'DESIGN.md');assert.equal(run.manifest.captures.before,null);assert.notEqual(workflowState(run.manifest).stage,'accepted');assert.equal(run.manifest.foundationInventory,null);
  assert.ok(!stdout.trim().startsWith(repo));assert.ok(!stdout.includes('/apps/designer/'));
  const explicit=join(root,'explicit-runs');const initArgs=['init','--spec',join(root,'experience.json'),'--url',`http://127.0.0.1:${server.address().port}/`];
  const overridden=await exec(process.execPath,[cli,...initArgs,'--out',explicit],{cwd:repo,env:{...process.env,HAPPYHANDS_RUNS_DIR:join(root,'unused-cache')}});assert.ok(overridden.stdout.trim().startsWith(explicit));
