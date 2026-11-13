@@ -11,6 +11,8 @@ import impeccableSource from '../../skills/vendor/impeccable/source.json' with {
 const vendorRoot=fileURLToPath(new URL('../../skills/vendor/',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const canonical=bytes=>bytes.toString('utf8').replaceAll('\r\n','\n');
+// Bound filesystem concurrency while preserving inventory order and checking every file.
+async function mapFiles(items,fn){const out=new Array(items.length);let next=0;const results=await Promise.allSettled(Array.from({length:Math.min(8,items.length)},async()=>{while(next<items.length){const i=next++;out[i]=await fn(items[i]);}}));const failed=results.find(item=>item.status==='rejected');if(failed)throw failed.reason;return out;}
 const sources={taste:tasteSource,impeccable:impeccableSource,'taste-v2':tasteV2Source,'web-taste':webTasteSource};
 const identities={'web-taste':['https://github.com/Leonxlnx/taste-skill','f6b76575f949707b4e3c37cd86cb44b0b98643e8','MIT'],'taste-v2':['https://github.com/Leonxlnx/taste-skill','6010f91a9935f1c167dfc500fb1a475681892e6b','MIT'],taste:['https://github.com/Leonxlnx/taste-skill','a60a36dc2bb3bb77ccf17f2f62041f5ca8a458b9','MIT'],impeccable:['https://github.com/pbakaus/impeccable','2f98774f86bc05563876643db37e6c37c322850f','Apache-2.0']};
 const modes=new Set(['review','implementation']);
@@ -55,13 +57,12 @@ export async function loadDesignGuidance(mode='review',value={},root=vendorRoot)
     const expected=sources[id];
     const base=await realpath(join(root,id)),sourceText=canonical(await readFile(await within(base,'source.json'))),source=JSON.parse(sourceText);
     if(JSON.stringify([source.repository,source.revision,source.license])!==JSON.stringify(identities[id])||JSON.stringify(source.files)!==JSON.stringify(expected.files)||source.files.some(item=>!safePath(item.path)))throw Error('Invalid design guidance source inventory: '+id);
-    const documents=[];
-    for(const item of source.files){
+    const documents=await mapFiles(source.files,async item=>{
       const bytes=await readFile(await within(base,'upstream/'+item.path));
       const content=item.encoding==='binary'?bytes:canonical(bytes);
       if(hash(content)!==item.sha256)throw Error('Design guidance hash mismatch: '+id+'/'+item.path);
-      documents.push({path:'upstream/'+item.path,content,sha256:item.sha256,...(item.encoding?{encoding:item.encoding}:{})});
-    }
+      return {path:'upstream/'+item.path,content,sha256:item.sha256,...(item.encoding?{encoding:item.encoding}:{})};
+    });
     const adapter=canonical(await readFile(await within(base,'ADAPTER.md'))),readFirst=['ADAPTER.md',...readingRoute(id,mode,profile).map(path=>'upstream/'+path)];
     const bundleHash=hash(JSON.stringify({source,adapter,mode,profile,readFirst,adapterVersion:'3.0.0'}));
     packs.push({metadata:{id,mode,repository:source.repository,revision:source.revision,license:source.license,bundleHash,readFirst,fileCount:documents.length,scripts:'preserved-not-automatically-executed'},documents,adapter,sourceText});
@@ -72,7 +73,7 @@ export async function loadDesignGuidance(mode='review',value={},root=vendorRoot)
 async function exists(directory){try{const entry=await lstat(directory);if(!entry.isDirectory()||entry.isSymbolicLink())throw Error('Design guidance snapshot must be a real directory.');return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}
 async function verify(directory,documents){
   const base=await realpath(directory);
-  for(const document of documents){let content;try{content=await readFile(await within(base,document.path));}catch(error){if(error.code!=='ENOENT')throw error;throw Error('Design guidance snapshot changed; file missing: '+document.path);}if(!content.equals(Buffer.isBuffer(document.content)?document.content:Buffer.from(document.content)))throw Error('Design guidance snapshot changed: '+document.path);}
+  await mapFiles(documents,async document=>{let content;try{content=await readFile(await within(base,document.path));}catch(error){if(error.code!=='ENOENT')throw error;throw Error('Design guidance snapshot changed; file missing: '+document.path);}if(!content.equals(Buffer.isBuffer(document.content)?document.content:Buffer.from(document.content)))throw Error('Design guidance snapshot changed: '+document.path);});
 }
 function snapshotDocuments(bundle){
   const documents=bundle.packs.flatMap(pack=>[{path:pack.metadata.id+'/ADAPTER.md',content:pack.adapter},{path:pack.metadata.id+'/source.json',content:pack.sourceText},...pack.documents.map(document=>({...document,path:pack.metadata.id+'/'+document.path}))]);
@@ -92,7 +93,7 @@ export async function stageDesignGuidance(directory,mode,value={}){
     // name also works under nested Windows workbench/job directories.
     await mkdir(dirname(destination),{recursive:true});const temporary=await mkdtemp(join(dirname(destination),'.pending-'));
     try{
-      for(const document of documents){const path=join(temporary,document.path);await mkdir(dirname(path),{recursive:true});await writeFile(path,document.content,{flag:'wx'});}
+      await mapFiles(documents,async document=>{const path=join(temporary,document.path);await mkdir(dirname(path),{recursive:true});await writeFile(path,document.content,{flag:'wx'});});
       await verify(temporary,documents);
       for(let attempt=0;;attempt++){
         try{await rename(temporary,destination);break;}
