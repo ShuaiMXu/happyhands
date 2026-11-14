@@ -37,7 +37,11 @@ export async function buildLite(output){
  await copy('pnpm-lock.yaml','engine-lock.yaml');
  await copy('distribution/lite/package.json','package.json');await copy('distribution/lite/package-lock.json','npm-shrinkwrap.json');
  const pkg=JSON.parse(await readFile(join(target,'package.json'),'utf8'));
- await chmod(join(target,'bin/happyhands.mjs'),0o755);
+ // npm normalizes executable bin files to LF. Hash those final bytes even
+ // when the source checkout uses CRLF, so packed archives retain integrity.
+ const entry=join(target,'bin/happyhands.mjs');
+ await writeFile(entry,(await readFile(entry,'utf8')).replace(/\r\n/g,'\n'));
+ await chmod(entry,0o755);
  const files=await Promise.all((await filesUnder(target)).map(async path=>{const bytes=await readFile(join(target,path));return {path,bytes:bytes.length,sha256:sha256(bytes)};}));
  const manifest={schemaVersion:'0.1',name:pkg.name,version:pkg.version,sourceRevision:revision,sourceDirty:Boolean(execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim()),files};
  await writeFile(join(target,'bundle.json'),JSON.stringify(manifest,null,2)+'\n');return {directory:target,version:pkg.version,files:files.length,bytes:files.reduce((n,row)=>n+row.bytes,0)};
