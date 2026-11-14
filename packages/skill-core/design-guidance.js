@@ -1,4 +1,5 @@
 import {remediationProfile} from '../harness-core/remediation.js';
+import {designIntents} from './design-intents.js';
 import {reviewOrderPrompt} from '../experience-core/review-order.js';
 import {readFile,mkdir,writeFile,mkdtemp,rename,rm,lstat,realpath} from 'node:fs/promises';
 import {join,dirname,relative,isAbsolute} from 'node:path';
@@ -21,7 +22,7 @@ export function designGuidanceProfile(value={}){
   if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Design guidance profile must be an object.');
   if(Object.keys(value).some(key=>!['taste','intent','dials','remediation'].includes(key)))throw Error('Unknown design guidance profile field.');
   const taste=value.taste??'existing',intent=value.intent??'polish';
-  if(!['existing','app-screen','public-page','dials-v1','legacy-v2'].includes(taste)||!['polish','layout','animate','harden','distill','typeset','clarify','adapt','onboard','optimize','extract'].includes(intent))throw Error('Unknown design guidance taste or intent.');
+  if(!['existing','app-screen','public-page','dials-v1','legacy-v2'].includes(taste)||!designIntents.includes(intent))throw Error('Unknown design guidance taste or intent.');
   let dials=null;
   if(value.dials!==undefined){
     if(taste!=='dials-v1')throw Error('Taste dials require the explicit dials-v1 profile; web-taste has no dials.');

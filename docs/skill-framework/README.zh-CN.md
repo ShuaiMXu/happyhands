@@ -205,4 +205,8 @@ Impeccable 当前 review 先读 Audit/Critique；implementation 先读 Polish，
 4. **补最有价值的 provider。** 先 recovery，再 impact/router；学习和总分后置。每个改写按第 7 节版本化与验证。
 5. **最后精简协议与案例。** 合并重复 handoff，抽出自有 UI profile 和视频个案，锁定厂商版本；不破坏历史哈希和已接受的项目例外。
 
-以上清单记录审阅阶段结论。后续已落地的方法选择、契约改写及演进发布校验见 [实施记录](implementation.zh-CN.md)；九个占位分析器仍未实现，本轮也未进行真实网页整改或宣称视觉质量改善。
+以上清单记录框架审阅阶段结论。已落地的方法选择、契约改写及演进发布校验见 [实施记录](implementation.zh-CN.md)；九个占位分析器仍未实现，框架审阅本身不证明视觉质量改善。
+
+## 真实案例验证
+
+[项目方法设置案例](case-method-settings.zh-CN.md)记录了真实诊断、隔离修复、匹配复拍、配置保存及独立复核，并区分方法读取、实际应用和证据缺口。该案例的整体复核仍为 needs-evidence，人工接受待定，不作为已接受的学习样例。
