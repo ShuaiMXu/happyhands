@@ -260,7 +260,13 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
       if(review.path!==`reviews/${name}`||!new RegExp(`^${review.skillId}(?:-[a-f0-9]{64})?\\.json$`).test(name))throw Error('Invalid review history path');
       if (await copyIfPresent(join(run.directory, 'reviews', name), join(target, 'reviews', name))) copied.push(`reviews/${name}`);
       if(review.evidenceBinding){
-        await readVisualReviewBinding(run,review,{checkContext:false,checkOriginals:false});
+        const bound=await readVisualReviewBinding(run,review,{checkContext:false,checkOriginals:false});
+        for(const image of bound.review.annotationArtifacts?.images||[]){
+          // Only bound, validated derived outputs join the export allow-list.
+          const bytes=await readVerificationFile(run.directory,image.path,40*1024*1024);
+          await mkdir(join(target,'reviews','annotations'),{recursive:true});
+          await writeFile(join(target,image.path),bytes);copied.push(image.path);
+        }
         const binding=review.evidenceBinding.path;await copyFile(join(run.directory,binding),join(target,binding));copied.push(binding);
       }
     }

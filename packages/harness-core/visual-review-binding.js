@@ -1,3 +1,4 @@
+import {assertReviewAnnotationArtifacts} from './review-annotations.js';
 import {readRemediation} from './remediation.js';
 import {mkdir,realpath,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -48,7 +49,8 @@ export async function bindVisualReview(run,review,path,expectedHashes={}){
     originals.push({path,hash});
   }
   const inputAssurance=referenced.every(path=>Boolean(expectedHashes[path]))?'producer-supplied-input-hashes':'attestation-time-snapshot';
-  const record={schemaVersion:'0.1',runId:run.manifest.id,reviewPath:path,reviewHash,contextHash:verificationHash(context(run,review)),inputAssurance,originals};
+  if(review.annotationArtifacts)await assertReviewAnnotationArtifacts({directory:run.directory,review,manifest:run.manifest,artifacts:review.annotationArtifacts.images});
+  const record={...(review.annotationArtifacts?{annotationArtifactsVersion:1}:{}),schemaVersion:'0.1',runId:run.manifest.id,reviewPath:path,reviewHash,contextHash:verificationHash(context(run,review)),inputAssurance,originals};
   const content=JSON.stringify(record,null,2)+'\n',hash=verificationHash(content),bindingPath=path.replace(/\.json$/,'.binding.json');
   if(Buffer.byteLength(content)>8*1024*1024)throw Error('Visual review binding exceeds its limit.');
   try{await writeFile(join(run.directory,bindingPath),content,{flag:'wx'});}catch(error){if(error.code!=='EEXIST')throw error;if((await readVerificationFile(run.directory,bindingPath,8*1024*1024)).toString('utf8')!==content)throw Error('Visual review binding already changed.');}
@@ -77,6 +79,10 @@ export async function readVisualReviewBinding(run,reference,{requireBound=false,
   if(review.skillId!==reference.skillId||review.verdict!==reference.verdict||review.reviewedAt!==reference.reviewedAt||JSON.stringify(review.reviewer)!==JSON.stringify(reference.reviewer)||(review.verificationDigest||null)!==(reference.verificationDigest||null))throw Error('Visual review reference changed.');
   if(checkContext&&record.contextHash!==verificationHash(context(run,review)))throw Error('Visual review context changed; collect a fresh review.');
   if(checkContext)assertVisualReview(review,await reviewManifest(run));
+  if(record.annotationArtifactsVersion!==undefined||review.annotationArtifacts){
+    if(record.annotationArtifactsVersion!==1||review.annotationArtifacts?.version!==1)throw Error('Rendered annotation artifacts are missing or unsupported.');
+    await assertReviewAnnotationArtifacts({directory:run.directory,review,manifest:run.manifest,artifacts:review.annotationArtifacts.images,checkOriginals});
+  }
   const paths=new Set();
   for(const original of record.originals){
     if(typeof original.path!=='string'||paths.has(original.path)||!/^[a-f0-9]{64}$/.test(original.hash||''))throw Error('Invalid visual review original binding.');paths.add(original.path);

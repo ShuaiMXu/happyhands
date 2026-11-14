@@ -1,3 +1,4 @@
+import {buildReviewAnnotationArtifacts} from './review-annotations.js';
 import {experienceFor,experienceRequired,EXPERIENCE_POLICY,EXPERIENCE_INSTRUCTIONS} from './experience-orchestration.js';
 import {collectExperienceCase,admitExperienceCase,experienceCaseBrief} from './experience-cases.js';
 import {stageRemediation,readRemediation} from './remediation.js';
@@ -526,6 +527,10 @@ export async function saveVisualReview(directory, review, { screenshotHashes = {
     if(previous){run.manifest.visualReviewHistory=[...(run.manifest.visualReviewHistory||[]),previous];run.manifest.visualReviews=run.manifest.visualReviews.filter(item=>item!==previous);}
     await assertReviewStorage(run.directory);
     const path = previous ? `reviews/${review.skillId}-${review.attempt?verificationHash(randomUUID()):verification.digest}.json` : `reviews/${review.skillId}.json`;
+    // Derived images are produced here, never accepted as a model assertion.
+    // Keep the caller's review immutable and historical records untouched.
+    if (review.annotations || review.structureChecks) review={...review,annotationArtifacts:{version:1,images:await buildReviewAnnotationArtifacts({directory:run.directory,review,manifest:run.manifest})}};
+    else if (review.annotationArtifacts) throw Error('Annotation artifacts require structured annotations.');
     await writeJson(runFilePath(run.directory, path), review);
     const evidenceBinding=await bindVisualReview({...run,manifest:{...run.manifest,verificationRecords:verification.records}},review,path,expectedHashes);
     run.manifest.visualReviews.push({ skillId: review.skillId, verdict: review.verdict, reviewer: review.reviewer, reviewedAt: review.reviewedAt, path, evidenceBinding, ...(verification.digest?{verificationDigest:verification.digest}:{}) });
