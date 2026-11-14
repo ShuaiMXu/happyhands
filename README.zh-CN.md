@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://happyhands.cc"><img alt="官网" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
-  <a href="https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4"><img alt="Alpha.4" src="https://img.shields.io/badge/release-Alpha.4-F79B60?style=flat"></a>
+  <a href="https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0"><img alt="v1.0.0" src="https://img.shields.io/badge/release-v1.0.0-F79B60?style=flat"></a>
   <a href="https://github.com/ShuaiMXu/happyhands/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&amp;label=Stars&amp;color=202020"></a>
   <a href="docs/harness.md"><img alt="Harness 指南" src="https://img.shields.io/badge/docs-Harness_guide-202020?style=flat"></a>
 </p>
@@ -28,21 +28,21 @@ HappyHands 帮助编码 Agent 检查界面设计、信息层级、交互反馈�
 
 https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
-v1.0.0 尚未公开发布。默认安装命令继续使用 Alpha.4，待最终资产发布并通过冷安装验证后再切换。
+[v1.0.0 正式版](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0)已发布，提供安装包、源码清单与校验值，并已通过公开下载后的独立冷安装验证。
 
 ## 开始使用
 
-在你的产品仓库中，一行安装 **已发布的轻量 Alpha.4 Skill**，无需启动工作台：
+在你的产品仓库中，一行安装 **已发布的轻量 v1.0.0 Skill**，无需启动工作台：
 
 ```sh
-npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v0.1.0-alpha.4/happyhands-lite-0.1.0-alpha.4.tgz happyhands install
+npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v1.0.0/happyhands-lite-1.0.0.tgz happyhands install
 ```
 
 默认安装到 Codex 用户技能目录（`~/.codex/skills/happyhands`，或 `CODEX_HOME` 下），不改产品源码。`--scope project` 可安装到项目内的 `.agents/skills/happyhands`，隔离修复前需要先提交或忽略这些安装文件。包内包含运行核心、完整的固定版本方法文件和六项运行依赖；已有 Skill 不会被覆盖。在 Codex 中使用 `$happyhands`，提供预览与一个具体用户任务，或按[轻量版指南](docs/lightweight.md)调用。`install --agent claude-code` 可安装到 Claude Code 的发现目录，其完整执行闭环仍未验证。DSH 可作为外部操作端读取和调用。
 
-需要 Node.js 22.15+（含 npm）、Git、Chrome/Edge 和已配置的 Agent。内置模型诊断与复核使用 Codex，新模型需使用支持它的 Codex 版本。安装和选取参考资料不代表真实产品修复已通过验收；包本身的实际验证与限制见 [已发布的 Alpha.4 说明](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4)。历史 [Alpha.4](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) 继续保留；升级时使用单独的 `--destination PATH`，不覆盖已有安装。
+需要 Node.js 22.15+（含 npm）、Git、Chrome/Edge 和已配置的 Agent。内置模型诊断与复核使用 Codex，新模型需使用支持它的 Codex 版本。安装和选取参考资料不代表真实产品修复已通过验收；包本身的实际验证与限制见 [v1.0.0 发布说明](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0)。历史 [Alpha.4](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) 继续保留；升级时使用单独的 `--destination PATH`，不覆盖已有安装。
 
-首版覆盖本地证据与修复流程、所选 Design.md/设计系统参考，以及独立的视频时间线审阅流程。已验证环境为 macOS、Chrome 和 Codex；Windows/Ubuntu、完整 Claude-only 或 DSH-only 闭环、真实新使用者接入及跨模型质量对照仍待验证。视频流程还需要明确可用的 FFmpeg/FFprobe 与真实整段视听复核。版本号不会将未测环境或未查看状态变成通过结论。
+首版覆盖本地证据与修复流程、所选 Design.md/设计系统参考，以及独立的视频时间线审阅流程。历史真实产品案例使用 macOS、Chrome 和 Codex。本版另有 Windows 安装包冷安装验证与 Ubuntu/Windows 工程 CI；这些平台的完整真实产品闭环、完整 Claude-only 或 DSH-only 闭环、真实新使用者接入及跨模型质量对照仍待验证。视频流程还需要明确可用的 FFmpeg/FFprobe 与真实整段视听复核。版本号不会将未测环境或未查看状态变成通过结论。
 
 ### 可选的本地工作台
 
@@ -111,7 +111,7 @@ HappyHands 支持任意 AI CLI 参与开放的编码 Agent 工作流。外部 Ag
 
 ## 当前范围
 
-HappyHands **免费开源**。v1.0.0 是轻量本地 Skill 的下一发布候选，源码工作台仍为可选入口。外部模型和 CLI 服务可能需要单独的账号、订阅或按量付费。结论以采集计划和已完成检查为准，未查看的页面、未测试的交互仍属未审阅范围。专业校准、新使用者验证、云端检查等缺口见[剩余待办](docs/remaining-work-2026-11-12.zh-CN.md)。
+HappyHands **免费开源**。v1.0.0 是轻量本地 Skill 的正式版本，源码工作台仍为可选入口。外部模型和 CLI 服务可能需要单独的账号、订阅或按量付费。结论以采集计划和已完成检查为准，未查看的页面、未测试的交互仍属未审阅范围。专业校准、新使用者验证、云端检查等缺口见[剩余待办](docs/remaining-work-2026-11-12.zh-CN.md)。
 
 轻量入口的运行记录默认存放在 `~/.happyhands/runs`，源码 CLI / 工作台仍使用 `.harness/`；也可显式指定输出路径。模型辅助步骤会通过 CLI 将所选源码上下文和图片发送给配置的模型服务。工作副本与仓库检查属于流程保护，不是安全沙箱。分享导出记录前应检查敏感内容，详见[数据与执行说明](docs/local-workbench.md)。
 
