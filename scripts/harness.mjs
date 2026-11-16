@@ -104,14 +104,13 @@ function required(options, key) {
   return options[key];
 }
 
-// B10-H2 invariant: any command that prints a run directory also prints the
-// workbench deep link. One helper, called everywhere a run dir is printed.
-// Tries a 500ms HEAD against the dev server; when it's not running, the link
-// still prints alongside the command to start it. OSC 8 makes it clickable in
-// supporting terminals; falls back to a bare URL.
+// Optional workbench deep link. It is off by default and always goes to stderr:
+// it used to print on stdout ahead of the JSON, so `next` and `status` could not
+// be parsed by a caller that only reads stdout. Set HAPPYHANDS_WORKBENCH_LINK=1
+// to get the link back, for a terminal where the canvas is actually running.
 const SITE_URL = process.env.PD_SITE_URL || 'http://127.0.0.1:4190';
 async function printWorkbenchLink(runId, stage) {
-  if(process.env.PD_HARNESS_HEADLESS==='1')return;
+  if(process.env.PD_HARNESS_HEADLESS==='1'||process.env.HAPPYHANDS_WORKBENCH_LINK!=='1')return;
   const url = `${SITE_URL}/apps/designer/?case=run:${runId}&view=canvas${stage ? `#stage=${stage}` : ''}`;
   let alive = false;
   try {
@@ -124,13 +123,13 @@ async function printWorkbenchLink(runId, stage) {
     });
   } catch { /* not running */ }
   const prefix = '  画布 → ';
-  if (process.stdout.isTTY && process.env.TERM !== 'dumb') {
-    process.stdout.write(`\x1b]8;;${url}\x07${prefix}${url}\x1b]8;;\x07\n`);
+  if (process.stderr.isTTY && process.env.TERM !== 'dumb') {
+    process.stderr.write(`\x1b]8;;${url}\x07${prefix}${url}\x1b]8;;\x07\n`);
   } else {
-    process.stdout.write(`${prefix}${url}\n`);
+    process.stderr.write(`${prefix}${url}\n`);
   }
   if (!alive) {
-    process.stdout.write(`  未启动 → 在 HappyHands 工程目录运行 npm run workbench\n`);
+    process.stderr.write(`  未启动 → 在 HappyHands 工程目录运行 npm run workbench\n`);
   }
 }
 
