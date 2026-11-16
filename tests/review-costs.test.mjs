@@ -52,3 +52,8 @@ test('identical completed requests cannot silently start another paid review wit
  await assert.rejects(reserveReviewCall(directory,{key,stage:'regional'}),/identical model request already completed/);
  await assert.rejects(reserveReviewCall(directory,{key,stage:'regional',deduplicate:true}),/reusable result is missing/);
 });
+
+test('policy edits cannot consume settlement headroom while a model is pending',async t=>{
+ const {directory}=await fixture(t);const id=await reserveReviewCall(directory,{key,stage:'synthetic-pending'});const before=await readFile(join(directory,'run.json'));
+ await assert.rejects(configureReviewCosts(directory,{maxCalls:10},'Cannot revise during pending execution'),/pending/);assert.deepEqual(await readFile(join(directory,'run.json')),before);await settleReviewCall(directory,id,{usage:measured});
+});

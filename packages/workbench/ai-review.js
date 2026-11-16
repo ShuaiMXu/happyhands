@@ -1,3 +1,4 @@
+import {reviewBatchKey} from '../harness-core/review-batch-key.js';
 import {reserveReviewCall,settleReviewCall,reviewUsageCollector,reviewCostReport,assertCostPolicy} from '../harness-core/review-costs.js';
 import {readReviewBatch,saveReviewBatch} from '../harness-core/review-batch-cache.js';
 import {pageStructurePrompt,aggregateStructureReviews} from '../harness-core/page-structure-review.js';
@@ -127,9 +128,7 @@ async function reviewBatch(directory, run, {cwd,signal,generate,language='zh',pu
   const effectivePrompt=reviewPrompt+comparisonInstructions;
   await writeFile(join(cwd,'review-prompt.txt'),effectivePrompt);
   await writeFile(join(cwd,'review-provenance.json'),JSON.stringify({ojoGuidance:ojo.metadata,designGuidancePacks:design.metadata,rubricId:designLanguageRubric.id,rubricVersion:designLanguageRubric.version,rubricHash,promptHash:hash(effectivePrompt),contextHash:hash(JSON.stringify(context)),screenshotHashes},null,2));
-  const canonical=value=>JSON.stringify(value).split(cwd).join('[review-session]');
-  const cacheKey=hash(canonical({version:'review-batch@2',plannedInputs,resumeIdentity,modelIdentity,prompt:effectivePrompt,context,screenshotHashes,fullCaptures:plannedManifest.captures,fullPlan:plannedManifest.plan,confirmation:plannedManifest.confirmation,scope:plannedManifest.experienceAudit,decision:plannedManifest.designDecision}));
-  if(/data:image\/[a-z0-9.+-]+;base64,/i.test(effectivePrompt+JSON.stringify(context)))throw Error('Inline encoded image text is not a supported visual input; use bound original image files.');
+  const cacheKey=reviewBatchKey({plannedInputs,resumeIdentity,modelIdentity,prompt:effectivePrompt,context,screenshotHashes,fullCaptures:plannedManifest.captures,fullPlan:plannedManifest.plan,confirmation:plannedManifest.confirmation,scope:plannedManifest.experienceAudit,decision:plannedManifest.designDecision},cwd);
   for(const [path,expected] of Object.entries(plannedInputs?.hashes||{}))if(hash(await readVerificationFile(directory,path,24*1024*1024))!==expected)throw Error('Screenshot changed during AI review; planned inputs no longer match before model invocation.');
   await verifyDesignGuidanceSnapshot(cwd,design);
   const cached=resumeIdentity?await readReviewBatch(directory,cacheKey):null;

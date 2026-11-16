@@ -8,7 +8,7 @@ New lightweight start/continue runs use task-design-review@2. Their audit.task.g
 
 Final independent QA for improvement/mixed cannot pass without an explicit improved designComparison with an explanation and inspected matched before/after originals. Repair tasks may preserve appearance. Regional assessments cannot certify a whole-task goal. Operator-authored requests still require real authorization; the schema cannot prove user intent or visual improvement.
 
-Native review validates all planned PNG files and cross-region capacity/dimensions before regional calls. Every later call rechecks complete original hashes, rejecting drift before another model invocation. Inline encoded image text is rejected in prompt/context. This prepares native CLI -i delivery; it does not certify visual perception, external MCP delivery, or actual human inspection.
+Native review validates all planned PNG files and cross-region capacity/dimensions before regional calls. Every later call rechecks complete original hashes, rejecting drift before another model invocation. Native visual evidence is supplied as checked PNG files via CLI -i; source data URIs remain untrusted source literals and never prove image inspection. This prepares native CLI -i delivery; it does not certify visual perception, external MCP delivery, or actual human inspection.
 
 Use model-review --run RUN --preflight-only true to produce native-review-plan.json with complete image hashes, potential calls, requested policy and current measured costs. No model call or cost reservation occurs. New @2 runs require an explicit call ceiling (persisted maxCalls or invocation max-model-calls) before actual model execution; the prepared plan is retained when it is missing. No arbitrary numeric default or per-batch approval is invented.
 
@@ -39,10 +39,12 @@ review-costs --run RUN reads the report. review-budget --run RUN --input POLICY.
 
 Continuation freezes complete source cost records, totals and policy without resetting them. Pending/uncertain execution must be reconciled before creating a successor. A predecessor with a successor cannot spend or revise its active policy. The source-bound lossless 0.2 gzip snapshot uses the earlier isolated fix: 2 MiB stored, 16 MiB expanded, hashes/byte counts, bounded decompression and old 0.1 compatibility. Evidence is not omitted to fit.
 
-Older unmeasured histories remain explicit and cannot claim a complete-task cumulative budget. Token precision required for an inherited history must be established before it is frozen in a continuation; inherited unknown values are not reclassified as zero. Cost history has bounded readers (2 MiB current snapshot, 32 MiB hash-linked history); exceeding a bound blocks rather than truncates.
+Older unmeasured histories remain explicit and cannot claim a complete-task cumulative budget. Token precision required for an inherited history must be established before it is frozen in a continuation; inherited unknown values are not reclassified as zero. Cost history has bounded readers (2 MiB current snapshot, 32 MiB hash-linked history); writes check the next reader bound and model reservations leave room for terminal settlement before invocation. Policy changes wait for pending calls to settle. Exceeding a bound retains the prior readable head rather than truncating history.
 
 Export adds a sanitized cost summary plus per-review outcome display copies. Repair verification, comparative design, regression, model QA and the actual separate human record remain distinct. Old passes do not become design improvement.
 
 ## Remaining boundaries
 
 External adapter image-delivery preflight, external/diagnostic/coding-agent usage adapters and graphical budget controls are not implemented here. Native workbench API uses the same ledger/policy, but same-run recovery is opt-in via the explicit-model CLI/programmatic identity, not an automatic UI feature. Remote CI, real model cost benchmarks, actual design improvement, Windows runtime identity and human comparison remain unverified. D requires authorized real cases and real people; synthetic protocol tests do not establish those outcomes.
+
+Review fix: batch-key@3 normalizes generated prompt paths before JSON encoding, preserving all structured source/task bytes. This fixes Windows separators and avoids false reuse when task text contains a session path. Earlier raw batches remain retained but are not silently promoted to the new key contract.

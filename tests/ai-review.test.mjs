@@ -443,3 +443,10 @@ test('new goal-bound execution requires a ceiling, but preflight remains free',a
  const preview=await runAiVisualReview(run.directory,{...opts,preflightOnly:true});assert.equal(preview.status,'preflight-only');
  await assert.rejects(runAiVisualReview(run.directory,opts),/explicit call ceiling/);assert.equal(calls,0);assert.equal((await loadRun(run.directory)).manifest.reviewCosts,undefined);
 });
+
+test('source data-URI literals remain source text and cannot replace checked image files',async t=>{
+ const {run,cwd}=await fixture(t),loaded=await loadRun(run.directory);loaded.spec.project.task+=' Source literal data:image/svg+xml;base64,PHN2Zz4= is not visual inspection evidence.';await writeFile(join(run.directory,'experience.json'),JSON.stringify(loaded.spec));
+ await runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate:async(c,a,o)=>{
+  const context=JSON.parse(await readFile(join(o.cwd,'review-context.json')));assert.match(context.project.task,/data:image/);assert.equal(a.filter(value=>value==='-i').length,2);assert.equal(a.some(value=>value.startsWith('data:image')),false);await generator(result)(c,a,o);
+ }});
+});

@@ -5,6 +5,8 @@ import {randomUUID} from 'node:crypto';
 import {loadRun,withRunLock,writeJson} from './store.js';
 import {readVerificationFile,verificationHash} from './verification.js';
 const VERSION='review-costs@1';
+const HISTORY_LIMIT=32*1024*1024,SNAPSHOT_LIMIT=2*1024*1024,SETTLEMENT_ROOM=16*1024;
+const storedHistorySizes=new WeakMap();
 const fields=['maxCalls','maxInputTokens','maxOutputTokens'];
 const empty=()=>({calls:0,inputTokens:0,cachedInputTokens:0,outputTokens:0,unknownUsage:0,pending:0,unmeasuredHistory:false});
 export function assertCostPolicy(policy){
@@ -27,9 +29,10 @@ export async function readReviewCosts(directory){
  const record=JSON.parse(bytes);
  if(record.version!==VERSION||record.runId!==run.manifest.id||!Array.isArray(record.calls)||record.calls.length>10000||!Array.isArray(record.policyChanges))throw Error('Invalid review cost ledger.');
  let previous=record.previous,depth=0,historyBytes=0;const seen=new Set([ref.hash]);
- while(previous){if(++depth>10000||seen.has(previous.hash)||previous.path!==`review-costs/${previous.hash}.json`||!/^[a-f0-9]{64}$/.test(previous.hash))throw Error('Invalid review cost history chain.');seen.add(previous.hash);const raw=await readVerificationFile(directory,previous.path,2*1024*1024);historyBytes+=raw.length;if(historyBytes>32*1024*1024||verificationHash(raw)!==previous.hash)throw Error('Review cost history changed or exceeds its bounded reader.');const old=JSON.parse(raw);if(old.runId!==run.manifest.id||old.version!==VERSION)throw Error('Review cost history identity changed.');previous=old.previous;}
+ while(previous){if(++depth>10000||seen.has(previous.hash)||previous.path!==`review-costs/${previous.hash}.json`||!/^[a-f0-9]{64}$/.test(previous.hash))throw Error('Invalid review cost history chain.');seen.add(previous.hash);const raw=await readVerificationFile(directory,previous.path,2*1024*1024);historyBytes+=raw.length;if(historyBytes>HISTORY_LIMIT||verificationHash(raw)!==previous.hash)throw Error('Review cost history changed or exceeds its bounded reader.');const old=JSON.parse(raw);if(old.runId!==run.manifest.id||old.version!==VERSION)throw Error('Review cost history identity changed.');previous=old.previous;}
  assertCostPolicy(record.policy);
  for(const call of record.calls)if(call.reconciliation){const r=call.reconciliation,bytes=await readVerificationFile(directory,r.evidencePath,256*1024);if(verificationHash(bytes)!==r.evidenceHash)throw Error('Reconciled provider receipt changed.');const receipt=JSON.parse(bytes);if(receipt.callId!==call.id||receipt.execution!==r.execution||JSON.stringify(receipt.usage)!==JSON.stringify(r.usage))throw Error('Reconciliation receipt binding changed.');}
+ storedHistorySizes.set(record,historyBytes+bytes.length);
  return record;
 }
 async function initialCosts(run){
@@ -44,18 +47,21 @@ async function initialCosts(run){
  if(inherited){if(!inherited.record||inherited.record.version!==VERSION||inherited.record.runId!==snapshot.parentManifest.id||verificationHash(JSON.stringify(inherited.record,null,2)+'\n')!==inherited.source?.hash||inherited.source?.hash!==snapshot.parentManifest.reviewCosts?.hash||JSON.stringify(summarizeReviewCosts(inherited.record))!==JSON.stringify(inherited.totals)||JSON.stringify(inherited.record.policy)!==JSON.stringify(inherited.policy))throw Error('Inherited review costs do not match their frozen source record.');}
  return {version:VERSION,runId:run.manifest.id,baseline:inherited?.totals||{...empty(),unmeasuredHistory:true},policy:inherited?.policy||{},policyChanges:[],calls:[]};
 }
-async function persist(run,record){
+async function persist(run,record,{reserveSettlement=false}={}){
  const folder=join(run.directory,'review-costs');await mkdir(folder,{recursive:true});
  if(await realpath(folder)!==join(await realpath(run.directory),'review-costs'))throw Error('Review cost storage cannot use symlinks.');
  record.previous=run.manifest.reviewCosts||null;
- const bytes=JSON.stringify(record,null,2)+'\n';if(Buffer.byteLength(bytes)>2*1024*1024)throw Error('Review cost ledger is full; no records were truncated.');
+ const bytes=JSON.stringify(record,null,2)+'\n',size=Buffer.byteLength(bytes),history=storedHistorySizes.get(record)||0;
+ if(size>SNAPSHOT_LIMIT)throw Error('Review cost ledger is full; no records were truncated.');
+ if(history>HISTORY_LIMIT||reserveSettlement&&history+size>HISTORY_LIMIT)throw Error('Review cost history has insufficient room for another snapshot and model settlement; the previous head is retained.');
+ if(reserveSettlement&&size+SETTLEMENT_ROOM>SNAPSHOT_LIMIT)throw Error('Review cost snapshot has insufficient settlement headroom; no model call was reserved.');
  const hash=verificationHash(bytes),path=`review-costs/${hash}.json`;
  try{await writeFile(join(run.directory,path),bytes,{flag:'wx'});}catch(e){if(e.code!=='EEXIST')throw e;if(!(await readVerificationFile(run.directory,path,2*1024*1024)).equals(Buffer.from(bytes)))throw Error('Existing review cost snapshot changed.');}
  run.manifest.reviewCosts={path,hash};await writeJson(join(run.directory,'run.json'),run.manifest);return record;
 }
 export async function configureReviewCosts(directory,policy,reason){
  assertCostPolicy(policy);if(!reason?.trim()||reason.length>2000)throw Error('Budget changes require a bounded reason.');
- return withRunLock(directory,async()=>{const run=await loadRun(directory);try{await readVerificationFile(directory,'continuation-next.json',256*1024);throw Error('Configure the active successor budget, not its frozen predecessor.');}catch(e){if(e.code!=='ENOENT')throw e;}const record=await readReviewCosts(directory)||await initialCosts(run);record.policyChanges.push({at:new Date().toISOString(),previous:record.policy,policy,reason});record.policy={...policy};return persist(run,record);});
+ return withRunLock(directory,async()=>{const run=await loadRun(directory);try{await readVerificationFile(directory,'continuation-next.json',256*1024);throw Error('Configure the active successor budget, not its frozen predecessor.');}catch(e){if(e.code!=='ENOENT')throw e;}const record=await readReviewCosts(directory)||await initialCosts(run);if(summarizeReviewCosts(record).pending)throw Error('Settle the pending model call before changing its budget policy.');record.policyChanges.push({at:new Date().toISOString(),previous:record.policy,policy,reason});record.policy={...policy};return persist(run,record);});
 }
 export async function reserveReviewCall(directory,{key,stage,policy,deduplicate=false,retryReason,modelIdentity=null}){
  if(!/^[a-f0-9]{64}$/.test(key)||!stage?.trim())throw Error('Invalid model call identity.');
@@ -75,11 +81,14 @@ export async function reserveReviewCall(directory,{key,stage,policy,deduplicate=
   if(Object.keys(limits).length&&totals.unmeasuredHistory)throw Error('Historical review usage is unmeasured; a complete task budget cannot be claimed.');
   if((limits.maxInputTokens!==undefined||limits.maxOutputTokens!==undefined)&&totals.unknownUsage)throw Error('Previous model usage is unknown; token budget blocks the next call.');
   if(limits.maxInputTokens!==undefined&&totals.inputTokens>=limits.maxInputTokens||limits.maxOutputTokens!==undefined&&totals.outputTokens>=limits.maxOutputTokens)throw Error('Cumulative review token budget exhausted before the next call.');
-  const call={id:randomUUID(),key,stage,...(modelIdentity?{modelIdentity}:{}),...(retryReason?{retryReason}:{}),state:'reserved',ownerPid:process.pid,reservedAt:new Date().toISOString()};record.calls.push(call);await persist(run,record);return call.id;
+  const call={id:randomUUID(),key,stage,...(modelIdentity?{modelIdentity}:{}),...(retryReason?{retryReason}:{}),state:'reserved',ownerPid:process.pid,reservedAt:new Date().toISOString()};record.calls.push(call);await persist(run,record,{reserveSettlement:true});return call.id;
  });
 }
 export async function settleReviewCall(directory,id,{usage=null,outcome='completed',error=null}={}){
  if(usage&&!validUsage(usage))throw Error('Invalid measured review usage.');
+ if(!['completed','failed','uncertain'].includes(outcome)||error!==null&&(typeof error!=='string'||error.length>2000))throw Error('Invalid bounded model settlement outcome or error.');
+ usage=usage?Object.fromEntries(['input_tokens','cached_input_tokens','output_tokens'].map(key=>[key,usage[key]])):null;
+ if(outcome==='failed'&&!usage)outcome='uncertain';
  return withRunLock(directory,async()=>{const run=await loadRun(directory),record=await readReviewCosts(directory);const call=record?.calls.find(item=>item.id===id);if(!call||call.state!=='reserved'||call.reconciliation)throw Error('Model call reservation is absent or already settled.');Object.assign(call,{state:'settled',settledAt:new Date().toISOString(),usage,outcome,error});await persist(run,record);return summarizeReviewCosts(record);});
 }
 export const validUsage=value=>value&&['input_tokens','cached_input_tokens','output_tokens'].every(k=>Number.isSafeInteger(value[k])&&value[k]>=0)&&value.cached_input_tokens<=value.input_tokens;
