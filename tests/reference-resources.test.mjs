@@ -25,7 +25,7 @@ function server({corrupt=false,foreign=false}={}){const calls=[];return {calls,f
 async function fixture(t){const root=await mkdtemp(join(tmpdir(),'hh-resource-test-'));t.after(()=>rm(root,{recursive:true,force:true}));const {directory}=await createRun({spec:structuredClone(sample),url:'http://127.0.0.1:3000',outputRoot:root,id:'resource1'});return {root,directory};}
 test('resource search gets only indexes, then selection snapshots exactly the chosen full document in the existing run',async t=>{
  const s=server(),f=await fixture(t),results=await searchResources('form',{fetcher:s.fetcher});
- assert.equal(results[0].id,'design-md:example');assert.equal(s.calls.length,3);assert.ok(!s.calls.some(url=>url.endsWith('.md')));
+ assert.equal(results[0].id,'design-md:example');assert.equal(s.calls.length,4);assert.ok(!s.calls.some(url=>url.endsWith('.md')));
  const before=baselineSourceHash(await loadRun(f.directory));
  const record=await selectResource({directory:f.directory,id:'design-md:example',fetcher:s.fetcher});
  const run=await loadRun(f.directory);assert.equal(run.manifest.selectedReferences[0].path,record.path);assert.notEqual(baselineSourceHash(run),before);
