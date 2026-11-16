@@ -81,3 +81,29 @@ test('reported hierarchy regression blocks a pass despite functional success; va
  rows[1].verdict='needs-evidence';assert.throws(()=>assertExperienceAssessments(rows,'pass',refs),/cannot override/);
  rows[1].verdict='not-applicable';assert.throws(()=>assertExperienceAssessments(rows,'pass',refs),/cannot be skipped/);
 });
+
+test('new goal-bound audits require explicit goals and cannot downgrade; old records remain readable',async t=>{
+ const f=await fixture(t);let run=await loadRun(f.directory);run.manifest.experiencePolicy='task-design-review@2';await writeFile(join(f.directory,'run.json'),JSON.stringify(run.manifest));
+ await assert.rejects(saveExperienceRecord(f.directory,'audit',f.audit),/downgrade/);
+ f.audit.version='task-design-review@2';await assert.rejects(saveExperienceRecord(f.directory,'audit',f.audit),/goal/);
+ f.audit.task.goal={version:'design-goal@1',kind:'mixed',requestQuote:'Help visitors',criteria:['Improve task hierarchy'],preserve:['Brand and calendar'],allowedChanges:['Reading order and grouping']};
+ await saveExperienceRecord(f.directory,'audit',f.audit);run=await loadRun(f.directory);assert.equal(run.manifest.experienceAudit.goal.kind,'mixed');assert.equal((await experienceFor(run)).audit.task.goal.kind,'mixed');
+ run.manifest.experienceAudit.goal.kind='repair';await writeFile(join(f.directory,'run.json'),JSON.stringify(run.manifest));await assert.rejects(experienceFor(await loadRun(f.directory)),/goal reference changed/);
+});
+test('repair goals may preserve design; improvement/mixed require improved final comparison',async()=>{
+ const {assertReviewGoal}=await import('../packages/harness-core/review-goal.js');
+ for(const kind of ['improvement','mixed'])for(const verdict of [undefined,'preserved','regressed','needs-evidence'])assert.throws(()=>assertReviewGoal({verdict:'pass',...(verdict?{designComparison:{verdict}}:{})},{version:'design-goal@1',kind}),/requires an explicit improved/);
+ assert.doesNotThrow(()=>assertReviewGoal({verdict:'pass',designComparison:{verdict:'preserved'}},{version:'design-goal@1',kind:'repair'}));
+ assert.doesNotThrow(()=>assertReviewGoal({verdict:'pass',designComparison:{verdict:'improved'}},{version:'design-goal@1',kind:'mixed'}));
+ assert.doesNotThrow(()=>assertReviewGoal({verdict:'pass'},null));
+});
+
+test('the real frozen audit-to-native-review path rejects a preservation pass for an improvement goal',async t=>{
+ const f=await fixture(t);f.audit.version='task-design-review@2';f.audit.task.goal={version:'design-goal@1',kind:'improvement',requestQuote:'Help visitors',criteria:['Clearer hierarchy for the next decision'],preserve:['Original brand'],allowedChanges:['Grouping and reading order']};f.decision.version=f.audit.version;
+ await saveExperienceRecord(f.directory,'audit',f.audit);let run=await loadRun(f.directory);await saveDiagnosis(f.directory,diagnoseRun({run}));await confirmFinding(f.directory,'F1','supported','Synthetic scope, not human acceptance');await saveExperienceRecord(f.directory,'decision',f.decision);await savePlan(f.directory,'F1');
+ await mkdir(join(f.directory,'after'));await writeFile(join(f.directory,'after/desktop.png'),png);await saveCapture(f.directory,'after',{viewports:{desktop:{screenshot:'after/desktop.png'}}});await saveEvaluation(f.directory,{status:'synthetic-functional-pass'});
+ await assert.rejects(runAiVisualReview(f.directory,{cwd:join(f.root,'goal-review'),maxModelCalls:1,signal:new AbortController().signal,generate:async(c,a,{cwd})=>{
+  const context=JSON.parse(await readFile(join(cwd,'review-context.json'))),refs=[original,'after/desktop.png'];await writeFile(join(cwd,'review-result.json'),JSON.stringify({[context.reviewResponsibility.decisionField]:'pass',screenshotRefs:refs,findings:[],rationale:'Synthetic scoped repair only',limitations:['Not actual visual evidence'],designComparison:{verdict:'preserved',reason:'Only a local repair; no hierarchy benefit established',screenshotRefs:refs},experienceAssessments:REVIEW_DIMENSIONS.map(dimension=>({dimension,verdict:'pass',reason:'Synthetic contract result only',screenshotRefs:refs}))}));
+ }}),/design improvement goal requires/);
+ assert.equal((await loadRun(f.directory)).manifest.visualReviews.length,0);assert.equal((await loadRun(f.directory)).manifest.judgment,null);
+});

@@ -47,7 +47,11 @@ test('failed protocol generation leaves the prior review effective and a workben
  await assert.rejects(runAiVisualReview(directory,{cwd:failed,signal:new AbortController().signal,retryOnProtocolChange:true,generate:async()=>{throw Error('Provider offline fixture');}}),/Provider offline/);
  assert.deepEqual((await loadRun(directory)).manifest.visualReviews,[old]);assert.deepEqual(await readFile(join(directory,old.path)),before);
  const cwd=join(root,'workbench');await mkdir(cwd);
- const review=await runAiVisualReview(directory,{cwd,signal:new AbortController().signal,retryOnProtocolChange:true,generate:model});
+ await assert.rejects(runAiVisualReview(directory,{cwd,signal:new AbortController().signal,retryOnProtocolChange:true,generate:model}),/uncertain execution/);
+ const {readReviewCosts,reconcileReviewCall}=await import('../packages/harness-core/review-costs.js');
+ const call=(await readReviewCosts(directory)).calls[0];await writeFile(join(directory,'synthetic-provider-receipt.json'),JSON.stringify({callId:call.id,execution:'not-started',usage:{input_tokens:0,cached_input_tokens:0,output_tokens:0},providerReceipt:'Synthetic fixture confirms its callback never invoked a provider'}));
+ await reconcileReviewCall(directory,call.id,{reason:'Fixture-only explicit no-execution receipt',evidencePath:'synthetic-provider-receipt.json'});
+ const review=await runAiVisualReview(directory,{cwd,signal:new AbortController().signal,retryOnProtocolChange:true,retryReason:'Explicitly retry after the fixture no-execution receipt',generate:model});
  assert.equal(review.verdict,'needs-evidence');assert.match(review.attempt.reason,/workbench/);assert.equal((await loadRun(directory)).manifest.visualReviewHistory.length,1);
 });
 

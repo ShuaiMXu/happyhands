@@ -6,7 +6,7 @@ import {withdrawJudgment} from '../packages/harness-core/store.js';
 import {saveRunMemoryException} from '../packages/harness-core/store.js';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { homedir } from 'node:os';
 import { createRun, loadRun, runFilePath, captureOnce, saveCapture, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveOnboarding, saveDiagnosis, saveVisualReview, recordAbsentBaseline, saveFoundationApproval } from '../packages/harness-core/store.js';
@@ -25,7 +25,7 @@ import { extractFoundationInventory } from '../packages/skill-core/foundation-in
 import {captureWithDesignSystem} from '../packages/harness-core/design-system.js';
 import {saveRepairScope} from '../packages/harness-core/store.js';
 
-import {EXPERIENCE_POLICY,experienceContext,saveExperienceRecord} from '../packages/harness-core/experience-orchestration.js';
+import {CURRENT_EXPERIENCE_POLICY,experienceContext,saveExperienceRecord} from '../packages/harness-core/experience-orchestration.js';
 
 const commandOptions = new Map([
   ['experience', 'run phase input surface'],
@@ -39,7 +39,11 @@ const commandOptions = new Map([
   ['skills', ''],
   ['agents', ''],
   ['model-diagnose', 'run model language'],
-  ['model-review', 'run model language'],
+  ['model-review', 'run model language max-model-calls max-total-calls max-input-tokens max-output-tokens resume-review retry-reason preflight-only'],
+  ['review-budget', 'run input reason'],
+  ['review-costs', 'run'],
+  ['review-reconcile', 'run input'],
+  ['review-normalize', 'run input out'],
   ['repair-scope', 'run finding all'],
   ['skill', 'run skill repo'],
   ['diagnose', 'run rubric'],
@@ -145,7 +149,11 @@ pnpm harness agents
 pnpm harness experience --run DIRECTORY --phase context [--surface public-page|app-screen]
 pnpm harness experience --run DIRECTORY --phase audit|decision --input FILE
 pnpm harness model-diagnose --run DIRECTORY [--model ID] [--language zh|en]
-pnpm harness model-review --run DIRECTORY [--model ID] [--language zh|en]
+pnpm harness model-review --run DIRECTORY [--model ID] [--language zh|en] [--max-model-calls N] [--resume-review true] [--max-total-calls N] [--max-input-tokens N] [--max-output-tokens N] [--retry-reason TEXT] [--preflight-only true]
+pnpm harness review-costs --run DIRECTORY
+pnpm harness review-budget --run DIRECTORY --input POLICY.json --reason TEXT
+pnpm harness review-reconcile --run DIRECTORY --input RECEIPT-REFERENCE.json
+pnpm harness review-normalize --run DIRECTORY --input REVIEW.json --out NEW.json
 pnpm harness repair-scope --run DIRECTORY (--finding ID | --all true)
 pnpm harness skill --run DIRECTORY --skill ID [--repo DIRECTORY]
 pnpm harness diagnose --run DIRECTORY [--rubric FILE]
@@ -209,7 +217,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const repository=await inspectRepository(config.repo);await waitForPreview(config.url,{timeoutMs:config.timeoutMs ?? 10000});
     const spec=JSON.parse(await readFile(config.spec,'utf8'));
     const outputRoot=runOutputRoot(options);await mkdir(outputRoot,{recursive:true});
-    const run=await createRun({spec,url:config.url,outputRoot,mode:'review',experiencePolicy:EXPERIENCE_POLICY});
+    const run=await createRun({spec,url:config.url,outputRoot,mode:'review',experiencePolicy:CURRENT_EXPERIENCE_POLICY});
     await saveOnboarding(run.directory,{status:'ready',mode:'review',config:publicProjectConfig(config),repository,preview:{url:config.url,managed:false},viewports:DEFAULT_VIEWPORTS,completedAt:new Date().toISOString()});
     console.log(run.directory);return;
   }
@@ -217,9 +225,28 @@ finding, and evaluate reports deterministic render checks without claiming an im
     if(Boolean(options.finding)===(options.all==='true')||options.all!==undefined&&options.all!=='true')throw Error('Explicitly choose --finding ID or --all true within the user-authorized repair scope.');
     console.log(JSON.stringify(await saveRepairScope(required(options,'run'),{findingId:options.finding}),null,2));return;
   }
+  if(['review-budget','review-costs','review-reconcile'].includes(command)){
+    const {configureReviewCosts,reviewCostReport,reconcileReviewCall}=await import('../packages/harness-core/review-costs.js');
+    const directory=required(options,'run');
+    if(command==='review-budget')await configureReviewCosts(directory,JSON.parse(await readFile(required(options,'input'),'utf8')),required(options,'reason'));
+    if(command==='review-reconcile'){const input=JSON.parse(await readFile(required(options,'input'),'utf8'));await reconcileReviewCall(directory,input.callId,input);}
+    console.log(JSON.stringify(await reviewCostReport(directory),null,2));return;
+  }
+  if(command==='review-normalize'){
+    const {normalizeReviewReferences}=await import('../packages/harness-core/review-reference-normalization.js');
+    const {readVerificationEvidence}=await import('../packages/harness-core/verification.js');
+    const directory=required(options,'run'),run=await loadRun(directory),verification=await readVerificationEvidence(directory,run.manifest);
+    const inputBytes=await readFile(required(options,'input'));const result=normalizeReviewReferences(JSON.parse(inputBytes),{...run.manifest,verificationRecords:verification.records});
+    const {verificationHash}=await import('../packages/harness-core/verification.js');result.provenance.rawInputBytesHash=verificationHash(inputBytes);result.provenance.normalizedOutputBytesHash=verificationHash(JSON.stringify(result.review,null,2)+'\n');
+    const out=required(options,'out');await writeFile(out,JSON.stringify(result.review,null,2)+'\n',{flag:'wx'});await writeFile(out+'.provenance.json',JSON.stringify(result.provenance,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result.provenance,null,2));return;
+  }
   if(['model-diagnose','model-review'].includes(command)){
     const {headlessModel}=await import('../packages/harness-core/headless-models.js');
-    console.log(JSON.stringify(await headlessModel({directory:required(options,'run'),phase:command==='model-diagnose'?'diagnosis':'review',model:options.model,language:options.language||'zh'}),null,2));return;
+    const costPolicy={};for(const [flag,key] of [['max-total-calls','maxCalls'],['max-input-tokens','maxInputTokens'],['max-output-tokens','maxOutputTokens']])if(options[flag]!==undefined){if(!/^(0|[1-9][0-9]*)$/.test(options[flag]))throw Error('Invalid '+flag+' budget.');costPolicy[key]=Number(options[flag]);}
+    if(options['preflight-only']!==undefined&&!['true','false'].includes(options['preflight-only']))throw Error('--preflight-only must be true or false.');
+    if(options['resume-review']!==undefined&&!['true','false'].includes(options['resume-review']))throw Error('--resume-review must be true or false.');
+    if(options['max-model-calls']!==undefined&&!/^(0|[1-9][0-9]*)$/.test(options['max-model-calls']))throw Error('--max-model-calls must be a nonnegative integer.');
+    console.log(JSON.stringify(await headlessModel({directory:required(options,'run'),phase:command==='model-diagnose'?'diagnosis':'review',model:options.model,language:options.language||'zh',...(options['max-model-calls']!==undefined?{maxModelCalls:Number(options['max-model-calls'])}:{}),resumeReview:options['resume-review']==='true',...(Object.keys(costPolicy).length?{costPolicy}:{}),retryReason:options['retry-reason'],preflightOnly:options['preflight-only']==='true'}),null,2));return;
   }
   if (command === 'skills') {
     const skills = await loadRegistry();

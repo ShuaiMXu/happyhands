@@ -1,3 +1,4 @@
+import {assertReviewGoal} from './review-goal.js';
 import {assertPageStructureReview,PAGE_STRUCTURE_RULE} from './page-structure-review.js';
 import {experienceRequired,assertExperienceAssessments} from './experience-contract.js';
 import {assertMethodChecks,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation-validation.js';
@@ -17,9 +18,18 @@ function availableScreenshots(manifest) {
   return refs;
 }
 
-export function assertVisualReview(review, manifest) {
+export function assertVisualReview(review, manifest, {regional=false}={}) {
   if (!validate(review)) throw new Error(validate.errors.map(error => `${error.instancePath || '/'} ${error.message}`).join('; '));
+  if(review.skillId==='visual-qa-evaluator')assertReviewGoal(review,manifest.experienceAudit?.goal,{regional});
   const available = availableScreenshots(manifest);
+  if(review.designComparison){
+    const comparison=review.designComparison;
+    if(!comparison.reason.trim()||comparison.screenshotRefs.some(ref=>!review.screenshotRefs.includes(ref)||!available.has(ref))||!['before/','after/'].every(prefix=>comparison.screenshotRefs.some(ref=>ref.startsWith(prefix))))throw Error('Design comparison requires inspected matched before and after originals.');
+    const beforeKeys=new Set(captureEntries(manifest.captures?.before).filter(entry=>comparison.screenshotRefs.includes(entry.screenshot)).map(entry=>captureKey(entry.stateId,entry.configurationId)));
+    if(!captureEntries(manifest.captures?.after).some(entry=>comparison.screenshotRefs.includes(entry.screenshot)&&beforeKeys.has(captureKey(entry.stateId,entry.configurationId))))throw Error('Design comparison requires a matched state and configuration pair.');
+    if(review.verdict==='pass'&&['regressed','needs-evidence'].includes(comparison.verdict))throw Error('A passing review cannot override a regressed or unverified design comparison.');
+  }
+
   if(review.skillId==='visual-qa-evaluator'&&experienceRequired({manifest}))assertExperienceAssessments(review.experienceAssessments,review.verdict,available);
   if(review.skillId==='visual-qa-evaluator'&&manifest.plan?.remediation){
     if(review.remediationHash!==manifest.plan.remediation.hash)throw Error('Review remediation contract changed.');

@@ -1,3 +1,5 @@
+import {reviewCostReport} from './review-costs.js';
+import {reviewOutcomes} from './review-outcomes.js';
 import {readRemediation,remediationExportFiles} from './remediation.js';
 import {verifyBaselineDiagnosis} from './baseline-diagnosis-record.js';
 import {readVerificationEvidence,readVerificationFile} from './verification.js';
@@ -100,6 +102,7 @@ function insideRoot(root, target) {
 // worktree and drop the absolute path.
 function publicManifest(manifest) {
   const copy = structuredClone(manifest);
+  delete copy.reviewCosts;delete copy.reviewBatchResults; // Private raw model/cost artifacts are not display-copy imports.
   if (copy.execution) {
     copy.execution = {
       ...copy.execution,
@@ -259,6 +262,9 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
       const name = review.path?.slice(8)||`${review.skillId}.json`;
       if(review.path!==`reviews/${name}`||!new RegExp(`^${review.skillId}(?:-[a-f0-9]{64})?\\.json$`).test(name))throw Error('Invalid review history path');
       if (await copyIfPresent(join(run.directory, 'reviews', name), join(target, 'reviews', name))) copied.push(`reviews/${name}`);
+      const original=JSON.parse(await readFile(join(run.directory,review.path),'utf8'));
+      const outcomePath='reviews/'+name.replace(/\.json$/,'.outcomes.json');
+      await writeJson(join(target,outcomePath),reviewOutcomes(original,run.manifest.judgment,run.manifest.experienceAudit?.goal));copied.push(outcomePath);
       if(review.evidenceBinding){
         await readVisualReviewBinding(run,review,{checkContext:false,checkOriginals:false});
         const binding=review.evidenceBinding.path;await copyFile(join(run.directory,binding),join(target,binding));copied.push(binding);
@@ -290,6 +296,8 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
     }
     copied.push(path);
   }
+  const costReport=await reviewCostReport(run.directory);
+  await writeJson(join(target,'review-cost-summary.json'),{status:costReport.status,scope:costReport.scope,assurance:costReport.assurance,policy:costReport.policy,totals:costReport.totals,unresolvedExecutions:costReport.pending.length+costReport.uncertain.length});copied.push('review-cost-summary.json');
   await writeJson(join(target, 'run.json'), publicManifest({...run.manifest,verificationRecords:verification.records.map(({result,...record})=>record)}));
   copied.push('run.json');
   const published={directory:target,manifest:JSON.parse(await readFile(join(target,'run.json'),'utf8')),spec:JSON.parse(await readFile(join(target,'experience.json'),'utf8'))};

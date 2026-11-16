@@ -1,3 +1,4 @@
+import {reviewRuntimeIdentity} from './review-runtime-identity.js';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {loadRun} from './store.js';
@@ -6,10 +7,13 @@ import {runAiVisualReview} from '../workbench/ai-review.js';
 import {runLocal} from '../workbench/jobs.js';
 
 // Reuse the workbench's actual read-only model protocols, without its HTTP/UI service.
-export async function headlessModel({directory,phase,model,language='zh',generate=runLocal}){
+export async function headlessModel({directory,phase,model,language='zh',generate=runLocal,maxModelCalls,resumeReview=false,costPolicy,retryReason,preflightOnly=false}){
  if(!['diagnosis','review'].includes(phase)||!['zh','en'].includes(language)||model!==undefined&&!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}$/.test(model))throw Error('Invalid headless model options.');
+ if(maxModelCalls!==undefined&&(phase!=='review'||!Number.isSafeInteger(maxModelCalls)||maxModelCalls<0))throw Error('Invalid review call budget.');
+ if(phase!=='review'&&(resumeReview||costPolicy||preflightOnly))throw Error('Review recovery and cost policy cannot be applied to diagnosis implicitly.');
  const run=await loadRun(directory),cwd=join(run.directory,'model-attempts',phase+'-'+randomUUID());
  const invoke=(command,args,options)=>generate(command,model?[...args.slice(0,args.indexOf('--')<0?args.length:args.indexOf('--')),'-m',model,...(args.includes('--')?args.slice(args.indexOf('--')):[])]:args,{...options,timeoutMs:20*60*1000});
- if(phase==='review')return runAiVisualReview(directory,{cwd,generate:invoke,signal:new AbortController().signal,language});
+ const resumeIdentity=resumeReview?await reviewRuntimeIdentity(model,directory):null;
+ if(phase==='review')return runAiVisualReview(directory,{cwd,generate:invoke,signal:new AbortController().signal,language,maxModelCalls,resumeIdentity,modelIdentity:{adapter:'codex-exec',model:model||'CLI-default-unresolved'},costPolicy,retryReason,preflightOnly});
  return diagnoseProduct(directory,{strategy:'recorded',cwd,generate:invoke,language,modelFailure:'throw'});
 }

@@ -1,4 +1,6 @@
-import {EXPERIENCE_POLICY} from './experience-orchestration.js';
+import {packContinuationSnapshot,readContinuationSnapshot} from './continuation-snapshot.js';
+import {readReviewCosts,summarizeReviewCosts} from './review-costs.js';
+import {CURRENT_EXPERIENCE_POLICY} from './experience-orchestration.js';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {readFile,writeFile,mkdir,realpath,rename,unlink} from 'node:fs/promises';
@@ -59,14 +61,16 @@ export async function continueReview({directory,configPath,outputRoot,reason}){
       const bytes=await readVerificationFile(parent.directory,ref.path,2*1024*1024);
       artifacts.push({path:ref.path,sha256:hash(bytes),review:JSON.parse(bytes)});
     }
-    const snapshot={schemaVersion:'0.1',role:'historical-predecessor-not-current-evidence',reason:reason.trim(),parentManifest:parent.manifest,parentSpec:parent.spec,reviews:artifacts};
-    const raw=encode(snapshot);
-    if(Buffer.byteLength(raw)>2*1024*1024)throw Error('Predecessor summary exceeds two MiB. Retain the original review and narrow the next task.');
+    const measuredCosts=await readReviewCosts(directory);
+    if(measuredCosts&&(summarizeReviewCosts(measuredCosts).pending||measuredCosts.calls.some(call=>call.outcome==='uncertain'&&!call.reconciliation)))throw Error('Reconcile pending or uncertain model execution before continuing the task.');
+    const snapshot={...(measuredCosts?{reviewCostInheritance:{record:measuredCosts,totals:summarizeReviewCosts(measuredCosts),policy:measuredCosts.policy,source:parent.manifest.reviewCosts}}:{}),schemaVersion:'0.1',role:'historical-predecessor-not-current-evidence',reason:reason.trim(),parentManifest:parent.manifest,parentSpec:parent.spec,reviews:artifacts};
+    const {raw,archive}=packContinuationSnapshot(snapshot);
     const spec={...configuredSpec,evidence:[],findings:[],review:{status:'not-started',before:'Fresh capture required',after:'',judgment:'pending',reason:''}};
     await mkdir(outputRoot,{recursive:true});
-    const next=await createRun({spec,url:config.url,outputRoot,experiencePolicy:EXPERIENCE_POLICY});
+    const next=await createRun({spec,url:config.url,outputRoot,experiencePolicy:CURRENT_EXPERIENCE_POLICY});
     const reference={path:'continuation-parent.json',sha256:hash(raw),parentRunId:parent.manifest.id,rootRunId:parent.manifest.onboarding?.continuation?.rootRunId||parent.manifest.id};
     try{
+      if(archive)await writeFile(join(next.directory,'continuation-parent.json.gz'),archive,{flag:'wx'});
       await writeFile(join(next.directory,reference.path),raw,{flag:'wx'});
       const onboarding={status:'ready',mode:'review',config:publicProjectConfig(config),repository,preview:{url:config.url,managed:false},parentRunId:parent.manifest.id,continuation:reference,completedAt:new Date().toISOString()};
       await saveContinuation(next.directory,{onboarding,limits:{...limits,round:limits.round+1},references});
@@ -93,7 +97,7 @@ export async function continuationBrief(run){
   if(reference.path!=='continuation-parent.json'||!/^[a-f0-9]{64}$/.test(reference.sha256))throw Error('Invalid predecessor reference.');
   const raw=await readVerificationFile(run.directory,reference.path,2*1024*1024);
   if(hash(raw)!==reference.sha256)throw Error('Historical predecessor changed.');
-  const value=JSON.parse(raw);
+  const value=await readContinuationSnapshot(run.directory,raw);
   if(value.parentManifest?.id!==reference.parentRunId||value.role!=='historical-predecessor-not-current-evidence')throw Error('Predecessor belongs to another review.');
   const limits={...DEFAULT_LIMITS,...value.parentManifest.limits};
   if(run.manifest.limits.round!==limits.round+1||run.manifest.limits.maxRounds!==limits.maxRounds||run.manifest.limits.maxMinutes!==limits.maxMinutes)throw Error('Continuation round budget changed.');

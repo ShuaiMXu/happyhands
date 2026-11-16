@@ -13,7 +13,7 @@ import {publicExecutionBrief} from '../packages/harness-core/export.js';
 import {inspectRepository} from '../packages/harness-core/onboard.js';
 import {selectResource,selectedReferenceContext} from '../packages/harness-core/reference-resources.js';
 const exec=promisify(execFile);
-async function fixture(t){
+async function fixture(t,before={viewports:{}}){
  const root=await realpath(await mkdtemp(join(tmpdir(),'hh-continuation-')));
  t.after(()=>rm(root,{recursive:true,force:true}));
  const repo=join(root,'product');await mkdir(repo);
@@ -27,7 +27,7 @@ async function fixture(t){
  const url=`http://127.0.0.1:${server.address().port}/`,outputRoot=join(root,'runs');await mkdir(outputRoot);
  const spec=structuredClone(sample),parent=await createRun({spec,url,outputRoot});
  await saveOnboarding(parent.directory,{status:'ready',repository:await inspectRepository(repo)});
- await saveCapture(parent.directory,'before',{viewports:{}});
+ await saveCapture(parent.directory,'before',before);
  const specPath=join(root,'spec.json'),configPath=join(root,'project.json');
  await writeFile(specPath,JSON.stringify(spec));
  await writeFile(configPath,JSON.stringify({version:'0.1',mode:'review',repo,spec:specPath,url}));
@@ -88,4 +88,84 @@ test('continuation rejects another repository even when its project labels match
  const config=JSON.parse(await readFile(f.configPath));config.repo=other;
  await writeFile(f.configPath,JSON.stringify(config));
  await assert.rejects(continueReview({...f,directory:f.parent.directory}),/same Git repository/);
+});
+
+test('continuation retains cumulative review costs and policy without resetting call budget',async t=>{
+ const f=await fixture(t);const {configureReviewCosts,reserveReviewCall,settleReviewCall,reviewCostReport}=await import('../packages/harness-core/review-costs.js');
+ await configureReviewCosts(f.parent.directory,{maxCalls:1},'One call for this task');const id=await reserveReviewCall(f.parent.directory,{key:'1'.repeat(64),stage:'regional'});await settleReviewCall(f.parent.directory,id,{usage:{input_tokens:100,cached_input_tokens:60,output_tokens:10}});
+ const directory=await continueReview({...f,directory:f.parent.directory});
+ await assert.rejects(reserveReviewCall(directory,{key:'2'.repeat(64),stage:'regional'}),/budget exhausted/);
+ await assert.rejects(configureReviewCosts(f.parent.directory,{maxCalls:10},'Wrong predecessor'),/active successor/);
+ await configureReviewCosts(directory,{maxCalls:2},'Explicitly add one successor call');const report=await reviewCostReport(directory);assert.equal(report.totals.calls,1);assert.equal(report.totals.inputTokens,100);assert.equal(report.policy.maxCalls,2);
+});
+test('uncertain model execution cannot be escaped by creating a continuation',async t=>{
+ const f=await fixture(t);const {reserveReviewCall,settleReviewCall}=await import('../packages/harness-core/review-costs.js');const id=await reserveReviewCall(f.parent.directory,{key:'3'.repeat(64),stage:'regional'});await settleReviewCall(f.parent.directory,id,{outcome:'uncertain'});
+ await assert.rejects(continueReview({...f,directory:f.parent.directory}),/Reconcile pending or uncertain/);
+});
+
+// Large snapshots remain complete; fixture-only data is never real review evidence.
+async function largeFixture(t){
+ const f=await fixture(t,{viewports:{},largeSyntheticDOM:'x'.repeat(3*1024*1024)});
+ return f;
+}
+test('large continuation preserves every byte, fresh gates, idempotency and inherited budget',async t=>{
+ const f=await largeFixture(t),parent=await loadRun(f.parent.directory);
+ const directory=await continueReview({...f,directory:f.parent.directory}),child=await loadRun(directory);
+ const envelope=JSON.parse(await readFile(join(directory,'continuation-parent.json')));
+ assert.equal(envelope.schemaVersion,'0.2');
+ const {gunzipSync}=await import('node:zlib');
+ const snapshot=JSON.parse(gunzipSync(await readFile(join(directory,envelope.payload.path))));
+ assert.deepEqual(snapshot.parentManifest,parent.manifest);assert.deepEqual(snapshot.parentSpec,parent.spec);
+ assert.equal(child.manifest.limits.round,2);assert.equal(child.manifest.captures.before,null);
+ assert.equal(await continueReview({...f,directory:f.parent.directory}),directory);
+ await saveCapture(directory,'before',{viewports:{}});
+ const third=await continueReview({...f,directory});await saveCapture(third,'before',{viewports:{}});
+ assert.equal((await loadRun(third)).manifest.limits.round,3);
+ await assert.rejects(continueReview({...f,directory:third}),/3-round/);
+});
+test('large continuation rejects altered or missing compressed evidence including idempotent retries',async t=>{
+ const f=await largeFixture(t),directory=await continueReview({...f,directory:f.parent.directory});
+ const envelope=JSON.parse(await readFile(join(directory,'continuation-parent.json'))),path=join(directory,envelope.payload.path),original=await readFile(path);
+ await writeFile(path,Buffer.from('altered'));
+ await assert.rejects(loadRun(directory),/Historical predecessor/);
+ await assert.rejects(continueReview({...f,directory:f.parent.directory}),/Historical predecessor/);
+ await writeFile(path,original);await loadRun(directory);await rm(path);
+ await assert.rejects(loadRun(directory),/ENOENT/);
+});
+test('oversized expanded snapshots fail before creating successor or consuming budget',async t=>{
+ const f=await fixture(t,{viewports:{},largeSyntheticDOM:'x'.repeat(17*1024*1024)});
+ await assert.rejects(continueReview({...f,directory:f.parent.directory}),/sixteen MiB/);
+ await assert.rejects(readFile(join(f.parent.directory,'continuation-next.json')),{code:'ENOENT'});
+ assert.equal((await loadRun(f.parent.directory)).manifest.limits.round,1);
+});
+
+test('archive reader bounds decompression and rejects path substitution and payload digest mismatch',async t=>{
+ const f=await largeFixture(t),directory=await continueReview({...f,directory:f.parent.directory});
+ const child=await loadRun(directory),original=JSON.parse(await readFile(join(directory,'continuation-parent.json')));
+ const {createHash}=await import('node:crypto'),{gzipSync}=await import('node:zlib');
+ const digest=x=>createHash('sha256').update(x).digest('hex');
+ async function fakeEnvelope(value){
+  const raw=JSON.stringify(value);await writeFile(join(directory,'continuation-parent.json'),raw);
+  const fake=structuredClone(child);fake.manifest.onboarding.continuation.sha256=digest(raw);return fake;
+ }
+ await assert.rejects(continuationBrief(await fakeEnvelope({...original,payload:{...original.payload,path:'../escape.gz'}})),/Invalid historical predecessor archive/);
+ await assert.rejects(continuationBrief(await fakeEnvelope({...original,payload:{...original.payload,expandedSha256:'0'.repeat(64)}})),/expanded content changed/);
+ const bomb=gzipSync(Buffer.alloc(17*1024*1024,120));await writeFile(join(directory,original.payload.path),bomb);
+ const envelope={...original,payload:{...original.payload,bytes:bomb.length,sha256:digest(bomb)}};
+ await assert.rejects(continuationBrief(await fakeEnvelope(envelope)),/larger than|Cannot create|buffer|length/i);
+});
+
+test('archive reader rejects symlink evidence',async t=>{
+ const f=await largeFixture(t),directory=await continueReview({...f,directory:f.parent.directory});
+ const envelope=JSON.parse(await readFile(join(directory,'continuation-parent.json'))),path=join(directory,envelope.payload.path);
+ const bytes=await readFile(path);await rm(path);const external=join(f.root,'original.gz');await writeFile(external,bytes);
+ const {symlink}=await import('node:fs/promises');await symlink(external,path);
+ await assert.rejects(loadRun(directory),/cannot use symlinks/);
+});
+
+test('incompressible snapshots retain the two MiB stored limit before successor creation',async t=>{
+ const {randomBytes}=await import('node:crypto');
+ const f=await fixture(t,{viewports:{},largeSyntheticDOM:randomBytes(3*1024*1024).toString('base64')});
+ await assert.rejects(continueReview({...f,directory:f.parent.directory}),/two MiB stored limit/);
+ await assert.rejects(readFile(join(f.parent.directory,'continuation-next.json')),{code:'ENOENT'});
 });
