@@ -23,6 +23,10 @@ import {assertReviewStorage,bindVisualReview,readVisualReviewBinding} from './vi
 
 const MANIFEST = 'run.json';
 const SPEC = 'experience.json';
+// The scoped task handed to whichever agent executes. The old name
+// (codex-brief.md) is only read through manifest.plan.path, so existing runs stay
+// readable; new runs never write it.
+const EXECUTION_BRIEF = 'execution-brief.md';
 
 export async function writeJson(path, value) {
   // Unique per write, not per process: two concurrent writers inside one
@@ -610,8 +614,8 @@ export async function savePlan(directory, findingId) {
       const memory=await stageProjectMemory(run);
       const remediation=await stageRemediation(run,findingId);
       const brief = bootstrapBrief(run.spec, { entries: run.manifest.baseline.entries || [], reason: run.manifest.baseline.reason, approval: run.manifest.foundationApproval })+projectMemoryBrief(memory)+await experienceCaseBrief(run)+selectedDesignSources;
-      await writeFile(join(run.directory, 'codex-brief.md'), brief, 'utf8');
-      run.manifest.plan = { path: 'codex-brief.md', kind: 'bootstrap', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), foundationVersion: run.manifest.foundationApproval.foundationVersion, createdAt: new Date().toISOString() };
+      await writeFile(join(run.directory, EXECUTION_BRIEF), brief, 'utf8');
+      run.manifest.plan = { path: EXECUTION_BRIEF, kind: 'bootstrap', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), foundationVersion: run.manifest.foundationApproval.foundationVersion, createdAt: new Date().toISOString() };
       if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(designSourceRefs(run));
       if(memory)run.manifest.plan.projectMemory=memory;
       await writeJson(join(run.directory, MANIFEST), run.manifest);
@@ -639,9 +643,9 @@ export async function savePlan(directory, findingId) {
     const {continuationBrief}=await import('./continue-review.js');
     const predecessorContext=await continuationBrief(run);
     const brief = codexBrief(run.spec, findingId) + confirmedScope + componentReuseBrief(reuse) + designSystemBrief(designSystem) + (run.manifest.foundationApproval ? `\n\nApproved Foundation version: ${run.manifest.foundationApproval.foundationVersion}\nApproval artifact: ${run.manifest.foundationApproval.path}\n` : '')+projectMemoryBrief(memory)+captureScope+requestContext+await experienceCaseBrief(run)+predecessorContext+experienceBrief+selectedDesignSources;
-    await writeFile(join(run.directory, 'codex-brief.md'), brief, 'utf8');
+    await writeFile(join(run.directory, EXECUTION_BRIEF), brief, 'utf8');
     run.manifest.findingId = findingId;
-    run.manifest.plan = { path: 'codex-brief.md', kind: 'fix', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), confirmationHash: projectMemoryDigest(run.manifest.confirmation), componentReuse: {path: reusePath, findingId, status: reuse.status}, createdAt: new Date().toISOString() };
+    run.manifest.plan = { path: EXECUTION_BRIEF, kind: 'fix', ...(remediation?{remediation}:{}), briefHash: createHash('sha256').update(brief).digest('hex'), confirmationHash: projectMemoryDigest(run.manifest.confirmation), componentReuse: {path: reusePath, findingId, status: reuse.status}, createdAt: new Date().toISOString() };
     if(experience)run.manifest.plan.experience={auditHash:experience.auditHash,decisionHash:experience.decisionHash};
     if(run.manifest.repair)run.manifest.plan.repairRequestHash=run.manifest.repair.hash;
     if(selectedDesignSources)run.manifest.plan.designSourcesDigest=designSourcesDigest(designSourceRefs(run));

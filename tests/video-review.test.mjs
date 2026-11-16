@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {canSymlink} from './helpers/symlink.mjs';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -44,6 +45,7 @@ test('fixed claims require changed declared source and media, and snapshot tampe
 });
 test('source traversal and symlinks are refused; technical failures stay distinct from editorial acceptance',async t=>{
  const f=await fixture(t);f.manifest.before.sourceFiles=['../after/source.js'];await writeFile(f.manifestPath,JSON.stringify(f.manifest));await assert.rejects(collectVideo({...f}),/relative regular/);assert.equal(JSON.parse(await readFile(join(f.out,'collection-failed.json'))).status,'failed');
+ if(!await canSymlink())return t.skip('Traversal refusal passed; this account cannot create symlinks.');
  await rm(f.out,{recursive:true});f.manifest.before.sourceFiles=['linked.js'];await symlink(join(f.root,'before/source.js'),join(f.root,'before/linked.js'));await writeFile(f.manifestPath,JSON.stringify(f.manifest));await assert.rejects(collectVideo({...f}),/symbolic links/);
  const checks=technicalChecks({...probe,format:{duration:'9'},streams:[{...probe.streams[0],width:1200}]},f.manifest.constraints);assert.equal(checks.status,'fail');assert.equal(checks.checks.audio,false);
  const bad=structuredClone(f.manifest);bad.segments[1].start=1.1;assert.throws(()=>validateManifest(bad),/complete timeline/);

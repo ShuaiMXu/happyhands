@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm,realpath,readFile,writeFile,mkdir,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
+import {testTmpRoot} from './helpers/tmp-root.mjs';
+import {canSymlink} from './helpers/symlink.mjs';
 import {join} from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
@@ -10,7 +12,7 @@ import {buildLite} from '../scripts/build-lite.mjs';
 import {installSkill} from '../skills/happyhands/lib/install.mjs';
 import {verifyBundle} from '../skills/happyhands/lib/integrity.mjs';
 const exec=promisify(execFile),repo=fileURLToPath(new URL('../',import.meta.url));
-async function fixture(t){const root=await realpath(await mkdtemp(join(tmpdir(),'hh-lite-test-')));t.after(()=>rm(root,{recursive:true,force:true}));const output=join(root,'bundle');await buildLite(output);return {root,output};}
+async function fixture(t){const root=await realpath(await mkdtemp(join(testTmpRoot(),'hh-lite-test-')));t.after(()=>rm(root,{recursive:true,force:true}));const output=join(root,'bundle');await buildLite(output);return {root,output};}
 test('portable bundle works from a different project and contains complete methods without UI dependencies',async t=>{
  const f=await fixture(t),manifest=await verifyBundle(f.output),pkg=JSON.parse(await readFile(join(f.output,'package.json')));
  assert.doesNotMatch(await readFile(join(f.output,'bin/happyhands.mjs'),'utf8'),/\r/,'hash the LF executable bytes npm will actually ship, including CRLF source checkouts');
@@ -68,6 +70,7 @@ test('dependency failure rolls back the incomplete skill and project links canno
  const f=await fixture(t);
  await assert.rejects(installSkill({source:f.output,project:f.root,scope:'project',installDependencies:async()=>{throw Error('offline');}}),/offline/);
  await assert.rejects(readFile(join(f.root,'.agents/skills/happyhands/SKILL.md')),/ENOENT/);
+ if(!await canSymlink())return t.skip('Rollback check passed; this account cannot create symlinks.');
  const other=join(f.root,'other');await mkdir(other);await rm(join(f.root,'.agents'),{recursive:true});await symlink(other,join(f.root,'.agents'),'dir');
  await assert.rejects(installSkill({source:f.output,project:f.root,scope:'project',installDependencies:async()=>{}}),/symbolic links/);
 });

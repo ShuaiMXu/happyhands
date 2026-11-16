@@ -137,7 +137,7 @@ test('confirming a diagnosed issue retains its evidence and creates a plannable 
   assert.equal(reuse.findingId,'DIAG');
   assert.equal(updated.manifest.plan.componentReuse.path,'component-reuse-plan.json');
   assert.deepEqual(reuse.observedNeedsReview,spec.designFoundation.components.filter(item=>item.status==='observed'));
-  const brief=await readFile(join(run.directory,'codex-brief.md'),'utf8');
+  const brief=await readFile(join(run.directory,'execution-brief.md'),'utf8');
   assert.match(brief,/## Component reuse plan/);
   assert.ok(brief.includes(JSON.stringify(reuse,null,2)));
 });
@@ -153,6 +153,6 @@ test('review foundations require a baseline, preserve a version and cannot be ch
   await saveFoundationApproval(run.directory,approval);
   await confirmFinding(run.directory,spec.findings[0].id,'supported','Fixture confirmation');
   await savePlan(run.directory,spec.findings[0].id);
-  assert.match(await readFile(join(run.directory,'codex-brief.md'),'utf8'),/Approved Foundation version: 1.0.0/);
+  assert.match(await readFile(join(run.directory,'execution-brief.md'),'utf8'),/Approved Foundation version: 1.0.0/);
   await assert.rejects(saveFoundationApproval(run.directory,{...approval,foundationVersion:'2.0.0'}),/cannot change/);
 });

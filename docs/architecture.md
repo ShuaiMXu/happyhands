@@ -55,7 +55,7 @@ The **Run** owns execution state and artifacts. Each run snapshots the spec and 
 | Diagnose | Skill results and spec observations | `diagnosis.json` evidence graph and priorities | Score withheld unless a versioned rubric gives all six dimensions a score, a weight above zero, a rationale and evidence that resolves, and coverage reaches 80% |
 | Approve foundation | Observed inventory and proposed rules | Versioned approved foundation | Human approves, replaces or deprecates every rule used by generation |
 | Confirm | Baseline, finding ID, human note | supported or stale verdict | Stale evidence cannot reach the agent |
-| Plan | Supported finding | `codex-brief.md` | Finding cites existing evidence |
+| Plan | Supported finding | `execution-brief.md` | Finding cites existing evidence |
 | Execute | Brief, clean Git repository, selected agent | New worktree, agent event log, diff | Explicit command; no push or deploy; host repository unchanged |
 | Capture after | Same or explicit updated URL | matching PNG and DOM summary | Baseline exists |
 | Evaluate | Both captures | `evaluation.json` | Same viewport dimensions |
@@ -64,7 +64,7 @@ The **Run** owns execution state and artifacts. Each run snapshots the spec and 
 
 `export` and `reindex` are not loop stages. `export` copies an allow-list of a finished run into a statically served folder so the Workbench can read it; the worktree and the agent event log are never copied. `reindex` rebuilds `index.json` from runs already exported and copies nothing.
 
-The brief is still written as `codex-brief.md`. That name predates multi-agent support and is kept so existing runs stay readable; every registered agent consumes the same file.
+The brief is written as `execution-brief.md`. Runs created before multi-agent support recorded the same file as `codex-brief.md`; the manifest keeps the path, so those runs stay readable and export the name they used. Every registered agent consumes the same file.
 
 The capture contract models a task state as a start point, ordered replay actions and a named configuration. Web configurations currently describe viewports; a later native adapter can describe a device without changing the ledger shape. New comparisons match `stateId + configurationId`, and an after version that cannot reach a baseline state records `stateReached: false` instead of silently skipping it. Legacy single-URL captures remain readable as one implicit `page` state with zero actions.
 

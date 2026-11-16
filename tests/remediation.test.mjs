@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {canSymlink} from './helpers/symlink.mjs';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -45,6 +46,7 @@ test('report archived outside target, bound to hash and revalidated',async t=>{
 });
 test('missing result and symlink report never satisfy execution',async t=>{
  const {run}=await fixture(t);await assert.rejects(collectRemediation(run,run.directory,[]),/ENOENT/);
+ if(!await canSymlink())return t.skip('Rollback and missing-result checks passed; this account cannot create symlinks.');
  await symlink(join(run.directory,'remediation-contract.json'),join(run.directory,RESULT_FILE));await assert.rejects(collectRemediation(run,run.directory,[]),/Invalid/);
 });
 test('adoption and Skill snapshot cannot change after planning',async t=>{

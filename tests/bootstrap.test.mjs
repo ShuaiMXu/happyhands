@@ -153,7 +153,7 @@ test('a bootstrap run is gated by an approved foundation instead of a confirmed 
   await assert.rejects(savePlan(directory, null), /Foundation Approval/i);
   await saveFoundationApproval(directory, structuredClone(approvalSample));
   await savePlan(directory, null);
-  const brief = await readFile(join(directory, 'codex-brief.md'), 'utf8');
+  const brief = await readFile(join(directory, 'execution-brief.md'), 'utf8');
   assert.match(brief, /Foundation version: 1\.0\.0/);
   assert.match(brief, /Approved by: Example product designer/);
   assert.match(brief, /error-surface=#FDE7E7/);

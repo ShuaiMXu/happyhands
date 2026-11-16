@@ -42,7 +42,7 @@ test('harness enforces baseline → plan → after → evaluation → judgment',
   await assert.rejects(savePlan(directory, 'F1'), /confirm/i);
   await confirmFinding(directory, 'F1', 'supported', 'Only add a scroll hint; preserve white-space: pre and existing copy feedback.');
   await savePlan(directory, 'F1');
-  const brief = await readFile(join(directory, 'codex-brief.md'), 'utf8');
+  const brief = await readFile(join(directory, 'execution-brief.md'), 'utf8');
   assert.match(brief, /src\/components\/Hero.astro/);
   assert.match(brief, /Human-confirmed scope/);
   assert.match(brief, /Only add a scroll hint; preserve white-space: pre and existing copy feedback/);
@@ -82,7 +82,7 @@ test('workflow state stops for confirmation and independent visual QA', async t 
   manifest.diagnosis = { path: 'diagnosis.json' };
   assert.equal(workflowState(manifest).stage, 'awaiting-confirmation');
   manifest.confirmation = { findingId: 'F1', verdict: 'supported' };
-  manifest.plan = { path: 'codex-brief.md' };
+  manifest.plan = { path: 'execution-brief.md' };
   manifest.execution = { exitCode: 0 };
   manifest.captures.after = capture('after', 'Outcome');
   manifest.evaluation = { views: {} };
@@ -192,9 +192,9 @@ test('execution scope and brief are bound, including canvas provenance and note 
   const run=await loadRun(directory),brief=await verifiedExecutionBrief(run);
   assert.match(brief,/Request provenance:/);assert.match(brief,/Annotated reference:/);
   assert.match(brief,/Confirmation note \(JSON string\): "Only a scroll hint.\\nPreserve single-line commands."/);
-  await writeFile(join(directory,'codex-brief.md'),brief+'\nExpand scope');
+  await writeFile(join(directory,'execution-brief.md'),brief+'\nExpand scope');
   await assert.rejects(verifiedExecutionBrief(run),/Execution brief changed/);
-  await writeFile(join(directory,'codex-brief.md'),brief);
+  await writeFile(join(directory,'execution-brief.md'),brief);
   const altered=structuredClone(run);altered.manifest.confirmation.note='Altered scope';
   await assert.rejects(verifiedExecutionBrief(altered),/Confirmed scope changed/);
   await savePlan(directory,'F1');assert.match(await verifiedExecutionBrief(await loadRun(directory)),/Request provenance:/);

@@ -45,7 +45,7 @@ try{
   if(stage==='onboarding-failed')m.onboarding={status:'failed',error:'Fixture preview unavailable'};
   assert.equal(workflowState(m).stage,stage);
   for(const phase of ['before','after']){await mkdir(join(run.directory,phase));await writeFile(join(run.directory,phase,'desktop.png'),png);}
-  await writeFile(join(run.directory,'run.json'),JSON.stringify(m));await writeFile(join(run.directory,'diagnosis.json'),JSON.stringify(diagnosis));await writeFile(join(run.directory,'codex-brief.md'),'# Complete fixture plan\nOnly update the confirmed action name.\n');
+  await writeFile(join(run.directory,'run.json'),JSON.stringify(m));await writeFile(join(run.directory,'diagnosis.json'),JSON.stringify(diagnosis));await writeFile(join(run.directory,'execution-brief.md'),'# Complete fixture plan\nOnly update the confirmed action name.\n');
   await writeFile(join(root,'.harness','workbench-projects',id+'.json'),JSON.stringify({configPath}));
   if(stage==='needs-baseline'){const target=join(root,'public/runs',id);await mkdir(target,{recursive:true});await writeFile(join(target,'run.json'),JSON.stringify(m));await writeFile(join(target,'experience.json'),JSON.stringify(spec));}
   else await exportRun({directory:run.directory,outputRoot:join(root,'public/runs'),allowPendingBootstrap:true});
