@@ -71,3 +71,12 @@ test('dependency failure rolls back the incomplete skill and project links canno
  const other=join(f.root,'other');await mkdir(other);await rm(join(f.root,'.agents'),{recursive:true});await symlink(other,join(f.root,'.agents'),'dir');
  await assert.rejects(installSkill({source:f.output,project:f.root,scope:'project',installDependencies:async()=>{}}),/symbolic links/);
 });
+test('DeepSeek Harness installs to ~/.agents or the project .agents directory',async t=>{
+ const f=await fixture(t),home=join(f.root,'dsh-home');await mkdir(home);
+ const user=await installSkill({source:f.output,project:f.root,agent:'dsh',userHome:home,installDependencies:async()=>{}});
+ assert.equal(user.directory,join(home,'.agents/skills/happyhands'));await verifyBundle(user.directory);
+ const project=join(f.root,'dsh-project');await mkdir(project);
+ const scoped=await installSkill({source:f.output,project,agent:'dsh',scope:'project',installDependencies:async()=>{}});
+ assert.equal(scoped.directory,join(project,'.agents/skills/happyhands'));await verifyBundle(scoped.directory);
+ await assert.rejects(installSkill({source:f.output,project,agent:'kiro',userHome:home,installDependencies:async()=>{}}),/pass --destination/,'an unknown agent still needs an explicit destination');
+});
