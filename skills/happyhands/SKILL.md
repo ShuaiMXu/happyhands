@@ -55,5 +55,6 @@ Every turn of your session re-sends everything you have read, so reading less up
 ## Optional
 
 - Design references: `HH resources search --query TEXT`, then `HH resources select --run RUN --id ID` before the experience audit. When the host exposes the HappyHands MCP tools, `search_design_resources` and `get_design_resource` return the same IDs. A selected reference is data, not approval to adopt a design system.
+- One-file report: `HH report --run RUN` writes `report.html` next to the run — gates, findings and every before/after screenshot with its hash, in one file with no server and no network. Show it to the user when they want to see the result rather than read JSON.
 - Before/after image export: `HH compare --run RUN --state STATE --configuration CONFIG`.
 - Video work, only when the user asks for it: read the bundled `skills/review-video/SKILL.md` and follow it. It needs FFmpeg/FFprobe, which are not bundled.

@@ -65,6 +65,7 @@ const commandOptions = new Map([
   ['memory-exception', 'run principle hash decision reason'],
   ['status', 'run'],
   ['next', 'run'],
+  ['report', 'run out'],
   ['export', 'run out'],
   ['compare', 'run state configuration out'],
   ['reindex', 'out']
@@ -174,6 +175,7 @@ pnpm harness case-admit --run DIRECTORY --id HASH --kind improved|preserved|regr
 pnpm harness memory-exception --run DIRECTORY --principle ID --hash CONTENT_HASH --decision exclude|apply --reason TEXT
 pnpm harness status --run DIRECTORY
 pnpm harness next --run DIRECTORY
+pnpm harness report --run DIRECTORY [--out FILE]
 pnpm harness export --run DIRECTORY [--out DIRECTORY]
 pnpm harness compare --run DIRECTORY --state ID --configuration ID [--out DIRECTORY]
 pnpm harness reindex [--out DIRECTORY]
@@ -387,6 +389,9 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const manifest = (await loadRun(directory)).manifest;
     await printWorkbenchLink(manifest.id, workflowState(manifest).stage);
     process.stdout.write(JSON.stringify({ ...manifest, workflow: workflowState(manifest) }, null, 2) + '\n');
+  } else if (command === 'report') {
+    const { buildRunReport } = await import('../packages/harness-core/report.js');
+    process.stdout.write(JSON.stringify(await buildRunReport({ directory, outputPath: options.out }), null, 2) + '\n');
   } else if (command === 'next') {
     const manifest = (await loadRun(directory)).manifest;
     const state = workflowState(manifest);
