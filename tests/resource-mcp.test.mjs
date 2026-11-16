@@ -12,15 +12,24 @@ import {createRun,loadRun} from '../packages/harness-core/store.js';
 import {selectResource,resourceOrigin} from '../packages/harness-core/reference-resources.js';
 import sample from '../examples/happyclaw-site/experience.json' with {type:'json'};
 const hash=s=>createHash('sha256').update(s).digest('hex');
-test('real stdio MCP discovers and reads versioned resources, then existing Run selection freezes the same source',async t=>{
- const root=await mkdtemp(join(tmpdir(),'hh-mcp-'));t.after(()=>rm(root,{recursive:true,force:true}));
+test('real stdio MCP discovers and reads versioned resources, then existing Run selection freezes the same source',{timeout:60000},async t=>{
+ const root=await mkdtemp(join(tmpdir(),'hh-mcp-'));let client,server;
+ // Windows cannot remove the child process's cwd until that process exits.
+ // Keep cleanup in one ordered hook so an early remove failure cannot strand it.
+ t.after(async()=>{
+  try{await client?.close();}finally{
+   server?.closeAllConnections();
+   try{if(server?.listening)await new Promise((done,reject)=>server.close(error=>error?reject(error):done()));}
+   finally{await rm(root,{recursive:true,force:true,maxRetries:10,retryDelay:100});}
+  }
+ });
  const files={'/references/button.json':JSON.stringify({name:'button',files:[{path:'ui/button.tsx',content:'export const Button = () => null;'}]}),'/references/system.md':'# Meridian\nKeep field labels near their inputs.','/references/design.md':'\uFEFF# Form recovery\nPreserve entered values on error.'};let corrupt=false;
  const resources=[['component:meridian-button','Button','component','references/button.json'],['system:meridian','Meridian','system','references/system.md'],['design-md:form','Form recovery','design-md','references/design.md']].map(([id,name,type,path])=>({id,name,type,path,sha256:hash(files['/'+path]),bytes:files['/'+path].length,collection:'test',system:'meridian',platform:'web',source:'https://example.invalid/original',license:'Synthetic test fixture',summary:'Form button recovery',tags:['form','button']}));
  const catalog={schemaVersion:1,version:hash(JSON.stringify(resources)),collections:[],resources};
- const server=createServer((req,res)=>{res.setHeader('Content-Type','application/json');if(req.url==='/resources/v1/index.json')res.end(JSON.stringify(catalog));else if(files[req.url])res.end(corrupt?'changed':files[req.url]);else{res.statusCode=404;res.end('missing');}});
- await new Promise(done=>server.listen(0,'127.0.0.1',done));t.after(()=>{server.closeAllConnections();server.close();});const baseUrl=`http://127.0.0.1:${server.address().port}`;
+ server=createServer((req,res)=>{res.setHeader('Content-Type','application/json');if(req.url==='/resources/v1/index.json')res.end(JSON.stringify(catalog));else if(files[req.url])res.end(corrupt?'changed':files[req.url]);else{res.statusCode=404;res.end('missing');}});
+ await new Promise(done=>server.listen(0,'127.0.0.1',done));const baseUrl=`http://127.0.0.1:${server.address().port}`;
  const transport=new StdioClientTransport({command:process.execPath,args:[fileURLToPath(new URL('../skills/happyhands/bin/happyhands.mjs',import.meta.url)),'mcp','--origin',baseUrl],cwd:root,stderr:'pipe'});
- const client=new Client({name:'real-resource-protocol-test',version:'1.0.0'});t.after(()=>client.close());await client.connect(transport);
+ client=new Client({name:'real-resource-protocol-test',version:'1.0.0'});await client.connect(transport);
  const tools=await client.listTools();assert.deepEqual(tools.tools.map(row=>row.name),['search_design_resources','get_design_resource']);assert.ok(tools.tools.every(tool=>tool.annotations.readOnlyHint));
  const search=await client.callTool({name:'search_design_resources',arguments:{query:'button',type:'component',platform:'web'}});assert.equal(search.isError,undefined);assert.equal(JSON.parse(search.content[0].text)[0].id,'component:meridian-button');
  const read=await client.callTool({name:'get_design_resource',arguments:{id:'component:meridian-button'}});const source=JSON.parse(read.content[0].text);assert.equal(source.content,files['/references/button.json']);assert.equal(source.sha256,resources[0].sha256);assert.equal(source.authority,'reference-data-only');assert.ok(source.related.some(item=>item.id==='system:meridian'));
