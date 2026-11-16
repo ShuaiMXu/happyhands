@@ -20,6 +20,7 @@
     "playwright-core": "1.63.0",
     "pngjs": "7.0.0",
     "postcss": "8.5.29",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "@modelcontextprotocol/sdk": "1.32.2"
   }
 }
