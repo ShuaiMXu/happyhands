@@ -1,4 +1,4 @@
-import {experienceFor,experienceRequired,EXPERIENCE_POLICY,EXPERIENCE_INSTRUCTIONS} from './experience-orchestration.js';
+import {experienceFor,experienceRequired,EXPERIENCE_POLICY,supportedExperiencePolicy,EXPERIENCE_INSTRUCTIONS} from './experience-orchestration.js';
 import {collectExperienceCase,admitExperienceCase,experienceCaseBrief} from './experience-cases.js';
 import {stageRemediation,readRemediation} from './remediation.js';
 import {isReportableFinding} from './finding-admission.js';
@@ -201,7 +201,7 @@ async function withLedgerLock(directory, name, operation, {maxAttempts, interval
 
 export async function createRun({ spec, url, outputRoot, id = randomUUID().slice(0, 8), mode = 'review', entry = null, experiencePolicy = null }) {
   assertExperienceSpec(spec);
-  if(experiencePolicy!==null&&experiencePolicy!==EXPERIENCE_POLICY)throw Error('Unsupported experience policy.');
+  if(experiencePolicy!==null&&!supportedExperiencePolicy(experiencePolicy))throw Error('Unsupported experience policy.');
   if(experiencePolicy&&mode!=='review')throw Error('Experience policy requires an existing review baseline.');
   if (!['review', 'bootstrap'].includes(mode)) throw new Error('Run mode must be review or bootstrap.');
   const parsed = url ? new URL(url) : null;
@@ -300,7 +300,7 @@ export async function loadRun(directory) {
   const root = resolve(directory);
   const manifest = JSON.parse(await readFile(join(root, MANIFEST), 'utf8'));
   const spec = assertExperienceSpec(JSON.parse(await readFile(join(root, SPEC), 'utf8')));
-  if(manifest.experiencePolicy!==undefined&&manifest.experiencePolicy!==EXPERIENCE_POLICY)throw Error('Unsupported experience policy.');
+  if(manifest.experiencePolicy!==undefined&&!supportedExperiencePolicy(manifest.experiencePolicy))throw Error('Unsupported experience policy.');
   if (manifest.version !== '0.1') throw new Error('Unsupported run version.');
   if (!Array.isArray(manifest.skills)) manifest.skills = [];
   if (!Array.isArray(manifest.visualReviews)) manifest.visualReviews = [];

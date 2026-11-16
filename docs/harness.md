@@ -306,3 +306,14 @@ The operational Skill-to-stage mapping and current-page-first execution order ar
 ## Task-specific experience orchestration
 
 New lightweight `start` and `continue` reviews use the [audit → design decision → independent experience review](experience-orchestration.md) gates. Old low-level and workbench records are not retroactively assessed; submit an audit before diagnosis or continue in a new run. Page changes and human acceptance remain separately authorized.
+
+
+## Goal-bound review and measured cost (isolated candidate)
+
+New lightweight start/continue runs adopt task-design-review@2. The runtime experience context supplies the mandatory goal schema. Repair, design comparison, regression, independent QA and actual human judgment remain separate; old @1 records are not retrospectively upgraded.
+
+Use `model-review --run RUN --preflight-only true` to prepare the native image/call plan without a model. New @2 execution requires a chosen call ceiling (`--max-model-calls N` or persisted `maxCalls`). `--model MODEL --resume-review true` enables same-run bound raw-batch recovery. Known failed-call retries require a reason; uncertain execution requires receipt reconciliation. A live pending owner cannot be declared not-started to free spending.
+
+`review-costs --run RUN` reports native visual-review usage; `review-budget --run RUN --input POLICY.json --reason TEXT` changes policy without resetting costs. POLICY accepts maxCalls, maxInputTokens, maxOutputTokens. Call ceilings use atomic reservations. Token thresholds stop the next call after observed usage; they are not hard per-call limits or a complete external-agent bill. GUI budget controls and external usage/image-delivery adapters remain unimplemented. `review-normalize` performs only validated reference conversions and never supplies semantic review or human acceptance.
+
+Complete original coverage, existing source binding, accepted-parent incremental conditions, historical failures, continuation attempt budgets and final human judgment remain required. Synthetic protocol tests do not prove design improvement or real model-cost savings.

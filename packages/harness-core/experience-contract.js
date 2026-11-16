@@ -1,7 +1,9 @@
 // Browser-safe policy and independent-review contract. No filesystem or model dependencies.
 export const EXPERIENCE_POLICY='task-design-review@1';
+export const CURRENT_EXPERIENCE_POLICY='task-design-review@2';
+export const supportedExperiencePolicy=value=>[EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY].includes(value);
 export const REVIEW_DIMENSIONS=['task','hierarchy','interaction','design-system','regression'];
-export function experienceRequired(run){return run.manifest.experiencePolicy===EXPERIENCE_POLICY;}
+export function experienceRequired(run){return supportedExperiencePolicy(run.manifest.experiencePolicy);}
 export function assertExperienceAssessments(rows,verdict,available){
  if(!Array.isArray(rows)||rows.length!==REVIEW_DIMENSIONS.length||new Set(rows.map(row=>row.dimension)).size!==rows.length)throw Error('Independent review requires all five experience dimensions.');
  for(const row of rows){

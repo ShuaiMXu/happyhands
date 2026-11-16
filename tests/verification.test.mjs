@@ -43,7 +43,7 @@ test('specialist image dimensions come from hash-checked PNGs and legacy ordinar
   original.records[0].images[0].width=1280;
   await assert.rejects(readVerificationEvidence(run.directory,await reindexed(original)),/dimensions changed/);
 });
-async function review(run,root,generate){const cwd=join(root,'review-'+Math.random().toString(36).slice(2));await mkdir(cwd);return runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate});}
+async function review(run,root,generate,options={}){const cwd=join(root,'review-'+Math.random().toString(36).slice(2));await mkdir(cwd);return runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate,...options});}
 function model(verdict='pass',inspect=()=>{}){return async(command,args,options)=>{
   const context=JSON.parse(await readFile(join(options.cwd,'review-context.json')));await inspect(context,args,options);
   await writeFile(args[args.indexOf('-o')+1],JSON.stringify({verdict,verificationRefs:context.verification.records.map(r=>r.id),screenshotRefs:context.evidence.map(e=>e.reference),findings:[],rationale:'Fixture result',limitations:['Fixture only']}));
@@ -89,7 +89,7 @@ test('rejects missing acknowledgement, tampered records, symlinks, wrong capture
 test('review cannot omit verification acknowledgement or race a new evidence revision',async t=>{
   const {run,root,binding}=await fixture(t);await saveVerificationEvidence(run.directory,{binding,records:[record()]});
   await assert.rejects(review(run,root,async(cmd,args,options)=>{await model()(cmd,args,options);const file=args[args.indexOf('-o')+1],result=JSON.parse(await readFile(file));delete result.verificationRefs;await writeFile(file,JSON.stringify(result));}),/acknowledge/);
-  await assert.rejects(review(run,root,model('pass',()=>saveVerificationEvidence(run.directory,{binding,records:[record()]}))),/changed/);
+  await assert.rejects(review(run,root,model('pass',()=>saveVerificationEvidence(run.directory,{binding,records:[record()]})),{retryReason:'Synthetic deliberate race probe after an invalid acknowledgement response; no real provider'}),/changed/);
 });
 test('configured runner binds source, preview, checks and bounded images and refuses changed source or build',async t=>{
   const {run,binding}=await fixture(t);await saveOnboarding(run.directory,{config:{verificationChecks:[check]}});

@@ -1,6 +1,7 @@
+import {reviewGoalSchema} from './review-goal.js';
 import {auditReadingMethods, METHOD_POLICY} from '../skill-core/method-policy.js';
-import {EXPERIENCE_POLICY,REVIEW_DIMENSIONS,experienceRequired} from './experience-contract.js';
-export {EXPERIENCE_POLICY,REVIEW_DIMENSIONS,experienceRequired,assertExperienceAssessments} from './experience-contract.js';
+import {EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY,supportedExperiencePolicy,REVIEW_DIMENSIONS,experienceRequired} from './experience-contract.js';
+export {EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY,supportedExperiencePolicy,REVIEW_DIMENSIONS,experienceRequired,assertExperienceAssessments} from './experience-contract.js';
 import {createHash} from 'node:crypto';
 import {mkdir,writeFile,realpath,readFile,mkdtemp,rename,rm} from 'node:fs/promises';
 import {join,dirname} from 'node:path';
@@ -26,20 +27,22 @@ const check=object({dimension:{enum:AUDIT_DIMENSIONS},status:{enum:['observed','
 const source=object({source:text,sha256:{type:'string',pattern:'^[a-f0-9]{64}$'},authority:{enum:['project-rule','observed','reference']},section:text,problem:text,adopt:text,preserve:text,avoid:text});
 const method=object({path:text,quote:text,application:text});
 const auditSchema=object({
- version:{const:EXPERIENCE_POLICY},surface:{enum:['public-page','app-screen']},
+ version:{enum:[EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY]},surface:{enum:['public-page','app-screen']},
  task:object({originalRequest:text,user:text,scenario:text,outcome:text,constraints:{type:'array',maxItems:100,items:text},operatorProposals:{type:'array',maxItems:100,items:text},assumptions:{type:'array',maxItems:100,items:text},scope:text,outOfScope:text}),
  journey:list(object({step:text,userQuestion:text,action:text,observation:text,screenshotRefs:evidence,unknowns:{type:'array',maxItems:100,items:text}})),
  issues:{type:'array',maxItems:100,items:object({id:text,kind:{enum:['defect','hypothesis','user-request']},problem:text,impact:text,rootCause:text,priority:{enum:['high','medium','low']},screenshotRefs:evidence})},
  checks:list(check),designBasis:object({sources:{type:'array',maxItems:128,items:source},missingSourcesReason:text}),methods:list(method)
 });
 const decisionSchema=object({
- version:{const:EXPERIENCE_POLICY},findingId:text,problemIds:strings,readingOrder:strings,grouping:text,primaryAction:text,
+ version:{enum:[EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY]},findingId:text,problemIds:strings,readingOrder:strings,grouping:text,primaryAction:text,
  content:object({show:strings,merge:{type:'array',maxItems:100,items:text},defer:{type:'array',maxItems:100,items:text},reason:text}),
  layout:text,components:list(object({source:text,consumers:strings,states:strings,decision:text})),
  alternatives:list(object({kind:{enum:['preserve','lighter','other']},description:text,benefit:text,cost:text})),
  chosen:text,whyBetterForTask:text,tradeoffs:text,referenceApplications:{type:'array',maxItems:128,items:object({source:text,application:text,verification:text})},
  verification:list(object({criterion:text,method:text,expectedEvidence:text})),methods:list(method)
 });
+auditSchema.properties.task.properties.goal=reviewGoalSchema;
+auditSchema.allOf=[{if:{properties:{version:{const:CURRENT_EXPERIENCE_POLICY}}},then:{properties:{task:{type:'object',required:['goal']}}}}];
 const ajv=new Ajv({allErrors:true});
 const validators={audit:ajv.compile(auditSchema),decision:ajv.compile(decisionSchema)};
 function validate(phase,input){
@@ -116,13 +119,17 @@ export async function experienceContext(directory,surface='app-screen'){
  const run=await loadRun(directory),bound=await binding(run);
  const design=await stageDesignGuidance(directory,'review',{...run.manifest.onboarding?.config?.designGuidance,taste:surface,dials:undefined});
  const ojo=await stageOjoGuidance(directory,'review'),local=await stageLocalMethods(directory);
- return {localMethods:local,policy:EXPERIENCE_POLICY,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema,decisionSchema,instructions:'Read every complete readFirst method and actual source; consult the remaining staged methods only for a demonstrated task need. Planning and learning share the existing decision/review/candidate records, not additional reports. Contract-only methods are guidance, not executed analyzers. Inspect originals; write the audit before formal diagnosis. Record user constraints separately from operator proposals. A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
+ const policy=run.manifest.experiencePolicy||CURRENT_EXPERIENCE_POLICY;
+ const scopedAuditSchema=structuredClone(auditSchema);scopedAuditSchema.properties.version={const:policy};
+ const scopedDecisionSchema=structuredClone(decisionSchema);scopedDecisionSchema.properties.version={const:policy};
+ return {localMethods:local,policy,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema:scopedAuditSchema,decisionSchema:scopedDecisionSchema,instructions:'Read every complete readFirst method and actual source; consult the remaining staged methods only for a demonstrated task need. Planning and learning share the existing decision/review/candidate records, not additional reports. Contract-only methods are guidance, not executed analyzers. Inspect originals; write the audit before formal diagnosis. Record user constraints separately from operator proposals. A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
 }
 export async function saveExperienceRecord(directory,phase,input){
  if(!['audit','decision'].includes(phase))throw Error('Choose audit or decision.');
  validate(phase,input);
  return withRunLock(directory,async()=>{
   const run=await loadRun(directory),key=phase==='audit'?'experienceAudit':'designDecision';
+  if(run.manifest.experiencePolicy===CURRENT_EXPERIENCE_POLICY&&input.version!==CURRENT_EXPERIENCE_POLICY)throw Error('A new goal-bound run cannot downgrade to the legacy experience policy.');
   if(run.manifest.mode!=='review'||run.manifest[key]||run.manifest.plan||run.manifest.execution||run.manifest.captures.after||run.manifest.judgment)throw Error('Experience records are immutable review inputs; continue in a fresh run.');
   if(!run.manifest.captures.before)throw Error('Capture before evidence first.');
   if(phase==='audit'&&(run.manifest.diagnosis||run.manifest.confirmation))throw Error('Audit and reference adaptation precede formal diagnosis. Continue in a fresh run.');
@@ -130,6 +137,7 @@ export async function saveExperienceRecord(directory,phase,input){
   if(!bound.originals.length)throw Error('Experience audit requires original before screenshots.');
   let audit,methodBindings;
   if(phase==='audit'){
+   if(input.task.goal&&!input.task.originalRequest.includes(input.task.goal.requestQuote))throw Error('Design goal must quote the original user request, not an operator proposal.');
    const ids=input.issues.map(row=>row.id);if(new Set(ids).size!==ids.length)throw Error('Duplicate audit problem IDs.');
    if(input.checks.length!==AUDIT_DIMENSIONS.length||AUDIT_DIMENSIONS.some(dimension=>!input.checks.some(row=>row.dimension===dimension)))throw Error('Audit must cover each task/detail dimension exactly once, including unknowns.');
    const refs=new Set(bound.originals.map(row=>row.path));
@@ -140,6 +148,7 @@ export async function saveExperienceRecord(directory,phase,input){
    assertReferences(input,bound.sources);methodBindings=await verifyMethods(run,input.methods,input.surface);
   }else{
    audit=await readExperienceRecord(run,'audit');
+   if(input.version!==audit.version)throw Error('Decision and audit policy versions must match.');
    if(!run.manifest.diagnosis||run.manifest.confirmation?.verdict!=='supported'||input.findingId!==run.manifest.confirmation.findingId)throw Error('Decision requires the current diagnosed and confirmed repair scope.');
    if(input.problemIds.some(id=>!audit.data.issues.some(row=>row.id===id)))throw Error('Decision must trace to audited problems.');
    if(!input.alternatives.some(row=>['preserve','lighter'].includes(row.kind)))throw Error('Compare a lighter alternative or preservation before adding structure.');
@@ -147,10 +156,10 @@ export async function saveExperienceRecord(directory,phase,input){
    if(input.referenceApplications.length!==sources.length||new Set(input.referenceApplications.map(row=>row.source)).size!==sources.length||input.referenceApplications.some(row=>!sources.includes(row.source)))throw Error('Decision must explain application or rejection and verification of each design basis.');
    methodBindings=await verifyMethods(run,input.methods,audit.data.surface);
   }
-  const record={version:EXPERIENCE_POLICY,phase,runId:run.manifest.id,methodBindings,baseline:bound.hash,...(audit?{auditHash:run.manifest.experienceAudit.sha256,scopeHash:digest(run.manifest.confirmation),diagnosisHash:hash(await readVerificationFile(directory,run.manifest.diagnosis.path,2*1024*1024))}:{}),data:input};
+  const record={version:input.version,phase,runId:run.manifest.id,methodBindings,baseline:bound.hash,...(audit?{auditHash:run.manifest.experienceAudit.sha256,scopeHash:digest(run.manifest.confirmation),diagnosisHash:hash(await readVerificationFile(directory,run.manifest.diagnosis.path,2*1024*1024))}:{}),data:input};
   const bytes=JSON.stringify(record,null,2)+'\n',sha256=hash(bytes),path=`experience/${phase}-${sha256}.json`;
   await mkdir(join(directory,'experience'),{recursive:true});if(await realpath(join(directory,'experience'))!==join(await realpath(directory),'experience'))throw Error('Experience storage cannot use symlinks.');await writeFile(join(directory,path),bytes,{flag:'wx'});
-  run.manifest.experiencePolicy=EXPERIENCE_POLICY;run.manifest[key]={path,sha256,...(phase==='audit'?{surface:input.surface}:{})};
+  run.manifest.experiencePolicy=input.version;run.manifest[key]={path,sha256,...(phase==='audit'?{surface:input.surface,...(input.task.goal?{goal:input.task.goal}:{})}:{})};
   await writeJson(join(directory,'run.json'),run.manifest);return run.manifest[key];
  });
 }
@@ -160,8 +169,10 @@ export async function readExperienceRecord(run,phase){
  const bytes=await readVerificationFile(run.directory,ref.path,512*1024);
  if(hash(bytes)!==ref.sha256)throw Error('Experience '+phase+' changed.');
  const record=JSON.parse(bytes);validate(phase,record.data);
- if(record.runId!==run.manifest.id||record.phase!==phase||record.version!==EXPERIENCE_POLICY||record.baseline!==(await binding(run)).hash)throw Error('Experience evidence or task changed; continue in a fresh run.');
+ if(record.runId!==run.manifest.id||record.phase!==phase||!supportedExperiencePolicy(record.version)||record.version!==record.data.version||record.version!==run.manifest.experiencePolicy||record.baseline!==(await binding(run)).hash)throw Error('Experience evidence or task changed; continue in a fresh run.');
  if(phase==='audit'){
+  if(JSON.stringify(ref.goal||null)!==JSON.stringify(record.data.task.goal||null))throw Error('Design goal reference changed.');
+  if(record.data.task.goal&&!record.data.task.originalRequest.includes(record.data.task.goal.requestQuote))throw Error('Design goal no longer matches its request.');
   if(ref.surface!==record.data.surface)throw Error('Experience surface changed.');
   assertReferences(record.data,await designSourceContext(run));
  }else{
@@ -175,6 +186,6 @@ export async function readExperienceRecord(run,phase){
 export async function experienceFor(run,phase='audit'){
  if(!experienceRequired(run))return null;
  const audit=await readExperienceRecord(run,'audit');
- return {methodRoot:run.directory,policy:EXPERIENCE_POLICY,audit:audit.data,...(phase==='decision'?{decision:(await readExperienceRecord(run,'decision')).data}:{}),auditHash:run.manifest.experienceAudit.sha256,...(phase==='decision'?{decisionHash:run.manifest.designDecision.sha256}:{})};
+ return {methodRoot:run.directory,policy:run.manifest.experiencePolicy,audit:audit.data,...(phase==='decision'?{decision:(await readExperienceRecord(run,'decision')).data}:{}),auditHash:run.manifest.experienceAudit.sha256,...(phase==='decision'?{decisionHash:run.manifest.designDecision.sha256}:{})};
 }
 export const EXPERIENCE_INSTRUCTIONS='Start from the original user task and baseline, then inspect the candidate; only then read the operator decision and verification counts. Operator proposals and hypotheses are not user requirements or defects. Challenge a compliant solution that worsens hierarchy, grouping, density, reading distance, action clarity or content burden. Compare the lighter/preserve alternative. Tables and labels can be appropriate for comparison tasks; do not ban a format or count fields. Evaluate real component states, grid relationships and source adaptation. Current normal-page task/detail checks precede responsive regressions. Missing evidence is not a pass. Method availability or a quote never proves it was executed.';

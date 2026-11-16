@@ -106,7 +106,7 @@ test('source-bound brand declarations reach original-image review, require asses
   for(const name of ['missing','valid'])await mkdir(join(root,name));
   await assert.rejects(runAiVisualReview(run.directory,{cwd:join(root,'missing'),signal:new AbortController().signal,generate}),/every capture-bound/);
   assert.deepEqual((await loadRun(run.directory)).manifest.visualReviews,[]);
-  const review=await runAiVisualReview(run.directory,{cwd:join(root,'valid'),signal:new AbortController().signal,generate});assert.equal(review.brandAssessments.length,4);
+  const review=await runAiVisualReview(run.directory,{cwd:join(root,'valid'),signal:new AbortController().signal,retryReason:'Explicit synthetic brand-schema probe after the missing-assessment fixture',generate});assert.equal(review.brandAssessments.length,4);
   const current=await loadRun(run.directory);assert.equal((await readVisualReviewBinding(current,current.manifest.visualReviews[0])).status,'bound');
   await exportRun({directory:run.directory,outputRoot:join(root,'public')});assert.deepEqual(current.spec.designFoundation,spec.designFoundation);assert.equal(current.manifest.judgment,null);
   await writeFile(join(run.directory,'after/design-system.json'),'changed');await assert.rejects(readVisualReviewBinding(current,current.manifest.visualReviews[0]),/extraction changed/);

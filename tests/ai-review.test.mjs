@@ -172,7 +172,7 @@ test('batched QA rejects evidence changed after an earlier batch without publish
     await writeFile(args[args.indexOf('-o')+1],JSON.stringify(responseFor(context,{...result,verdict:'pass',screenshotRefs:refs})));
     if(++calls===1)await writeFile(join(run.directory,refs[0]),'changed-after-first-batch');
   }}),/Screenshot changed/);
-  assert.ok(calls>1);assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);
+  assert.equal(calls,1,'Input drift must stop before paying for the next batch');assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);
 });
 test('one failing region keeps the aggregate verdict failed and preserves evidence',async t=>{
   const {run,cwd}=await largeFixture(t);let calls=0;
@@ -369,4 +369,77 @@ test('independent QA receives the selected project grid source and rejects sourc
   if(mutate){await assert.rejects(action,/design sources changed/i);assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);}
   else assert.equal((await action).verdict,'needs-evidence');
  });
+});
+
+
+test('invalid overview dimensions are rejected before any paid model call',async t=>{
+ const {run,cwd}=await wholeFixture(t,{badDimensions:true});let calls=0;
+ await assert.rejects(runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate:async()=>{calls++;}}),/dimensions do not match/);
+ assert.equal(calls,0);assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);
+});
+test('explicit call budget rejects the complete regional and cross-region plan without trimming',async t=>{
+ const {run,cwd}=await wholeFixture(t);let calls=0;
+ await assert.rejects(runAiVisualReview(run.directory,{cwd,maxModelCalls:3,signal:new AbortController().signal,generate:async()=>{calls++;}}),/4 planned model calls, 3 allowed/);
+ assert.equal(calls,0);assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);
+});
+test('zero call budget blocks fresh review but permits a valid bound cached result',async t=>{
+ const {run,cwd}=await fixture(t);let calls=0;
+ await assert.rejects(runAiVisualReview(run.directory,{cwd,maxModelCalls:0,signal:new AbortController().signal,generate:async()=>{calls++;}}),/budget exceeded/);
+ assert.equal(calls,0);
+ await runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate:generator(result)});
+ const cached=await runAiVisualReview(run.directory,{cwd,maxModelCalls:0,signal:new AbortController().signal,generate:async()=>{calls++;}});
+ assert.equal(cached.verdict,'needs-evidence');assert.equal(calls,0);
+});
+
+test('comparative design preservation survives independent review without becoming improvement',async t=>{
+ const {run,cwd}=await fixture(t);
+ const review=await runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate:generator({...result,designComparison:{verdict:'preserved',reason:'Scoped repair preserves the layout.',screenshotRefs:result.screenshotRefs}})});
+ assert.equal(review.designComparison.verdict,'preserved');assert.equal((await loadRun(run.directory)).manifest.judgment,null);
+});
+test('design comparison cannot cite unseen originals',async t=>{
+ const {run,cwd}=await fixture(t);
+ await assert.rejects(runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate:generator({...result,designComparison:{verdict:'improved',reason:'Unsupported.',screenshotRefs:['before/unseen.png','after/desktop.png']}})}),/Design comparison/);
+ assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);
+});
+
+
+test('headless review forwards zero budget before launching a CLI model',async t=>{
+ const {headlessModel}=await import('../packages/harness-core/headless-models.js');
+ const {run}=await fixture(t);let calls=0;
+ await assert.rejects(headlessModel({directory:run.directory,phase:'review',maxModelCalls:0,generate:async()=>{calls++;}}),/budget exceeded/);
+ assert.equal(calls,0);
+});
+
+test('batch recovery reuses three bound regional results and spends only on the missing cross review',async t=>{
+ const {run,cwd}=await wholeFixture(t);const resumeIdentity={model:'synthetic',version:'fixture@1'},costPolicy={maxCalls:5};let first=0,second=0;
+ const usage=o=>o.onOutput(JSON.stringify({type:'turn.completed',usage:{input_tokens:100,cached_input_tokens:50,output_tokens:10}})+'\n');
+ await assert.rejects(runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,resumeIdentity,costPolicy,generate:async(c,a,o)=>{first++;usage(o);if(o.cwd.endsWith('cross-region'))throw Error('synthetic metered transport failure');await wholeGenerator()(c,a,o);}}),/synthetic metered/);
+ assert.equal(first,4);assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);
+ const review=await runAiVisualReview(run.directory,{cwd:cwd+'-retry',signal:new AbortController().signal,resumeIdentity,costPolicy,maxModelCalls:1,retryReason:'Retry the known metered cross-region failure',generate:async(c,a,o)=>{second++;usage(o);assert.ok(o.cwd.endsWith('cross-region'));await wholeGenerator()(c,a,o);}});
+ assert.equal(second,1);assert.equal(review.verdict,'pass');assert.equal(review.screenshotRefs.length,34);
+ const {reviewCostReport}=await import('../packages/harness-core/review-costs.js');const report=await reviewCostReport(run.directory);assert.equal(report.totals.calls,5);assert.equal(report.totals.inputTokens,500);assert.equal((await loadRun(run.directory)).manifest.judgment,null);
+});
+test('changed raw batch cache is rejected without another model call',async t=>{
+ const {run,cwd}=await fixture(t);const resumeIdentity={model:'synthetic',version:'fixture@1'};
+ await assert.rejects(runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,resumeIdentity,generate:async(c,a,o)=>{await generator({...result,screenshotRefs:['after/desktop.png']})(c,a,o);}}),/matched/);
+ const current=await loadRun(run.directory),ref=Object.values(current.manifest.reviewBatchResults)[0];await writeFile(join(run.directory,ref.path),'{}');let calls=0;
+ await assert.rejects(runAiVisualReview(run.directory,{cwd:cwd+'-retry',signal:new AbortController().signal,resumeIdentity,generate:async()=>{calls++;}}),/Cached review batch changed/);assert.equal(calls,0);
+});
+
+test('native preflight prepares the complete bound image plan without invoking or reserving a model',async t=>{
+ const {run,cwd}=await wholeFixture(t);let calls=0;
+ const result=await runAiVisualReview(run.directory,{cwd,preflightOnly:true,signal:new AbortController().signal,generate:async()=>{calls++;}});
+ assert.equal(calls,0);assert.equal(result.status,'preflight-only');assert.equal(result.plan.originals.length,34);assert.equal(result.plan.potentialModelCalls,4);assert.equal((await loadRun(run.directory)).manifest.reviewCosts,undefined);
+});
+test('changed protocol or runtime identity never reuses a stale raw batch',async t=>{
+ const {run,cwd}=await fixture(t);let calls=0;
+ const execute=identity=>runAiVisualReview(run.directory,{cwd:cwd+'-'+identity,resumeIdentity:{model:'synthetic',version:identity},signal:new AbortController().signal,generate:async(c,a,o)=>{calls++;await generator({...result,screenshotRefs:['after/desktop.png']})(c,a,o);}});
+ await assert.rejects(execute('v1'),/matched/);await assert.rejects(execute('v2'),/matched/);assert.equal(calls,2);
+});
+
+test('new goal-bound execution requires a ceiling, but preflight remains free',async t=>{
+ const {run,cwd}=await fixture(t),loaded=await loadRun(run.directory);loaded.manifest.experiencePolicy='task-design-review@2';await writeFile(join(run.directory,'run.json'),JSON.stringify(loaded.manifest));let calls=0;
+ const opts={cwd,signal:new AbortController().signal,generate:async()=>{calls++;}};
+ const preview=await runAiVisualReview(run.directory,{...opts,preflightOnly:true});assert.equal(preview.status,'preflight-only');
+ await assert.rejects(runAiVisualReview(run.directory,opts),/explicit call ceiling/);assert.equal(calls,0);assert.equal((await loadRun(run.directory)).manifest.reviewCosts,undefined);
 });

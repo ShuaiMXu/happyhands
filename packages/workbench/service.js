@@ -260,7 +260,7 @@ export function createWorkbench(root, dependencies = {}) {
     return jobs.start({kind:'ai-review',runId:input.runId},async context=>{
       await assertExpectedStage(run.directory, input.expectedStage);
       await context.update({stage:'ai-review'});
-      try {await ensureVerification(run.directory,context.signal,{retry:true});return {runId:input.runId,review:await runAiVisualReview(run.directory,{...context,generate,language:input.language,retryOnProtocolChange:true,...(input.evidenceRetry?{evidenceRetry:input.evidenceRetry}:{})})};}
+      try {await ensureVerification(run.directory,context.signal,{retry:true});return {runId:input.runId,review:await runAiVisualReview(run.directory,{...context,generate,language:input.language,costPolicy:input.costPolicy,retryReason:input.retryReason,retryOnProtocolChange:true,...(input.evidenceRetry?{evidenceRetry:input.evidenceRetry}:{})})};}
       finally {await publish(run.directory);}
     });
   }

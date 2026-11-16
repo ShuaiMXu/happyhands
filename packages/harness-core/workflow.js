@@ -65,7 +65,7 @@ export function workflowState(manifest) {
   if (result.mode === 'bootstrap') return bootstrapWorkflow(manifest, result);
   if (!manifest.captures?.before) return { ...result, stage: 'needs-baseline', next: 'capture --phase before' };
   if(manifest.patternAdmissions?.length&&!manifest.foundationApproval)return {...result,stage:'needs-foundation-approval',blocked:true,reason:'Staged patterns need explicit decisions and a Foundation version approval before planning.',next:'foundation-approve --input FILE'};
-  if(manifest.experiencePolicy==='task-design-review@1'&&!manifest.experienceAudit)return {...result,stage:'needs-experience-audit',next:'experience --phase context, then experience --phase audit --input FILE'};
+  if(['task-design-review@1','task-design-review@2'].includes(manifest.experiencePolicy)&&!manifest.experienceAudit)return {...result,stage:'needs-experience-audit',next:'experience --phase context, then experience --phase audit --input FILE'};
   // A replay of an already merged change has captures and a confirmed scope,
   // but no new agent execution or diagnosis. Continue through the SAME QA and
   // human-decision gates instead of asking the user to edit the project again.
@@ -73,7 +73,7 @@ export function workflowState(manifest) {
   if (!manifest.diagnosis) return { ...result, stage: 'needs-diagnosis', next: 'diagnose' };
   if (!manifest.confirmation) return { ...result, stage: 'awaiting-confirmation', blocked: true, reason: 'Diagnosis is ready. Request automatic repair; final acceptance remains with the user.', next: 'repair' };
   if (manifest.confirmation.verdict === 'stale') return { ...result, stage: 'finding-stale', blocked: true, reason: 'The selected finding no longer matches the baseline.', next: 'Start a new diagnosis or run.' };
-  if(manifest.experiencePolicy==='task-design-review@1'&&!manifest.designDecision)return {...result,stage:'needs-design-decision',next:'experience --phase decision --input FILE'};
+  if(['task-design-review@1','task-design-review@2'].includes(manifest.experiencePolicy)&&!manifest.designDecision)return {...result,stage:'needs-design-decision',next:'experience --phase decision --input FILE'};
   if (!manifest.plan) return { ...result, stage: 'needs-plan', next: 'plan' };
   return fromExecution(manifest, result);
 }

@@ -605,6 +605,37 @@
           }
         }
       }
+    },
+    "designComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "reason",
+        "screenshotRefs"
+      ],
+      "properties": {
+        "verdict": {
+          "enum": [
+            "improved",
+            "preserved",
+            "regressed",
+            "needs-evidence"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "screenshotRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "uniqueItems": true
+        }
+      }
     }
   }
 }
