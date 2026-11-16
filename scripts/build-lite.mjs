@@ -15,7 +15,7 @@ export async function buildLite(output){
   await mkdir(dirname(join(target,path)),{recursive:true});
   await copyFile(input,join(target,path));
  };
- const directories=['packages/harness-core','packages/skill-core','packages/experience-core','packages/workbench','skills','.agents','regression'];
+ const directories=['packages/harness-core','packages/skill-core','packages/experience-core','skills','.agents','regression'];
  const tracked=execFileSync('git',['ls-files','-z','--',...directories,':(top,glob)*.schema.json'],{cwd:sourceRoot,encoding:'utf8'}).split('\0').filter(Boolean);
  const skillPrefix='skills/happyhands/';
  for(const path of tracked){

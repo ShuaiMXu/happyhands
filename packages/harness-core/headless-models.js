@@ -3,8 +3,8 @@ import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {loadRun} from './store.js';
 import {diagnoseProduct} from './diagnose-product.js';
-import {runAiVisualReview} from '../workbench/ai-review.js';
-import {runLocal} from '../workbench/jobs.js';
+import {runAiVisualReview} from './ai-review.js';
+import {runLocal} from './jobs.js';
 import {adaptModelLauncher,defaultModelAgent} from './model-adapters.js';
 
 // Reuse the workbench's actual read-only model protocols, without its HTTP/UI service.

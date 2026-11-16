@@ -1,4 +1,4 @@
-name: Workbench regression checks
+name: Regression checks
 on:
   push:
     branches: [main]
@@ -9,8 +9,12 @@ permissions:
 jobs:
   verify:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        # engines says >=22.15. Testing only the newest release means the minimum
+        # version is never exercised.
+        node: ["22", "24"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -19,15 +23,18 @@ jobs:
           version: "11.19.0"
       - uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - run: pnpm test:unit
       - run: pnpm regression --output regression-report.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: regression-${{ matrix.os }}
+          name: regression-${{ matrix.os }}-node${{ matrix.node }}
           path: regression-report.json
           if-no-files-found: warn
+      # The browser suite needs a downloaded Chromium and the Vite app; it is run
+      # locally with pnpm test:browser rather than on every push.
       - run: pnpm build
+        if: matrix.node == '24'

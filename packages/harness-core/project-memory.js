@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {mkdir,readFile,realpath,writeFile} from 'node:fs/promises';
 import {basename,dirname,join} from 'node:path';
-import {projectMemory} from '../workbench/memory.js';
+import {projectMemory} from './memory.js';
 
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function hostRoot(directory) {

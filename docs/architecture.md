@@ -91,8 +91,9 @@ Execution always happens in a **new Git worktree** taken from a clean repository
 - `packages/harness-core/runner.js`: worktree setup, agent execution and host-repository verification.
 - `packages/harness-core/export.js`: allow-list export and manifest redaction.
 - `packages/harness-core/evaluate.js`: deterministic comparison contract.
+- `packages/harness-core/{jobs,ai-review,baseline-diagnosis,memory,run-verification,review-responsibility}.js`: the execution launcher, model review batches, model diagnosis, project memory and verification checks. They live with the engine because the CLI and the model steps need them; `packages/workbench/*.js` keeps one-line re-export shims for imports that predate the split.
 - `scripts/harness.mjs`: CLI orchestration, also used by the installed lightweight Skill.
-- `packages/workbench/service.js`: optional local HTTP interface for run creation, job orchestration and stage writes through the same store. A static build reads exported runs only.
+- `packages/workbench/service.js`: optional local HTTP interface for run creation, job orchestration and stage writes through the same store. A static build reads exported runs only. This package is no longer part of the shipped bundle and carries no engine logic; `apps/designer` is its only consumer.
 
 ## Invariants and limits
 

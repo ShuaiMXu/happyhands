@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import {saveExperienceCase} from '../packages/harness-core/store.js';
 import {listExperienceCases} from '../packages/harness-core/experience-cases.js';
-import {runVerificationChecks} from '../packages/workbench/verification.js';
+import {runVerificationChecks} from '../packages/harness-core/run-verification.js';
 import {withdrawJudgment} from '../packages/harness-core/store.js';
 import {saveRunMemoryException} from '../packages/harness-core/store.js';
 import { request as httpRequest } from 'node:http';
