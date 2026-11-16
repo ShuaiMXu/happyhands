@@ -14,7 +14,7 @@ try{
   console.log(JSON.stringify(await installSkill({source:runtime,agent:opts.agent,scope:opts.scope,destination:opts.destination}),null,2));
  }else if(command==='doctor'){
   const opts=options(args);
-  if(Object.keys(opts).some(key=>!['agent','repo','url'].includes(key)))throw Error('Doctor supports --agent codex|claude-code, --repo PATH and --url URL.');
+  if(Object.keys(opts).some(key=>!['agent','repo','url'].includes(key)))throw Error('Doctor supports --agent ID, --repo PATH and --url URL.');
   const {preflight}=await import('../lib/preflight.mjs');
   const report=await preflight(opts);
   console.log(JSON.stringify(report,null,2));

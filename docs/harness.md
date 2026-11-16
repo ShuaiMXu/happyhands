@@ -178,7 +178,7 @@ New attestations have a durable binding to their exact review bytes, original sc
 
 To coordinate this workflow from DeepSeek Harness without opening the HappyHands workbench, see the [DSH workflow](dsh.md) / [DSH 调用流程](dsh.zh-CN.md). DSH is an external operator here; a dedicated execution adapter and a DSH-only diagnosis/review loop are not available.
 
-Any AI CLI can participate in the external coding-agent workflow when it has the required local access. Direct `execute` currently supports only the registered Codex and Claude Code adapters; this registry does not define the product’s overall CLI compatibility. Workbench model diagnosis and built-in visual review still use Codex. Changes made outside the Harness can be captured and evaluated, but have no Harness agent-execution record and must be identified separately.
+Any AI CLI can participate in the external coding-agent workflow when it has the required local access. Codex and Claude Code are built-in adapters for both `execute` and the read-only model calls (`model-diagnose`, `model-review`, selected with `--agent`, or `HAPPYHANDS_MODEL_AGENT` in the workbench). Other CLIs can be declared in `~/.happyhands/agents.json`; see [agent adapters](../skills/happyhands/references/agent-adapters.md). Codex remains the default and the only adapter for artifact image generation. Changes made outside the Harness can be captured and evaluated, but have no Harness agent-execution record and must be identified separately.
 
 `execute` runs the registered agent selected for the invocation. `pnpm harness agents` lists what is registered; `--agent ID` picks one and `--command PATH` relocates its binary without changing its flags.
 

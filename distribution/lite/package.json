@@ -21,6 +21,7 @@
     "pngjs": "7.0.0",
     "postcss": "8.5.29",
     "typescript": "6.0.3",
-    "@modelcontextprotocol/sdk": "1.32.2"
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@anthropic-ai/sdk": "1.8.0"
   }
 }

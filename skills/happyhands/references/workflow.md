@@ -1,5 +1,7 @@
 # Running one scoped repair
 
+This is the detailed reference. Day to day, `HH next --run RUN` gives the exact next command in `cli.steps`; open the section below for the stage you are on rather than reading the whole page. Other agent CLIs are covered in [agent adapters](agent-adapters.md).
+
 Requirements: Node.js 22.15+, Git, installed Chrome/Edge, a working preview and a configured coding agent. Built-in model diagnosis and independent visual review use signed-in Codex. With no model override each Codex invocation inherits its effective CLI model configuration. A supplied `--model ID` overrides only that command. `doctor` checks executables only; failed capture or model access stays a failed/missing step. The workbench is optional and is not included in this distribution. Run records default to `~/.happyhands/runs`, outside product source. Use the actual printed directory; `HAPPYHANDS_RUNS_DIR` or explicit `--out` can change it, and an explicit output inside a product must be deliberately ignored before clean execution.
 
 Below, `HH` means `node /actual/skill/directory/bin/happyhands.mjs`; use the real path, not a fabricated shell command. Run from the target project. Every option takes a value. Keep one actual run directory throughout.

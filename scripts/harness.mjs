@@ -7,7 +7,8 @@ import {saveRunMemoryException} from '../packages/harness-core/store.js';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 import { createRun, loadRun, runFilePath, captureOnce, saveCapture, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveOnboarding, saveDiagnosis, saveVisualReview, recordAbsentBaseline, saveFoundationApproval } from '../packages/harness-core/store.js';
 import { captureBrowser, captureBrowserPlan, DEFAULT_VIEWPORTS } from '../packages/harness-core/browser.js';
@@ -31,6 +32,7 @@ const commandOptions = new Map([
   ['experience', 'run phase input surface'],
   ['init', 'spec url mode out'],
   ['start', 'config out'],
+  ['quickstart', 'repo url task name request out browser'],
   ['continue', 'run config reason out'],
   ['onboard', 'config out'],
   ['baseline', 'run reason'],
@@ -38,8 +40,8 @@ const commandOptions = new Map([
   ['capture', 'run phase url plan repo bind-evidence extract-design-system browser'],
   ['skills', ''],
   ['agents', ''],
-  ['model-diagnose', 'run model language'],
-  ['model-review', 'run model language max-model-calls max-total-calls max-input-tokens max-output-tokens resume-review retry-reason preflight-only'],
+  ['model-diagnose', 'run model language agent'],
+  ['model-review', 'run model language agent max-model-calls max-total-calls max-input-tokens max-output-tokens resume-review retry-reason preflight-only'],
   ['review-budget', 'run input reason'],
   ['review-costs', 'run'],
   ['review-reconcile', 'run input'],
@@ -53,6 +55,7 @@ const commandOptions = new Map([
   ['confirm', 'run finding verdict note'],
   ['plan', 'run finding'],
   ['execute', 'run repo agent command model'],
+  ['execute-finish', 'run'],
   ['evaluate', 'run'],
   ['judge', 'run decision reason'],
   ['withdraw-judgment', 'run reason'],
@@ -211,6 +214,26 @@ finding, and evaluate reports deterministic render checks without claiming an im
     else{if(options.surface)throw Error('Surface belongs in the audit, not a command override.');console.log(JSON.stringify(await saveExperienceRecord(directory,phase,JSON.parse(await readFile(required(options,'input'),'utf8'))),null,2));}
     return;
   }
+  if(command==='quickstart'){
+    // Writes the three input files outside the repository, then runs the
+    // ordinary start and baseline capture so nothing behaves differently.
+    const {buildQuickstartInputs}=await import('../packages/harness-core/quickstart.js');
+    const {execFile}=await import('node:child_process');const {promisify}=await import('node:util');
+    const inputs=buildQuickstartInputs({repo:required(options,'repo'),url:required(options,'url'),task:required(options,'task'),name:options.name,request:options.request});
+    const outputRoot=runOutputRoot(options);
+    const inputDirectory=join(dirname(outputRoot),'inputs',new Date().toISOString().replace(/[:.]/g,'-'));
+    await mkdir(inputDirectory,{recursive:true});
+    const writeJson = async (name, value) => writeFile(join(inputDirectory, name), JSON.stringify(value, null, 2) + '\n');
+    await writeJson('experience.json', inputs.spec);
+    await writeJson('capture-plan.json', inputs.capturePlan);
+    await writeJson('project.json', inputs.config);
+    const self = (...args) => promisify(execFile)(process.execPath, [fileURLToPath(import.meta.url), ...args], { env: process.env, maxBuffer: 16 * 1024 * 1024 });
+    const run = (await self('start', '--config', join(inputDirectory, 'project.json'), '--out', outputRoot)).stdout.trim().split(/\r?\n/).pop();
+    let capture={status:'captured'};
+    try{await self('capture','--run',run,'--phase','before','--plan',join(inputDirectory,'capture-plan.json'),'--repo',inputs.config.repo,'--bind-evidence','true',...(options.browser?['--browser',options.browser]:[]));}
+    catch(error){capture={status:'failed',error:String(error.stderr||error.message).trim().slice(-2000)};process.exitCode=1;}
+    console.log(JSON.stringify({run,inputs:inputDirectory,capture,next:`next --run ${run}`},null,2));return;
+  }
   if(command==='start'){
     const config=await loadProjectConfig(required(options,'config'));
     if(config.mode!=='review'||!config.url)throw Error('Lightweight start requires an existing preview and explicit mode review; use onboard for bootstrap.');
@@ -246,7 +269,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
     if(options['preflight-only']!==undefined&&!['true','false'].includes(options['preflight-only']))throw Error('--preflight-only must be true or false.');
     if(options['resume-review']!==undefined&&!['true','false'].includes(options['resume-review']))throw Error('--resume-review must be true or false.');
     if(options['max-model-calls']!==undefined&&!/^(0|[1-9][0-9]*)$/.test(options['max-model-calls']))throw Error('--max-model-calls must be a nonnegative integer.');
-    console.log(JSON.stringify(await headlessModel({directory:required(options,'run'),phase:command==='model-diagnose'?'diagnosis':'review',model:options.model,language:options.language||'zh',...(options['max-model-calls']!==undefined?{maxModelCalls:Number(options['max-model-calls'])}:{}),resumeReview:options['resume-review']==='true',...(Object.keys(costPolicy).length?{costPolicy}:{}),retryReason:options['retry-reason'],preflightOnly:options['preflight-only']==='true'}),null,2));return;
+    console.log(JSON.stringify(await headlessModel({directory:required(options,'run'),phase:command==='model-diagnose'?'diagnosis':'review',model:options.model,...(options.agent?{agent:options.agent}:{}),language:options.language||'zh',...(options['max-model-calls']!==undefined?{maxModelCalls:Number(options['max-model-calls'])}:{}),resumeReview:options['resume-review']==='true',...(Object.keys(costPolicy).length?{costPolicy}:{}),retryReason:options['retry-reason'],preflightOnly:options['preflight-only']==='true'}),null,2));return;
   }
   if (command === 'skills') {
     const skills = await loadRegistry();
@@ -367,8 +390,12 @@ finding, and evaluate reports deterministic render checks without claiming an im
     process.stdout.write(JSON.stringify({ ...manifest, workflow: workflowState(manifest) }, null, 2) + '\n');
   } else if (command === 'next') {
     const manifest = (await loadRun(directory)).manifest;
-    await printWorkbenchLink(manifest.id, workflowState(manifest).stage);
-    process.stdout.write(JSON.stringify(workflowState(manifest), null, 2) + '\n');
+    const state = workflowState(manifest);
+    await printWorkbenchLink(manifest.id, state.stage);
+    const { nextCliCommand } = await import('../packages/harness-core/next-command.js');
+    const { hasPendingSelfExecution } = await import('../packages/harness-core/runner.js');
+    const pendingSelf = state.stage === 'needs-execution' && await hasPendingSelfExecution(directory);
+    process.stdout.write(JSON.stringify({ ...state, cli: nextCliCommand(state, manifest, directory, { pendingSelf }) }, null, 2) + '\n');
   } else if (command === 'skill') {
     const result = await executeSkill({ id: required(options, 'skill'), directory, repo: options.repo ? resolve(options.repo) : undefined });
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
@@ -451,7 +478,16 @@ finding, and evaluate reports deterministic render checks without claiming an im
       commandOverride: options.command,
       model: options.model
     });
+    if (execution.status === 'awaiting-operator-edit') {
+      process.stdout.write(JSON.stringify(execution, null, 2) + '\n');
+      return;
+    }
     await printWorkbenchLink(execution.branch.replace(/^pd\//, ""));
+    process.stdout.write(JSON.stringify(execution, null, 2) + '\n');
+    if (executionBlock({ execution })) process.exitCode = 1;
+  } else if (command === 'execute-finish') {
+    const { finishSelfExecution } = await import('../packages/harness-core/runner.js');
+    const execution = await finishSelfExecution({ directory });
     process.stdout.write(JSON.stringify(execution, null, 2) + '\n');
     if (executionBlock({ execution })) process.exitCode = 1;
   } else if (command === 'evaluate') {

@@ -1,3 +1,4 @@
+import {defaultModelAgent} from '../harness-core/api-models.js';
 import {reviewBatchKey} from '../harness-core/review-batch-key.js';
 import {reserveReviewCall,settleReviewCall,reviewUsageCollector,reviewCostReport,assertCostPolicy} from '../harness-core/review-costs.js';
 import {readReviewBatch,saveReviewBatch} from '../harness-core/review-batch-cache.js';
@@ -60,7 +61,7 @@ export function regionalTaskCaptures(batch,scope){
   return {before:union.filter(item=>item.phase==='before').map(item=>item.entry),after:union.filter(item=>item.phase==='after').map(item=>item.entry)};
 }
 
-async function reviewBatch(directory, run, {cwd,signal,generate,language='zh',purpose='regional',reviewStage='normal-layout',regionalReviews=[],plannedManifest=run.manifest,resumeIdentity=null,costPolicy,retryReason,invocationBudget,plannedInputs=null,modelIdentity={adapter:'codex-exec',model:'CLI-default-unresolved'}}, persist=true) {
+async function reviewBatch(directory, run, {cwd,signal,generate,language='zh',purpose='regional',reviewStage='normal-layout',regionalReviews=[],plannedManifest=run.manifest,resumeIdentity=null,costPolicy,retryReason,invocationBudget,plannedInputs=null,modelIdentity={adapter:defaultModelAgent()==='codex'?'codex-exec':defaultModelAgent(),model:'CLI-default-unresolved'}}, persist=true) {
   if(!run.manifest.captures.after || !run.manifest.evaluation) throw new Error('Capture and evaluate the changed interface before AI review.');
   const existing=visualReviewFor(run.manifest,'visual-qa-evaluator');
   if(existing&&!run.retryAttempt)return (await readVisualReviewBinding(await loadRun(directory),existing)).review;
@@ -157,7 +158,7 @@ async function reviewBatch(directory, run, {cwd,signal,generate,language='zh',pu
   const result=JSON.parse(bytes.toString('utf8'));
   const verdict=readResponsibilityVerdict(result,context.reviewResponsibility);
   assertBrandAssessments(result,context.designSystem);
-  const review={schemaVersion:'0.1',skillId:'visual-qa-evaluator',reviewer:{type:'model',name:'Codex independent visual review',version:`${CURRENT_VISUAL_REVIEW_PROTOCOL}; role-contract@1; design=${design.metadata.bundleHash}; ojo=${ojo.metadata.bundleHash}; rubric=${designLanguageRubric.version}; sha256=${rubricHash}`},reviewedAt:batchRecord?.generatedAt||new Date().toISOString(),verdict,screenshotRefs:result.screenshotRefs,findings:result.findings,rationale:result.rationale,limitations:result.limitations,attachmentRefs:annotations.map(item=>item.id),...(verificationRecords.length?{verificationDigest:run.manifest.verificationEvidence.digest,verificationRefs:result.verificationRefs}:{}),...(persist&&run.retryAttempt?{attempt:run.retryAttempt}:{}),...(result.findingResolutions?{findingResolutions:result.findingResolutions}:{})};
+  const review={schemaVersion:'0.1',skillId:'visual-qa-evaluator',reviewer:{type:'model',name:(modelIdentity.adapter==='codex-exec'?'Codex':modelIdentity.adapter)+' independent visual review',version:`${CURRENT_VISUAL_REVIEW_PROTOCOL}; role-contract@1; design=${design.metadata.bundleHash}; ojo=${ojo.metadata.bundleHash}; rubric=${designLanguageRubric.version}; sha256=${rubricHash}`},reviewedAt:batchRecord?.generatedAt||new Date().toISOString(),verdict,screenshotRefs:result.screenshotRefs,findings:result.findings,rationale:result.rationale,limitations:result.limitations,attachmentRefs:annotations.map(item=>item.id),...(verificationRecords.length?{verificationDigest:run.manifest.verificationEvidence.digest,verificationRefs:result.verificationRefs}:{}),...(persist&&run.retryAttempt?{attempt:run.retryAttempt}:{}),...(result.findingResolutions?{findingResolutions:result.findingResolutions}:{})};
   if(incrementalCapture&&Array.isArray(review.limitations))review.limitations.push('Incremental review only: excluded states remain unreviewed: '+incrementalCapture.selection.excludedStateIds.join(', '));
   if(context.experience)review.experienceAssessments=result.experienceAssessments;
   if(purpose!=='regional-batch'&&result.designComparison)review.designComparison=result.designComparison;

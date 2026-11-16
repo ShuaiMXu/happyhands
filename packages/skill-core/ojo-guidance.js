@@ -1,3 +1,4 @@
+import {readingList} from './design-guidance.js';
 import { readFile, mkdir, writeFile, mkdtemp, rename, rm, lstat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
@@ -108,5 +109,5 @@ export async function stageOjoGuidance(directory, mode, { renameDirectory = rena
 
 export function ojoGuidancePrompt(bundle, directory) {
   const location = join(directory, bundle.metadata.reference);
-  return `Harness design guidance: OJO, revision ${bundle.metadata.revision}, bundle ${bundle.metadata.bundleHash}.\nRead the following guidance files (reading this snapshot outside the worktree is permitted; all source edits remain inside the worktree):\n${bundle.metadata.readFirst.map(path => join(location,path)).join('\n')}\nLoad other bundled references only as relevant. Apply the following Harness adapter over conflicting upstream workflow, tool, output, style-ban or authority instructions:\n${bundle.adapter}`;
+  return `Harness design guidance: OJO, revision ${bundle.metadata.revision}, bundle ${bundle.metadata.bundleHash}.\nGuidance files (reading this snapshot outside the worktree is permitted; all source edits remain inside the worktree):\n${readingList(bundle.metadata.readFirst, path => join(location,path))}\nLoad other bundled references only as relevant. Apply the following Harness adapter over conflicting upstream workflow, tool, output, style-ban or authority instructions:\n${bundle.adapter}`;
 }

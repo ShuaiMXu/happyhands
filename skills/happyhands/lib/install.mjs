@@ -14,7 +14,9 @@ export async function installSkill({source,project=process.cwd(),agent='codex',s
  if(process.platform==='win32')throw Error('Run the installer through npx so the npm CLI location is available.');
  return run('npm',args,{cwd});
 }}){
- if(!['codex','claude-code'].includes(agent))throw Error('Select codex or claude-code; DSH uses the portable instructions as an external operator.');
+ // Codex and Claude Code have known Skill directories. Any other agent CLI gets the same bundle at an explicit --destination it reads Skills from.
+ if(!['codex','claude-code'].includes(agent)&&!destination)throw Error('For agents other than codex or claude-code, pass --destination with the directory that agent reads Skills or instructions from.');
+ if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(agent))throw Error('Invalid --agent ID.');
  if(!['user','project'].includes(scope))throw Error('Select --scope user or project.');
  const bundle=await verifyBundle(source),root=await realpath(project);
  const userRoot=agent==='codex'?(process.env.CODEX_HOME||join(userHome,'.codex')):join(userHome,'.claude');
