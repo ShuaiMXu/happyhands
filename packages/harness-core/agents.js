@@ -155,9 +155,9 @@ export const DEFAULT_AGENT = 'codex';
 
 // Any other CLI is declared in JSON, without code changes:
 //   HAPPYHANDS_AGENTS_FILE=/path/agents.json  (default ~/.happyhands/agents.json)
-// See docs/agent-adapters.md for the format. A declared adapter still has to
-// state how it meets every boundary clause, and the post-run fingerprint check
-// applies to it exactly as to the built-in adapters.
+// See skills/happyhands/references/agent-adapters.md for the format. A
+// declared adapter still has to state how it meets every boundary clause, and
+// the post-run fingerprint check applies to it exactly as to the built-ins.
 export function agentsFilePath(env = process.env) {
   return env.HAPPYHANDS_AGENTS_FILE || join(homedir(), '.happyhands', 'agents.json');
 }
@@ -179,7 +179,7 @@ export function loadCustomAgents({ agentsFile = agentsFilePath() } = {}) {
 
 export async function customAgent(id, options = {}) {
   const agent = loadCustomAgents(options)[id];
-  if (!agent) throw new Error(`Unknown agent "${id}". Built in: ${Object.keys(AGENTS).join(', ')}. Declare others in ${options.agentsFile || agentsFilePath()} (see docs/agent-adapters.md).`);
+  if (!agent) throw new Error(`Unknown agent "${id}". Built in: ${Object.keys(AGENTS).join(', ')}. Declare others in ${options.agentsFile || agentsFilePath()} (see skills/happyhands/references/agent-adapters.md).`);
   return agent;
 }
 
@@ -231,7 +231,7 @@ export function resolveAgent(id = DEFAULT_AGENT, { commandOverride, agentsFile }
   const agent = AGENTS[id] || (declared && fromDeclaration(declared));
   if (!agent) {
     const known = [...Object.keys(AGENTS), ...Object.keys(loadCustomAgents({ agentsFile }))];
-    throw new Error(`Unknown agent "${id}". Available: ${known.join(', ')}. Declare another CLI in ${agentsFile || agentsFilePath()} (see docs/agent-adapters.md); it must state how it meets every boundary clause.`);
+    throw new Error(`Unknown agent "${id}". Available: ${known.join(', ')}. Declare another CLI in ${agentsFile || agentsFilePath()} (see skills/happyhands/references/agent-adapters.md); it must state how it meets every boundary clause.`);
   }
   const undeclared = CLAUSES.filter(clause => !agent.satisfies?.[clause]?.trim());
   if (undeclared.length) {

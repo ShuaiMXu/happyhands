@@ -41,6 +41,7 @@ Details for each stage, with examples, are in [workflow](references/workflow.md)
 - Before replaying a Capture Plan, check it does not buy, send messages or change external accounts.
 - No push, merge, deploy or publishing.
 - The product's own design documents and approved rules come before the bundled methods (OJO, web-taste, Impeccable). For official websites and landing pages, use `--surface public-page`; web-taste is then the primary method.
+- Before diagnosing or planning, read the bundled `skills/review-product/SKILL.md`, `skills/experience-remediation/SKILL.md` and `docs/finding-admission-policy.md` (or the staged copies the guidance prompt names). Reading a method is not proof of applying it, and a broad principle is not a defect.
 - Keep failures. A failed attempt stays in the record; the next attempt is a new run.
 
 ## Keeping token use down
