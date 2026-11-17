@@ -1,0 +1,14 @@
+apps/designer/main.js
+  h_8f87e56e705bcf 161-164,166-167,169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "c5fc5286cbbd8e56f020729e21b48228889566dc",
+  "prompts": {},
+  "humans": {
+    "h_8f87e56e705bcf": {
+      "author": "ShuaiMXu <49175785+ShuaiMXu@users.noreply.github.com>"
+    }
+  }
+}
