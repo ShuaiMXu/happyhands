@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://happyhands.cc"><img alt="Website" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
-  <a href="https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0"><img alt="v1.0.0" src="https://img.shields.io/badge/release-v1.0.0-F79B60?style=flat"></a>
+  <a href="https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0"><img alt="v1.1.0" src="https://img.shields.io/badge/release-v1.1.0-F79B60?style=flat"></a>
   <a href="https://github.com/ShuaiMXu/happyhands/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&amp;label=Stars&amp;color=202020"></a>
   <a href="docs/harness.md"><img alt="Harness guide" src="https://img.shields.io/badge/docs-Harness_guide-202020?style=flat"></a>
 </p>
@@ -30,19 +30,19 @@ https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
 ## Get started
 
-Install the **published lightweight v1.0.0 Skill** from your product repository. It uses the Harness without starting the workbench:
+Install the **published lightweight v1.1.0 Skill** from your product repository. It uses the Harness without starting the workbench:
 
 ```sh
-npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v1.0.0/happyhands-lite-1.0.0.tgz happyhands install
+npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v1.1.0/happyhands-lite-1.1.0.tgz happyhands install
 ```
 
 The default destination is your Codex user Skill directory (`~/.codex/skills/happyhands`, or under `CODEX_HOME`), so product source stays untouched. `--scope project` selects `.agents/skills/happyhands`; commit or ignore that project-local installation before a clean isolated repair. It includes the runtime, complete pinned methods and six runtime dependencies; the installer never overwrites an existing Skill. Use `$happyhands` in Codex with your preview and one user task, or follow the [lightweight guide](docs/lightweight.md). Claude Code discovery is available with `install --agent claude-code`; its full execution loop remains unverified. DSH can operate the portable instructions as an external coordinator.
 
-Requires Node.js 22.15+ with npm, Git, Chrome/Edge and a configured agent. Model diagnosis/review use Codex; newer models require a Codex version that supports them. Runtime installation and reference selection do not establish a verified product repair. See the [v1.0.0 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0) for archive-specific validation and open limits. The previous [Alpha.4 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) remains available; upgrades use a separate `--destination PATH` and preserve the existing installation.
+Requires Node.js 22.15+ with npm, Git, Chrome/Edge and a configured agent. Model diagnosis/review use Codex; newer models require a Codex version that supports them. Runtime installation and reference selection do not establish a verified product repair. See the [v1.1.0 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0) for archive-specific validation and open limits. The previous [Alpha.4 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) remains available; upgrades use a separate `--destination PATH` and preserve the existing installation.
 
-v1.0.0 covers the local evidence and repair workflow, selected Design.md/design-system references and a separate timestamped video-review path. Historical real-product cases use macOS with Chrome and Codex. The v1.0.0 archive has separate Windows cold-install verification, and engineering CI runs on Ubuntu and Windows; full real-product workflows on those platforms, complete Claude-only or DSH-only workflows, new-user onboarding and cross-model quality comparisons remain open. Video review additionally requires explicitly available FFmpeg/FFprobe and actual full audiovisual review. The release number does not turn untested environments or unseen states into accepted results.
+v1.1.0 covers the local evidence and repair workflow, model or CLI adapters chosen per run, original-image review annotations, selected Design.md/design-system references and a separate timestamped video-review path. Historical real-product cases use macOS with Chrome and Codex. The v1.0.0 archive had separate Windows cold-install verification, and engineering CI runs on Ubuntu and Windows; full real-product workflows on those platforms, complete Claude-only or DSH-only workflows, new-user onboarding and cross-model quality comparisons remain open. Video review additionally requires explicitly available FFmpeg/FFprobe and actual full audiovisual review. The release number does not turn untested environments or unseen states into accepted results.
 
-The [v1.0.0 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0) includes the installable archive, source manifest and checksums. A fresh public-download installation was verified independently of the source checkout.
+The [v1.1.0 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0) includes the installable archive, source manifest and checksums. The v1.0.0 archive's fresh public-download installation was verified independently of the source checkout; v1.1.0 states its own verification in its release notes.
 
 ### Optional local workbench
 
@@ -112,7 +112,7 @@ Run `pnpm harness agents` to inspect registered executors. Select one with `harn
 
 ## Current scope
 
-HappyHands is **free and open source**. v1.0.0 is the regular release of the lightweight local Skill; the source workbench remains optional. External model and CLI services may require their own accounts, subscriptions or usage fees. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, new-user validation, hosted checks and other gaps are tracked in the [remaining work](docs/remaining-work-2026-11-12.zh-CN.md).
+HappyHands is **free and open source**. v1.1.0 is the regular release of the lightweight local Skill; the source workbench remains optional. External model and CLI services may require their own accounts, subscriptions or usage fees. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, new-user validation, hosted checks and other gaps are tracked in the [remaining work](docs/remaining-work-2026-11-12.zh-CN.md).
 
 Lightweight runs default to `~/.happyhands/runs`; the source CLI/workbench retains `.harness/`. An explicit output path can override these locations. Model-assisted steps send selected source context and images to the configured model service through the CLI. Worktrees and repository checks are workflow safeguards, not a security sandbox. Review shared exports for sensitive material. See [data and execution details](docs/local-workbench.md).
 
