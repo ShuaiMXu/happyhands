@@ -7,7 +7,7 @@
 
 <h3 align="center">UI review and product experience improvements for coding agents.</h3>
 
-<p align="center">Start with real pages and user tasks. Apply design rules, make isolated changes, and compare the results.</p>
+<p align="center">Capture real pages, diagnose what actually breaks the task, fix it in an isolated worktree, and judge the result on before/after evidence.</p>
 
 <p align="center">
   <a href="https://happyhands.cc"><img alt="Website" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
@@ -17,38 +17,73 @@
 </p>
 
 <p align="center">
-  <a href="#get-started">Get started</a> / <a href="#how-it-works">How it works</a> / <a href="#star-growth">Star growth</a> / <a href="https://happyhands.cc">Website</a> / <a href="README.zh-CN.md">简体中文</a>
+  <a href="#install">Install</a> · <a href="#how-it-works">How it works</a> · <a href="#use-your-coding-agent">Your agent</a> · <a href="#scope-and-limits">Limits</a> · <a href="https://happyhands.cc">Website</a> · <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-HappyHands helps coding agents review interface design, information hierarchy, interaction feedback and user-task flows. Use the local Harness to capture real pages, make scoped changes in an isolated worktree, and assess before/after evidence. Operate it from the command line or through the local workbench.
-
-## Product demo
-
-37-second product demo.
+HappyHands is a local Harness that gives a coding agent a design-review loop it can be held to. It drives your existing Chrome or Edge against a real preview, captures the states a user task passes through, and reports problems that have a reproducible observation behind them — then makes the repair in an isolated Git worktree and asks a separate reviewer to judge the before/after evidence. You drive it from the CLI, or from the optional local workbench.
 
 https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
-## Get started
+<sub>37-second demo: capture → diagnose → isolated repair → independent review → your decision.</sub>
 
-Install the **published lightweight v1.1.0 Skill** from your product repository. It uses the Harness without starting the workbench:
+## Install
+
+From the product repository you want reviewed, with Node.js 22.15+ and npm:
 
 ```sh
 npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v1.1.0/happyhands-lite-1.1.0.tgz happyhands install
 ```
 
-The default destination is your Codex user Skill directory (`~/.codex/skills/happyhands`, or under `CODEX_HOME`), so product source stays untouched. `--scope project` selects `.agents/skills/happyhands`; commit or ignore that project-local installation before a clean isolated repair. It includes the runtime, complete pinned methods and six runtime dependencies; the installer never overwrites an existing Skill. Use `$happyhands` in Codex with your preview and one user task, or follow the [lightweight guide](docs/lightweight.md). Claude Code discovery is available with `install --agent claude-code`; its full execution loop remains unverified. DSH can operate the portable instructions as an external coordinator.
+This installs the lightweight Skill — runtime, pinned methods and eight runtime dependencies — into your Codex user Skill directory (`~/.codex/skills/happyhands`, or under `CODEX_HOME`) and never overwrites an existing install. Add `--agent claude-code`, `--agent dsh` (`~/.agents/skills`), or `--scope project` (`.agents/skills/happyhands`) for another discovery path. Then ask your agent to use `$happyhands` with the preview URL and one user task. Details: [lightweight guide](docs/lightweight.md) · [release notes](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0) · [CLI reference](docs/harness.md).
 
-Requires Node.js 22.15+ with npm, Git, Chrome/Edge and a configured agent. Model diagnosis/review use Codex; newer models require a Codex version that supports them. Runtime installation and reference selection do not establish a verified product repair. See the [v1.1.0 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0) for archive-specific validation and open limits. The previous [Alpha.4 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) remains available; upgrades use a separate `--destination PATH` and preserve the existing installation.
+You also need Git, an installed Chrome or Edge, and model access for the screenshot-aware steps — a signed-in Codex CLI, `--agent claude-code`, or an API configured through `HAPPYHANDS_API_*`. Installing the Skill does not by itself verify a repair; the run has to pass its own gates.
 
-v1.1.0 covers the local evidence and repair workflow, model or CLI adapters chosen per run, original-image review annotations, selected Design.md/design-system references and a separate timestamped video-review path. Historical real-product cases use macOS with Chrome and Codex. The v1.0.0 archive had separate Windows cold-install verification, and engineering CI runs on Ubuntu and Windows; full real-product workflows on those platforms, complete Claude-only or DSH-only workflows, new-user onboarding and cross-model quality comparisons remain open. Video review additionally requires explicitly available FFmpeg/FFprobe and actual full audiovisual review. The release number does not turn untested environments or unseen states into accepted results.
+## How it works
 
-The [v1.1.0 release](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0) includes the installable archive, source manifest and checksums. The v1.0.0 archive's fresh public-download installation was verified independently of the source checkout; v1.1.0 states its own verification in its release notes.
+1. **Inspect.** Connect the repository and preview, agree the capture scope, then read desktop and phone screenshots with their findings. Change device, version or interaction state without leaving the review.
+2. **Repair.** **Fix automatically** checks the diagnosed issues against current source, prepares the scope and plan, and runs the coding agent in an isolated worktree. The result is captured and put through applicable checks and an independent visual review. Missing evidence and failed checks stay visible.
+3. **Decide.** Compare before and after and accept or reject. Rejection and counter-evidence requests need a reason. An accepted, verified repair can leave as a **draft PR** through a separate action; HappyHands never merges or deploys.
 
-### Optional local workbench
+One click delegates the scope and planning steps — it does not accept the result for you. A new interface with no baseline still needs explicit [Foundation approval](docs/harness.md) before implementation.
 
-For the original source checkout and optional visual workbench, use the steps below. The [Harness guide](docs/harness.md) also documents the full CLI.
+### What supports a finding
 
-You need Git, Node.js **22.15+**, pnpm **11.19**, and an installed Chrome or Edge for browser capture. This source distribution provides the local workbench and Harness. Configure and sign in to **Codex CLI** to use the workbench’s built-in model diagnosis and visual review; implementation CLI setup depends on the executor you choose. See [Use your coding agent](#use-your-coding-agent) for the distinction.
+A reported defect needs a reproducible observation, a specific explanation of what is wrong, and a pointer to the skill snapshot it violates; the Harness checks the cited section, line and quotation. General advice and aesthetic preference do not enter the automatic repair list. An enhancement you asked for is recorded as a user request, not relabelled as an observed defect.
+
+Repairs follow the reviewed product's own design sources — the HappyHands UI profile applies to the workbench and to projects that explicitly adopted it. Original screenshots, earlier failures and excluded suggestions stay in the record, including when new counter-evidence forces a re-review while the original failure is retained. See the [finding admission policy](docs/finding-admission-policy.md) and the [HappyClaw counter-evidence case](docs/counter-evidence-review-2026-10-21.md).
+
+## Use your coding agent
+
+Any AI CLI can operate the Harness if it has local terminal, repository and browser access. `harness execute` launches a registered adapter, or with `--agent self` prepares the isolated worktree for the operating agent to edit and records the result through `execute-finish`. Codex is the default adapter.
+
+| Tool | Current role |
+| --- | --- |
+| Codex CLI | Default implementation adapter; built-in screenshot-aware diagnosis and review. |
+| Claude Code | Implementation adapter and read-only diagnosis/review adapter (`--agent claude-code`); `--bare` is added only when `ANTHROPIC_API_KEY` is set. |
+| Any other CLI | Declare it in `~/.happyhands/agents.json` (argv template, image flag, boundary statements) and use it for `execute`, `model-diagnose` and `model-review`. See [agent adapters](skills/happyhands/references/agent-adapters.md). |
+| Cursor, Kimi Code, WorkBuddy | Drive the loop with `next` and edit with `--agent self`, or declare an adapter as above. |
+| DeepSeek Harness | Installs with `install --agent dsh`; edits with `--agent self`, which still leaves an execution record. Screenshot review needs a vision model — [DSH workflow](docs/dsh.md). |
+
+`harness agents` lists what is registered. `--command PATH` only moves an adapter's binary, not its protocol. Changes made outside the Harness have no execution record and must be identified separately during review.
+
+## Scope and limits
+
+HappyHands is **free and open source** (MIT). The lightweight Skill is the supported way in; the workbench is optional. Coverage follows the capture plan and the checks that actually ran — pages you did not look at and interactions you did not exercise are not reviewed. Model and CLI services may need their own accounts or paid plans.
+
+Lightweight runs default to `~/.happyhands/runs`, the source CLI and workbench to `.harness/`; an explicit output path overrides both. Model-assisted steps send the selected source context and images to the configured model service. Worktrees and repository checks are workflow safeguards, not a security sandbox — review shared exports before publishing them. See [data and execution details](docs/local-workbench.md) and the [open gaps](docs/remaining-work-2026-11-12.zh-CN.md).
+
+<details>
+<summary>Release history and what has been verified</summary>
+
+v1.1.0 is the current regular release; [v1.0.0](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0) and [Alpha.4](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) remain downloadable. Upgrades use a separate `--destination PATH` and keep the existing installation.
+
+Each release states its own verification in its notes. In short: historical real-product cases ran on macOS with Chrome and Codex; v1.0.0's archive passed a public-download Windows cold install; engineering CI covers Ubuntu and Windows on Node 22 and 24. Still open: full real-product workflows on Windows/Ubuntu, complete Claude-only or DSH-only loops, new-user onboarding, cross-model quality comparison, a real `claude-code` model review, and live Anthropic/OpenAI calls (the API adapters are covered by mock servers). Video review additionally needs explicitly available FFmpeg/FFprobe and an actual full audiovisual review.
+
+</details>
+
+## Run the workbench from source
+
+The workbench is a local UI over the same Harness. It needs Git, Node.js **22.15+**, pnpm **11.19** and Chrome/Edge.
 
 ```sh
 git clone https://github.com/ShuaiMXu/happyhands.git
@@ -57,112 +92,38 @@ pnpm install --frozen-lockfile
 pnpm workbench
 ```
 
-Keep this terminal running. `pnpm workbench` starts the **local HappyHands workbench** and opens **http://127.0.0.1:4190/apps/designer/**. This address works on your computer after startup; it is not the public website or Theme Studio.
+Keep that terminal running. `pnpm workbench` serves **http://127.0.0.1:4190/apps/designer/** on your machine — not the public website. Make sure the product you want reviewed has a working preview (start its own dev server separately if needed), then connect the repository directory, the preview URL and one specific user task. Design sources such as `DESIGN.md` or a tokens file are optional references to files that already exist in that repository.
 
-Make sure the product you want to review has a working preview. If it needs a local server, start it in a separate terminal using that project's own instructions. Confirm the preview URL opens in your browser, then connect the project in the HappyHands workbench with its local repository directory, preview URL and a specific user task.
+## Design resources
 
-The following is an example of the information to provide, **not a terminal command**. Replace the directory and URL with your project's actual values; port `3000` is only an example and is separate from the workbench's port `4190`.
-
-```text
-Repository: /path/to/your-product
-Preview: http://localhost:3000
-User task: Sign up and create the first project
-Existing design sources (optional): DESIGN.md, src/styles/tokens.css, src/components
-```
-
-Design sources are optional references to files or directories that already exist in the product repository. The paths above are examples, not required files; use your actual paths and omit any that do not exist.
-
-Check the proposed pages, devices and interaction states before capture. For configuration and command-line use, follow the [Harness guide](docs/harness.md). The [public website](https://happyhands.cc) provides guidance and design resources; repository review and code changes run locally.
-
-## How it works
-
-1. **Inspect the pages.** Connect your repository and preview, check the capture scope, then view desktop and phone screenshots with their issues. Switch devices, versions and interaction states without leaving the review. Click a screenshot to enlarge it in place.
-2. **Start a repair.** Select **Fix automatically**. The workbench checks the diagnosed issues against current source, prepares the scope and plan, and runs the coding agent in an isolated Git worktree. It then captures the result and runs applicable checks and independent visual review. Missing evidence and failed checks remain visible.
-3. **Review the result.** Compare before and after, then accept or reject the change. Acceptance reasons are optional; rejection and counter-evidence requests require a reason. An accepted, verified repair can be submitted as a **draft PR** through a separate action. The workbench does not merge or deploy it.
-
-One repair action delegates the intermediate scope and planning steps; it does not accept the result for you. New interfaces without a baseline still require explicit [Foundation approval](docs/harness.md) before implementation.
-
-### What supports a finding
-
-A reported defect needs a reproducible observation, an explanation of what is wrong, and a reference to the relevant skill snapshot. The Harness checks the cited section, line and quotation. General design advice and aesthetic preferences do not enter the automatic repair list on their own.
-
-An explicitly requested enhancement is recorded as a user request rather than relabeled as an observed defect. Its implementation still requires the adopted project rules, source-bound scope, isolated execution and fresh independent review.
-
-Repairs follow the reviewed product's own design sources. The HappyHands UI profile applies to the workbench and to projects that have explicitly adopted it. Original screenshots, earlier failures and excluded suggestions remain in the record. See the [finding admission policy](docs/finding-admission-policy.md).
-
-The [HappyClaw review record](docs/counter-evidence-review-2026-10-21.md) shows how new counter-evidence led to an independent re-review while retaining the original failure. It documents that case's review path, not a whole-product acceptance or production deployment.
-
-### Design resources
-
-The [website](https://happyhands.cc) provides Design.md references, design systems and components. Select references for the task and inspect their source, usage and licensing. The lightweight entry can search indexes and freeze selected full documents in the same run, including explicitly selected HTTPS Markdown/CSS/JSON and GitHub document links. Selection does not install components or approve a new design system. Further real-case acceptance is tracked in [#7](https://github.com/ShuaiMXu/happyhands/issues/7).
-
-## Use your coding agent
-
-HappyHands supports working with any AI CLI as part of an open coding-agent workflow. An external agent can operate the Harness with the necessary local terminal, repository and browser access, and changes made outside the Harness can be captured and reviewed. `harness execute` either launches a registered adapter or, with `--agent self`, prepares the isolated worktree for the operating agent to edit and records the result through `execute-finish`; the default launched adapter is Codex. This does not mean every CLI has built-in integration or that every feature has been validated with every CLI.
-
-| Tool | Current role |
-| --- | --- |
-| Codex CLI | Built-in model diagnosis and screenshot-aware review; also the default implementation adapter. Its execution path has shipped, but this is not full-loop validation of every feature. |
-| Claude Code | Implementation adapter and read-only diagnosis/review adapter (`--agent claude-code`). Works with normal login; `--bare` is added only when `ANTHROPIC_API_KEY` is set. Complete end-to-end validation remains open. |
-| Any other CLI | Declare it in `~/.happyhands/agents.json` (argv template, image flag, boundary statements) to use it for `execute`, `model-diagnose` and `model-review` without code changes. See [agent adapters](skills/happyhands/references/agent-adapters.md). |
-| Cursor, Kimi Code, WorkBuddy | Can operate the Harness by following `next` and make the edit with `--agent self`, or be declared as adapters as above. |
-| DeepSeek Harness (DSH) | Operates the CLI and can edit with `--agent self`, which still leaves an execution record. Installs as a Skill with `install --agent dsh` into `~/.agents/skills`. Screenshot review needs a vision model: `--agent claude-code` or an API configured through `HAPPYHANDS_API_*`. See the [DSH workflow](docs/dsh.md). |
-
-Run `pnpm harness agents` to inspect registered executors. Select one with `harness execute --agent ID`; `--command PATH` only changes that adapter’s binary location, not its CLI protocol. Other CLIs need an adapter for launched execution, or the operating agent can edit with `--agent self`. External changes have no Harness agent-execution record and must be identified separately during review. Agent-specific behavior and limits are described in the [adapter documentation](docs/architecture.md#agent-adapters-and-the-permission-boundary).
-
-## Current scope
-
-HappyHands is **free and open source**. v1.1.0 is the regular release of the lightweight local Skill; the source workbench remains optional. External model and CLI services may require their own accounts, subscriptions or usage fees. Coverage follows the capture plan and completed checks; unseen pages and untested interactions remain unreviewed. Professional calibration, new-user validation, hosted checks and other gaps are tracked in the [remaining work](docs/remaining-work-2026-11-12.zh-CN.md).
-
-Lightweight runs default to `~/.happyhands/runs`; the source CLI/workbench retains `.harness/`. An explicit output path can override these locations. Model-assisted steps send selected source context and images to the configured model service through the CLI. Worktrees and repository checks are workflow safeguards, not a security sandbox. Review shared exports for sensitive material. See [data and execution details](docs/local-workbench.md).
+[happyhands.cc](https://happyhands.cc) publishes Design.md references, design systems and components. The lightweight entry can search those indexes and freeze the selected documents into the run — including explicitly chosen HTTPS Markdown/CSS/JSON and GitHub document links. Selecting a reference does not install a component or approve a new design system; check its source, usage and licensing first.
 
 <details>
-<summary>Development and repository guide</summary>
-
-```sh
-pnpm dev             # Local development on port 4173
-pnpm design:check    # Design documentation and integration contracts
-pnpm test           # Engineering tests
-pnpm regression     # Versioned release cases
-pnpm build          # Contract checks and production build
-pnpm harness skills # Registered methods and their maturity
-```
-
-The workbench UI lives in `apps/designer/`. Local service code is in `packages/workbench/`; capture, execution and run storage are in `packages/harness-core/`. The current public website is maintained in [happyhands-site](https://github.com/ShuaiMXu/happyhands-site). A static build of this repository does not provide the writable local service.
-
-Before contributing, read [AGENTS.md](AGENTS.md), [DESIGN.md](DESIGN.md) and the [architecture](docs/architecture.md). Preserve approval boundaries, source provenance and complete upstream skills. Report the checks you actually ran; do not commit credentials, private captures or local run records.
-
-</details>
-
-## Star growth
+<summary>Star growth</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/star-history-dark.svg">
   <img src="assets/readme/star-history-light.svg" width="100%" alt="HappyHands cumulative GitHub star growth, with stars added in the last seven days and the snapshot date">
 </picture>
 
-The chart groups GitHub's current stargazers by their star dates. Removed stars are excluded from the historical totals. The chart refreshes daily through GitHub Actions and shows its snapshot date. The top badge reports the current total.
-
-<details>
-<summary>Refresh the growth chart</summary>
-
-With GitHub CLI configured and signed in, run from the repository root:
-
-```sh
-node scripts/update-star-history.mjs
-```
-
-The script saves daily aggregates and charts, without account names or credentials. Authentication, data or count-check failures retain the existing charts rather than replacing them with zeroes. Source data: [star-history.json](assets/readme/star-history.json).
+Grouped by GitHub's current stargazers and their star dates; removed stars are excluded. Refreshed daily by GitHub Actions, with the snapshot date on the chart. To refresh locally, run `node scripts/update-star-history.mjs` with GitHub CLI signed in — it stores aggregates only, and keeps the previous chart when authentication or counts fail.
 
 </details>
 
+## Development
+
+```sh
+pnpm dev             # local development, port 4173
+pnpm design:check    # design documentation and integration contracts
+pnpm test            # engineering tests
+pnpm regression      # versioned release cases
+pnpm build           # contract checks and production build
+```
+
+The workbench UI lives in `apps/designer/`, the local service in `packages/workbench/`, and capture, execution and run storage in `packages/harness-core/`. A static build of this repository does not provide the writable local service; the public site is maintained in [happyhands-site](https://github.com/ShuaiMXu/happyhands-site). Before contributing, read [AGENTS.md](AGENTS.md), [DESIGN.md](DESIGN.md) and the [architecture](docs/architecture.md), and report only the checks you actually ran.
+
 ## Project links
 
-[Website](https://happyhands.cc) / [Harness guide](docs/harness.md) / [Roadmap](docs/next-steps.md) / [Issues](https://github.com/ShuaiMXu/happyhands/issues)
+[Website](https://happyhands.cc) · [Harness guide](docs/harness.md) · [Roadmap](docs/next-steps.md) · [Issues](https://github.com/ShuaiMXu/happyhands/issues) · [Star history](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands&type=date) · [Forks](https://github.com/ShuaiMXu/happyhands/forks)
 
-Follow the core project:
-
-[![Forks](https://img.shields.io/github/forks/ShuaiMXu/happyhands?style=flat&label=Forks)](https://github.com/ShuaiMXu/happyhands/forks)
-[Star history](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands&type=date)
-
-Original HappyHands source is licensed under MIT. Bundled third-party code and dependencies retain their own licenses, including tldraw’s separate production-use requirements. See [third-party notices](THIRD_PARTY_NOTICES.md).
+Original HappyHands source is licensed under MIT. Bundled third-party code and dependencies keep their own licenses, including tldraw's separate production-use requirements — see [third-party notices](THIRD_PARTY_NOTICES.md).

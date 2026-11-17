@@ -5,50 +5,85 @@
   </picture>
 </p>
 
-<h3 align="center">为编码 Agent 补上 UI 评审与产品体验优化流程。</h3>
+<h3 align="center">给编码 Agent 的界面评审与产品体验改进能力。</h3>
 
-<p align="center">从真实页面和用户任务出发，结合设计规范、隔离修改和前后对比改进体验。</p>
+<p align="center">抓真实页面、定位真正卡住任务的问题、在隔离工作区里修，然后用前后对比证据判断到底改没改好。</p>
 
 <p align="center">
-  <a href="https://happyhands.cc"><img alt="官网" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
+  <a href="https://happyhands.cc"><img alt="Website" src="https://img.shields.io/badge/website-happyhands.cc-202020?style=flat"></a>
   <a href="https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0"><img alt="v1.1.0" src="https://img.shields.io/badge/release-v1.1.0-F79B60?style=flat"></a>
   <a href="https://github.com/ShuaiMXu/happyhands/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ShuaiMXu/happyhands?style=flat&amp;label=Stars&amp;color=202020"></a>
-  <a href="docs/harness.md"><img alt="Harness 指南" src="https://img.shields.io/badge/docs-Harness_guide-202020?style=flat"></a>
+  <a href="docs/harness.md"><img alt="Harness guide" src="https://img.shields.io/badge/docs-Harness_guide-202020?style=flat"></a>
 </p>
 
 <p align="center">
-  <a href="#开始使用">开始使用</a> / <a href="#一次审阅怎么进行">审阅流程</a> / <a href="#star-增长">Star 增长</a> / <a href="https://happyhands.cc">官网</a> / <a href="README.md">English</a>
+  <a href="#安装">安装</a> · <a href="#工作方式">工作方式</a> · <a href="#接入你的编码-agent">接入 Agent</a> · <a href="#范围与限制">限制</a> · <a href="https://happyhands.cc">官网</a> · <a href="README.md">English</a>
 </p>
 
-HappyHands 帮助编码 Agent 检查界面设计、信息层级、交互反馈和任务流程。使用本地 Harness 采集真实页面，在隔离工作副本中修改，再对照前后证据判断结果。可通过命令行操作，也可使用本地工作台。
-
-## 产品演示
-
-37 秒产品演示。
+HappyHands 是一个本地 Harness，给编码 Agent 一套「可以被追问」的设计评审闭环。它驱动你本机已有的 Chrome 或 Edge 打开真实预览，抓取一个用户任务经过的各种状态，并且只报**有可复现观察**的问题——然后在隔离的 Git 工作区里完成修改，再让一个独立的复核者对着前后证据判断。你可以用命令行驱动，也可以用可选的本地工作台。
 
 https://github.com/user-attachments/assets/19607c8f-3fb4-4db5-826e-ff664980dbce
 
-[v1.1.0 正式版](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0)已发布，提供安装包、源码清单与校验值；v1.0.0 曾通过公开下载后的独立冷安装验证，本版的验证范围见发布说明。
+<sub>37 秒演示：抓取 → 诊断 → 隔离修复 → 独立复核 → 你来决定。</sub>
 
-## 开始使用
+## 安装
 
-在你的产品仓库中，一行安装 **已发布的轻量 v1.1.0 Skill**，无需启动工作台：
+在你想要评审的产品仓库里执行（需要 Node.js 22.15+ 与 npm）：
 
 ```sh
 npx --yes --package=https://github.com/ShuaiMXu/happyhands/releases/download/v1.1.0/happyhands-lite-1.1.0.tgz happyhands install
 ```
 
-默认安装到 Codex 用户技能目录（`~/.codex/skills/happyhands`，或 `CODEX_HOME` 下），不改产品源码。`--scope project` 可安装到项目内的 `.agents/skills/happyhands`，隔离修复前需要先提交或忽略这些安装文件。包内包含运行核心、完整的固定版本方法文件和六项运行依赖；已有 Skill 不会被覆盖。在 Codex 中使用 `$happyhands`，提供预览与一个具体用户任务，或按[轻量版指南](docs/lightweight.md)调用。`install --agent claude-code` 可安装到 Claude Code 的发现目录，其完整执行闭环仍未验证。DSH 可作为外部操作端读取和调用。
+这条命令安装的是轻量 Skill——运行核心、固定版本方法文件与 8 项运行依赖——默认落到 Codex 的用户技能目录（`~/.codex/skills/happyhands`，或 `CODEX_HOME` 下），不会覆盖已有安装。要装到别的发现路径，加 `--agent claude-code`、`--agent dsh`（`~/.agents/skills`）或 `--scope project`（`.agents/skills/happyhands`）。装完后让 Agent 用 `$happyhands`，给出预览地址和一个具体用户任务即可。详见[轻量版指南](docs/lightweight.md) · [发布说明](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0) · [CLI 参考](docs/harness.md)。
 
-需要 Node.js 22.15+（含 npm）、Git、Chrome/Edge 和已配置的 Agent。内置模型诊断与复核使用 Codex，新模型需使用支持它的 Codex 版本。安装和选取参考资料不代表真实产品修复已通过验收；包本身的实际验证与限制见 [v1.1.0 发布说明](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.1.0)。历史 [Alpha.4](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) 继续保留；升级时使用单独的 `--destination PATH`，不覆盖已有安装。
+另外还需要 Git、已安装的 Chrome 或 Edge，以及能看截图的模型访问——已登录的 Codex CLI、`--agent claude-code`，或通过 `HAPPYHANDS_API_*` 配置的 API。装上 Skill 本身不代表修复已被验证，一次运行必须过它自己的门禁。
 
-本版覆盖本地证据与修复流程、可在每次运行中选择的模型或 CLI 适配器、原图审阅标注、所选 Design.md/设计系统参考，以及独立的视频时间线审阅流程。历史真实产品案例使用 macOS、Chrome 和 Codex。v1.0.0 另有 Windows 安装包冷安装验证；两版均有 Ubuntu/Windows 工程 CI；这些平台的完整真实产品闭环、完整 Claude-only 或 DSH-only 闭环、真实新使用者接入及跨模型质量对照仍待验证。视频流程还需要明确可用的 FFmpeg/FFprobe 与真实整段视听复核。版本号不会将未测环境或未查看状态变成通过结论。
+## 工作方式
 
-### 可选的本地工作台
+1. **看清现状。** 连接仓库与预览，确认抓取范围，然后逐个看桌面与手机截图及其问题；切换设备、版本与交互状态不用离开当前评审。
+2. **开始修复。** 点 **Fix automatically**：系统会把诊断出的问题对回当前源码，生成范围与方案，在隔离工作区里驱动编码 Agent 执行，再抓取结果、跑适用检查并做一次独立视觉复核。缺失证据和未通过的检查不会被藏起来。
+3. **你来决定。** 对比前后，接受或拒绝。拒绝和「要求更多反证」需要写理由。被接受且验证通过的修复，可以通过另一个动作输出成 **draft PR**；HappyHands 不做合并，也不做部署。
 
-下方保留源码工程与可视化工作台的使用方式；完整命令见 [Harness 指南](docs/harness.md)。
+一次点击只是代办了范围与方案这两步，不会替你接受结果。没有基线的新界面，在实现之前仍然需要明确的 [Foundation 批准](docs/harness.md)。
 
-准备 Git、Node.js **22.15+**、pnpm **11.19**，以及用于浏览器采集的已安装 Chrome 或 Edge。本仓库提供本地工作台与 Harness 源码。工作台内置模型诊断和视觉复核需要已配置、已登录的 **Codex CLI**；代码实现所需的 CLI 配置取决于所选执行器。区别见[配合你的编码工具](#配合你的编码工具)。
+### 什么问题才成立
+
+一条上报的缺陷需要有可复现的观察、具体说明哪里不对，并指向它违反的方法快照；Harness 会核对你引用的章节、行号与原文。宽泛建议和审美偏好不会自动进入修复清单。你主动提出的增强，会记录成用户请求，而不会被改写成「观察到的缺陷」。
+
+修复遵循被评审产品自己的设计依据——HappyHands 自己的 UI 规范只作用于工作台，以及明确采纳了它的项目。原始截图、失败的尝试和被排除的建议都留在记录里，包括新反证迫使重新复核、而原失败结论依然保留的情况。见[问题录入与判断依据](docs/finding-admission-policy.md)与 [HappyClaw 反证案例](docs/counter-evidence-review-2026-10-21.md)。
+
+## 接入你的编码 Agent
+
+任何 AI CLI 只要有本机终端、仓库和浏览器访问能力，就能驱动这个 Harness。`harness execute` 会拉起已注册的适配器；用 `--agent self` 时，它只准备好隔离工作区，由当前 Agent 自己改，再通过 `execute-finish` 留下执行记录。默认适配器是 Codex。
+
+| 工具 | 当前角色 |
+| --- | --- |
+| Codex CLI | 默认实现适配器；内置的看图诊断与复核。 |
+| Claude Code | 实现适配器，也做只读诊断/复核（`--agent claude-code`）；仅当设置了 `ANTHROPIC_API_KEY` 时才附加 `--bare`。 |
+| 其他任意 CLI | 在 `~/.happyhands/agents.json` 里声明（argv 模板、图片参数、边界声明），即可用于 `execute`、`model-diagnose`、`model-review`。见[适配器文档](skills/happyhands/references/agent-adapters.md)。 |
+| Cursor、Kimi Code、WorkBuddy | 跟着 `next` 驱动流程，并用 `--agent self` 自己改；或按上面方式声明适配器。 |
+| DeepSeek Harness | `install --agent dsh` 安装；用 `--agent self` 编辑，同样留执行记录。看图评审需要视觉模型——见 [DSH 流程](docs/dsh.md)。 |
+
+`harness agents` 列出已注册的适配器。`--command PATH` 只改二进制路径，不改它的协议。在 Harness 之外做的修改没有执行记录，复核时必须单独标注。
+
+## 范围与限制
+
+HappyHands **免费开源**（MIT）。轻量 Skill 是受支持的入口，工作台是可选项。结论以采集计划和真正跑过的检查为准——没看过的页面、没走到的交互，都算未评审。模型与 CLI 服务可能需要单独的账号或付费套餐。
+
+轻量版运行默认存到 `~/.happyhands/runs`，源码版 CLI 与工作台默认存到 `.harness/`；显式指定输出路径可覆盖。涉及模型的步骤会把选中的源码上下文与图片发给所配置的模型服务。工作区和仓库检查是流程护栏，不是安全沙箱——外发前请先检查导出内容。见[数据与执行说明](docs/local-workbench.md)与[待办缺口](docs/remaining-work-2026-11-12.zh-CN.md)。
+
+<details>
+<summary>版本历史与已验证范围</summary>
+
+v1.1.0 是当前正式版；[v1.0.0](https://github.com/ShuaiMXu/happyhands/releases/tag/v1.0.0) 与 [Alpha.4](https://github.com/ShuaiMXu/happyhands/releases/tag/v0.1.0-alpha.4) 仍可下载。升级时用单独的 `--destination PATH`，不覆盖已有安装。
+
+每个版本在自己的发布说明里交代验证范围。简要情况：历史真实产品案例跑在 macOS + Chrome + Codex 上；v1.0.0 的安装包通过过公开下载后的 Windows 冷安装；工程 CI 覆盖 Ubuntu 与 Windows 的 Node 22/24。仍未覆盖：Windows/Ubuntu 上的完整真实产品闭环、完整 Claude-only 或 DSH-only 闭环、真实新使用者接入、跨模型质量对照、真实的 `claude-code` 模型评审，以及真实的 Anthropic/OpenAI 调用（API 适配器目前只有 mock server 覆盖）。视频评审还需要明确可用的 FFmpeg/FFprobe 与真实的整段视听复核。
+
+</details>
+
+## 从源码运行工作台
+
+工作台是同一套 Harness 的本地界面，需要 Git、Node.js **22.15+**、pnpm **11.19** 和 Chrome/Edge。
 
 ```sh
 git clone https://github.com/ShuaiMXu/happyhands.git
@@ -57,112 +92,38 @@ pnpm install --frozen-lockfile
 pnpm workbench
 ```
 
-保持这个终端运行。`pnpm workbench` 会启动 **HappyHands 本地工作台**，并打开 **http://127.0.0.1:4190/apps/designer/**。这个地址需要启动服务后才能在你的电脑上访问，不是官网，也不是主题工作室。
+保持这个终端不关。`pnpm workbench` 会在本机 **http://127.0.0.1:4190/apps/designer/** 起服务——这不是官网。先确认要评审的产品有可用预览（需要本地服务就在另一个终端按它自己的说明起），再填入仓库目录、预览地址和一个具体用户任务。`DESIGN.md`、tokens 文件这类设计依据是可选的，指向该仓库里已经存在的文件即可。
 
-确保待审阅产品有可用的预览。如果需要本地服务，请另开一个终端，按照该项目自身的说明启动。确认预览地址能在浏览器中打开后，再到 HappyHands 工作台连接项目，提供本地仓库目录、预览地址和具体的用户任务。
+## 设计资源
 
-下面是需要提供的信息示例，**不是终端命令**。请将目录和地址替换为项目的实际值；`3000` 只是示例端口，与工作台使用的 `4190` 不同。
-
-```text
-项目仓库：/path/to/your-product
-预览地址：http://localhost:3000
-用户任务：完成注册并创建第一个项目
-已有设计资料（可选）：DESIGN.md、src/styles/tokens.css、src/components
-```
-
-设计资料是待审阅仓库中已有的规范文件、样式或组件目录，供审阅参考。上面的路径只是示例，并非必须具备的文件；请使用实际路径，没有的可以省略。
-
-采集前核对建议的页面、设备和交互状态。项目配置和命令行操作见 [Harness 指南](docs/harness.md)。[官网](https://happyhands.cc) 提供使用指引和设计资源；仓库审阅和代码修改在本地执行。
-
-## 一次审阅怎么进行
-
-1. **查看问题。** 连接仓库和预览，核对采集范围，查看桌面、手机截图及对应问题。在当前审阅中切换设备、版本和交互状态，点击截图即可页内放大。
-2. **一键修复。** 工作台根据当前源码核实诊断问题，准备修改范围和计划，再调用编码 Agent 在隔离的 Git 工作副本中执行。完成后重新采集页面，运行适用检查和独立视觉复核。缺失证据和失败记录会保留。
-3. **核对结果。** 查看前后对比，决定接受或拒绝。接受时理由选填；拒绝或提交反证重新复核时需说明原因。已接受且通过验证的修复，可再点击提交**草稿 PR**，工作台不会替你合并或部署。
-
-一键修复代表你授权工作台处理本轮中间的范围与计划步骤，最终结果仍由你判断。没有原页面的新界面，依然需要先明确批准[设计基础](docs/harness.md)，再开始实现。
-
-### 问题需要什么依据
-
-正式问题需要有可复现的现象、明确的错误说明，以及对应的 skill 快照引用。Harness 会核对引用的章节、行号和原文。宽泛的设计建议、个人审美偏好不能单独成为自动修复依据。
-
-用户明确要求的改进按真实请求记录，不伪装成已观察到的缺陷；执行仍须遵循项目规范、绑定源码与范围、隔离修改，并进行新的独立复核。
-
-修改遵循被审项目自己的设计来源。HappyHands UI 规范用于工作台，以及明确采用这套规范的项目。原始截图、早期失败和未录入建议都会保留，具体要求见[问题录入与判断依据](docs/finding-admission-policy.md)。
-
-[HappyClaw 重审记录](docs/counter-evidence-review-2026-10-21.md) 展示了一次实际过程：补充反证后重新独立复核，同时保留原失败报告。这份记录说明的是该案例的审阅路径，不代表整个产品已验收或部署。
-
-### 设计资源
-
-[官网](https://happyhands.cc) 提供 Design.md 参考、设计系统和组件资源，可结合任务选择设计来源，并核对源码、使用方式与许可。轻量入口可检索索引，将选中的完整文档冻结到同一条运行记录，也支持明确选择的 HTTPS Markdown/CSS/JSON 与 GitHub 文档链接。选取参考不会安装组件或批准新的设计系统；后续真实案例验收见 [#7](https://github.com/ShuaiMXu/happyhands/issues/7)。
-
-## 配合你的编码工具
-
-HappyHands 支持任意 AI CLI 参与开放的编码 Agent 工作流。外部 Agent 具备所需的本地终端、仓库和浏览器访问能力时，可以操作 Harness；在 Harness 外完成的修改也可采集和审阅。通过 `harness execute` 执行时，要么拉起已注册的适配器，要么用 `--agent self` 由当前操作的 Agent 在隔离工作副本里修改、再用 `execute-finish` 收口并留下执行记录；默认拉起的适配器是 Codex。这不代表每个 CLI 都有内置接入，也不代表所有功能都已在每个 CLI 上验证。
-
-| 工具 | 当前用途 |
-| --- | --- |
-| Codex CLI | 内置模型诊断、截图视觉复核，也是默认代码执行适配器；执行路径已有使用记录，不等于所有功能均已完成全流程验证。 |
-| Claude Code | 代码执行适配器，也可作为只读诊断/截图复核适配器（`--agent claude-code`）。正常登录即可用，仅当设置了 `ANTHROPIC_API_KEY` 时才附加 `--bare`；完整端到端验证仍待完成。 |
-| 其他 CLI | 在 `~/.happyhands/agents.json` 中声明（argv 模板、图片参数、边界声明），即可用于 `execute`、`model-diagnose`、`model-review`，无需改代码。见[适配器文档](skills/happyhands/references/agent-adapters.md)。 |
-| Cursor、Kimi Code、WorkBuddy | 可以按 `next` 操作 Harness，并用 `--agent self` 自己改；也可按上面的方式声明为适配器。 |
-| DeepSeek Harness（DSH） | 可操作 CLI，也可用 `--agent self` 自己改并留下执行记录；用 `install --agent dsh` 安装到 `~/.agents/skills`。截图复核需要能读图的模型：`--agent claude-code` 或通过 `HAPPYHANDS_API_*` 配置的 API。见 [DSH 调用流程](docs/dsh.zh-CN.md)。 |
-
-运行 `pnpm harness agents` 查看已注册执行器，通过 `harness execute --agent ID` 选择；`--command PATH` 只更改该适配器的二进制路径，不改变 CLI 协议。其他 CLI 若要拉起执行需添加适配器，也可以让操作 Agent 用 `--agent self` 自己改。外部修改没有 Harness Agent 执行记录，审阅时需单独说明。具体行为和限制见[适配器说明](docs/architecture.md#agent-adapters-and-the-permission-boundary)。
-
-## 当前范围
-
-HappyHands **免费开源**。v1.1.0 是轻量本地 Skill 的正式版本，源码工作台仍为可选入口。外部模型和 CLI 服务可能需要单独的账号、订阅或按量付费。结论以采集计划和已完成检查为准，未查看的页面、未测试的交互仍属未审阅范围。专业校准、新使用者验证、云端检查等缺口见[剩余待办](docs/remaining-work-2026-11-12.zh-CN.md)。
-
-轻量入口的运行记录默认存放在 `~/.happyhands/runs`，源码 CLI / 工作台仍使用 `.harness/`；也可显式指定输出路径。模型辅助步骤会通过 CLI 将所选源码上下文和图片发送给配置的模型服务。工作副本与仓库检查属于流程保护，不是安全沙箱。分享导出记录前应检查敏感内容，详见[数据与执行说明](docs/local-workbench.md)。
+[happyhands.cc](https://happyhands.cc) 提供 Design.md 参考、设计系统与组件。轻量入口可以检索这些索引，并把选中的文档冻结进本次运行——包括显式指定的 HTTPS Markdown/CSS/JSON 与 GitHub 文档链接。选中参考不代表安装了组件，也不代表批准了新的设计系统；请先核对来源、用法与许可。
 
 <details>
-<summary>开发与仓库说明</summary>
-
-```sh
-pnpm dev             # 本地开发，端口 4173
-pnpm design:check    # 设计文档和接入契约检查
-pnpm test           # 工程测试
-pnpm regression     # 版本化发布案例
-pnpm build          # 契约检查及生产构建
-pnpm harness skills # 已注册方法及其成熟度
-```
-
-工作台界面位于 `apps/designer/`，本地服务位于 `packages/workbench/`，采集、执行和运行记录位于 `packages/harness-core/`。当前公开官网由 [happyhands-site](https://github.com/ShuaiMXu/happyhands-site) 独立维护；本仓库的静态构建不提供可写本地服务。
-
-贡献前阅读 [AGENTS.md](AGENTS.md)、[DESIGN.md](DESIGN.md) 和[架构文档](docs/architecture.md)。保留批准边界、来源信息及完整上游 Skills，如实记录实际执行的检查；不要提交凭证、私有截图或本地运行记录。
-
-</details>
-
-## Star 增长
+<summary>Star 增长</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/star-history-dark.svg">
-  <img src="assets/readme/star-history-light.svg" width="100%" alt="HappyHands Star 累计增长曲线，包含最近 7 天加星数量和数据更新时间">
+  <img src="assets/readme/star-history-light.svg" width="100%" alt="HappyHands GitHub 累计 Star 增长，含近七日新增与快照日期">
 </picture>
 
-增长图按 GitHub 当前 Star 用户的加星日期累计，无法还原取消 Star 之前的历史总量。GitHub Actions 每天刷新图表，更新时间显示在图中。顶部徽章显示当前总量。
-
-<details>
-<summary>刷新增长图表</summary>
-
-配置并登录 GitHub CLI 后，在仓库根目录运行：
-
-```sh
-node scripts/update-star-history.mjs
-```
-
-脚本仅保存每日汇总与图表，不保存用户名或凭据。认证、数据或数量校验失败时保留原图，不将失败结果写成零。数据文件：[star-history.json](assets/readme/star-history.json)。
+按 GitHub 当前 stargazers 及其点星日期聚合；已取消的 star 不计入历史总数。GitHub Actions 每日刷新，图上有快照日期。本地刷新需已登录 GitHub CLI，执行 `node scripts/update-star-history.mjs`——只保存聚合数据；认证或计数失败时保留原图，不会清零。
 
 </details>
 
+## 开发
+
+```sh
+pnpm dev             # 本地开发，端口 4173
+pnpm design:check    # 设计文档与集成契约校验
+pnpm test            # 工程测试
+pnpm regression      # 版本化回归用例
+pnpm build           # 契约校验 + 生产构建
+```
+
+工作台界面在 `apps/designer/`，本地服务在 `packages/workbench/`，抓取、执行与运行记录在 `packages/harness-core/`。本仓库的静态构建不提供可写的本地服务；官网单独维护在 [happyhands-site](https://github.com/ShuaiMXu/happyhands-site)。参与贡献前先读 [AGENTS.md](AGENTS.md)、[DESIGN.md](DESIGN.md) 与[架构](docs/architecture.md)，并且只报告你真正跑过的检查。
+
 ## 项目链接
 
-[官网](https://happyhands.cc) / [Harness 指南](docs/harness.md) / [待办](docs/next-steps.md) / [问题反馈](https://github.com/ShuaiMXu/happyhands/issues)
+[官网](https://happyhands.cc) · [Harness 指南](docs/harness.md) · [路线图](docs/next-steps.md) · [Issues](https://github.com/ShuaiMXu/happyhands/issues) · [Star 历史](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands&type=date) · [Forks](https://github.com/ShuaiMXu/happyhands/forks)
 
-关注核心项目：
-
-[![Forks](https://img.shields.io/github/forks/ShuaiMXu/happyhands?style=flat&label=Forks)](https://github.com/ShuaiMXu/happyhands/forks)
-[Star history](https://www.star-history.com/?repos=ShuaiMXu%2Fhappyhands&type=date)
-
-自有 HappyHands 源码采用 MIT。第三方代码和依赖保留各自许可，包括 tldraw 独立的生产使用要求，详见 [第三方声明](THIRD_PARTY_NOTICES.md)。
+HappyHands 原始代码采用 MIT 许可。随包分发的第三方代码与依赖沿用各自许可，其中 tldraw 另有生产使用要求——见[第三方声明](THIRD_PARTY_NOTICES.md)。
