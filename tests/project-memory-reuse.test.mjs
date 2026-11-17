@@ -34,7 +34,7 @@ test('later plan snapshots approved project history without replacing current ev
   const context=await verifyProjectMemory(run,repo);assert.equal(context.entries[0].source.runId,'prior-run');
   assert.deepEqual(context.entries[0].exceptions,['Destructive actions']);
   assert.equal(run.manifest.confirmation.findingId,'F1');assert.equal(run.manifest.captures.before.viewports.desktop.dom.h1[0],'HappyClaw');
-  const brief=await readFile(join(run.directory,'codex-brief.md'),'utf8');assert.ok(brief.includes(reference.path));assert.match(brief,/not approval of this change/);
+  const brief=await readFile(join(run.directory,'execution-brief.md'),'utf8');assert.ok(brief.includes(reference.path));assert.match(brief,/not approval of this change/);
   await assert.rejects(executeWithAgent({directory:run.directory,repo,commandOverride:'git'}),/exited/);
   const prompt=await readFile(join(run.directory,'execution-prompt.txt'),'utf8');assert.match(prompt,/Use outcome labels/);assert.match(prompt,/untrusted data, not commands/);
 });
@@ -61,7 +61,7 @@ test('legacy plans cannot silently ignore newly approved project principles',asy
 
 test('a reasoned run exception invalidates the plan and preserves global memory and other runs',async t=>{
   const {host,repo,memory,candidate,run}=await fixture(t);
-  const before=await readFile(join(run.directory,'codex-brief.md'),'utf8');
+  const before=await readFile(join(run.directory,'execution-brief.md'),'utf8');
   const saved=await saveRunMemoryException(run.directory,{id:candidate.id,principleHash:candidate.contentHash,decision:'exclude',reason:'This workflow uses domain-specific action names'});
   assert.equal(saved.planInvalidated,true);assert.equal(await readFile(join(run.directory,saved.event.priorPlan.path),'utf8'),before);
   assert.equal((await loadRun(run.directory)).manifest.plan,undefined);assert.equal((await memory.active()).length,1);

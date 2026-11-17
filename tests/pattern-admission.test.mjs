@@ -51,7 +51,7 @@ test('staging preserves approved base, requires final decisions and carries appr
   for(const brief of [reviewBrief,firstBrief])for(const field of ['whenToUse','whenToAvoid','exceptions','limitations','dependencies','tokenReferences','examples'])assert.ok(brief.includes(`"${field}"`),field);
   await assert.rejects(stagePatternAdmission(run.directory,request),/frozen/);
   await confirmFinding(run.directory,'F1','supported','Synthetic review confirmation');await savePlan(run.directory,'F1');
-  assert.match(await readFile(join(run.directory,'codex-brief.md'),'utf8'),/Approved pattern constraints/);
+  assert.match(await readFile(join(run.directory,'execution-brief.md'),'utf8'),/Approved pattern constraints/);
   const exported=await exportRun({directory:run.directory,outputRoot:join(root,'public')});assert.ok(exported.files.includes(references[0].path));
   const copy=await loadRun(exported.directory);assert.equal((await readPatternAdmissions(copy)).length,1);
   await writeFile(join(exported.directory,references[0].path),'{}');assert.deepEqual(await reindex(join(root,'public')),[]);

@@ -1,6 +1,7 @@
 import Ajv from 'ajv/dist/2020.js';
 import schema from '../../diagnosis.schema.json' with { type: 'json' };
 import { captureEntries } from './capture-state.js';
+import { deterministicChecks } from './deterministic-checks.js';
 
 const checkDiagnosis = new Ajv({ allErrors: true }).compile(schema);
 const CONFIDENCE = Object.freeze({ low: 1, medium: 3, high: 5 });
@@ -190,7 +191,13 @@ export function evaluateScore(rubric, evidenceIds) {
 
 export function diagnoseRun({ run, skillResults = [], rubric = null }) {
   const evidence = [...specEvidence(run.spec), ...captureEvidence(run.manifest)];
-  const findings = mergeFindings([...normalizedSpecFindings(run.spec, run.manifest), ...normalizedSkillFindings(skillResults, evidence)])
+  // Facts the capture already measured (widths, computed colours, target sizes)
+  // become findings without a model, so a run without a vision model still
+  // reports a real class of defects.
+  const baseline = run.manifest.captures?.before;
+  const checks = deterministicChecks({phase: 'before', entries: baseline ? captureEntries(baseline) : []});
+  evidence.push(...checks.evidence);
+  const findings = mergeFindings([...normalizedSpecFindings(run.spec, run.manifest), ...normalizedSkillFindings(skillResults, evidence), ...checks.findings])
     .filter(item => item.evidenceRefs.length)
     .sort(compareDiagnosisFindings);
   const evidenceIds = new Set(evidence.map(item => item.id));

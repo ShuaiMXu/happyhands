@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {canSymlink} from './helpers/symlink.mjs';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile,mkdir,rm,realpath} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -156,6 +157,7 @@ test('archive reader bounds decompression and rejects path substitution and payl
 });
 
 test('archive reader rejects symlink evidence',async t=>{
+ if(!await canSymlink())return t.skip('This Windows account cannot create symlinks.');
  const f=await largeFixture(t),directory=await continueReview({...f,directory:f.parent.directory});
  const envelope=JSON.parse(await readFile(join(directory,'continuation-parent.json'))),path=join(directory,envelope.payload.path);
  const bytes=await readFile(path);await rm(path);const external=join(f.root,'original.gz');await writeFile(external,bytes);

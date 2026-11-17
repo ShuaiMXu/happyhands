@@ -16,8 +16,9 @@ const execFileAsync = promisify(execFile);
 test('Codex model selection stays in the registered protocol and cannot switch the adapter',async()=>{
  const adapter=resolveAgent('codex');const args=adapter.argv({worktree:'/tmp/product',lastMessagePath:'/tmp/result',model:'gpt-6-astra'});
  assert.equal(args[args.indexOf('-m')+1],'gpt-6-astra');assert.equal(args[0],'exec');assert.ok(args.includes('workspace-write'));
- await assert.rejects(executeWithAgent({directory:'not-read',repo:'not-read',agent:'claude-code',model:'gpt-6-astra'}),/Codex model ID/);
- await assert.rejects(executeWithAgent({directory:'not-read',repo:'not-read',model:'--bad'}),/Codex model ID/);
+ // Claude Code declares a model flag, so a model passes the gate and fails only on the missing run.
+ await assert.rejects(executeWithAgent({directory:'not-read',repo:'not-read',agent:'claude-code',model:'claude-opus-5-5'}),/ENOENT/);
+ await assert.rejects(executeWithAgent({directory:'not-read',repo:'not-read',model:'--bad'}),/Invalid --model ID/);
 });
 
 async function temporaryRepo(t) {
@@ -38,15 +39,19 @@ async function temporaryRepo(t) {
 }
 
 test('every registered adapter states how it meets each boundary clause', () => {
-  const agents = listAgents();
+  const all = listAgents();
+  // Model-only API adapters never edit; the boundary applies to everything that executes.
+  const agents = all.filter(agent => agent.roles.includes('execute'));
   assert.ok(agents.length >= 2, 'at least Codex and Claude Code are registered');
   for (const agent of agents) {
     for (const clause of Object.keys(BOUNDARY)) {
       assert.ok(agent.satisfies?.[clause]?.trim(), `${agent.id} must state how it meets ${clause}`);
     }
-    assert.ok(agent.command, `${agent.id} needs a command`);
+    // The operating agent launches no process; everything else needs a binary.
+    if (agent.id !== 'self') assert.ok(agent.command, `${agent.id} needs a command`);
     assert.ok(agent.verified, `${agent.id} must record how far it has been verified`);
   }
+  for (const agent of all) assert.ok(agent.verified, `${agent.id} must record how far it has been verified`);
 });
 
 test('an unknown agent, or one that cannot express the boundary, is refused', () => {
@@ -57,15 +62,21 @@ test('an unknown agent, or one that cannot express the boundary, is refused', ()
   assert.equal(resolved.id, 'claude-code', 'but the adapter identity and flags are not');
 });
 
-test('the Claude Code adapter runs headless, without repository instructions, and without publish tools', () => {
+test('the Claude Code adapter runs headless, without repository instructions when it can, and without publish tools', t => {
+  const saved = process.env.ANTHROPIC_API_KEY;
+  t.after(() => { if (saved === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved; });
+  process.env.ANTHROPIC_API_KEY = 'test-key';
   const argv = resolveAgent('claude-code').argv({ worktree: '/w', lastMessagePath: '/w/last.md' });
   assert.ok(argv.includes('-p'), 'headless');
-  assert.ok(argv.includes('--bare'), 'a reviewed repository must not instruct the agent through CLAUDE.md');
+  assert.ok(argv.includes('--bare'), 'with an API key, a reviewed repository must not instruct the agent through CLAUDE.md');
   assert.equal(argv[argv.indexOf('--permission-mode') + 1], 'acceptEdits');
-  const denied = argv[argv.indexOf('--disallowed-tools') + 1];
+  const denied = argv.slice(argv.indexOf('--disallowed-tools') + 1);
   for (const tool of ['Bash(git push:*)', 'Bash(git remote:*)']) {
     assert.ok(denied.includes(tool), `${tool} must be denied`);
   }
+  // --bare refuses OAuth login, so without an API key it is left out or the adapter could not start.
+  delete process.env.ANTHROPIC_API_KEY;
+  assert.ok(!resolveAgent('claude-code').argv({ worktree: '/w' }).includes('--bare'));
 });
 
 test('the push override makes git push fail before it reaches the remote', async t => {
@@ -340,4 +351,29 @@ test('strict executor preserves a project file using the reserved report name',a
  await saveOnboarding(run.directory,{repository:{root,commit:(await git('rev-parse','HEAD')).stdout.trim()},config:{designGuidance:{remediation:{profile:'project',adoptionReason:'Explicit synthetic execution fixture adoption'}}}});await savePlan(run.directory,'F1');
  await assert.rejects(executeWithAgent({directory:run.directory,repo:root,commandOverride:'never-run'}),/already tracks the reserved/);
  assert.equal(await readFile(join(root,'.harness-remediation-result.json'),'utf8'),'Existing project content');assert.equal((await git('branch','--list','pd/reportcollision')).stdout.trim(),'');
+});
+
+test('the operating agent can execute itself: prepare, edit the worktree, finish with the same checks', async t => {
+  const { finishSelfExecution } = await import('../packages/harness-core/runner.js');
+  const { root, run } = await plannedRun(t, 'selfedit');
+  const prepared = await executeWithAgent({ directory: run.directory, repo: root, agent: 'self' });
+  assert.equal(prepared.status, 'awaiting-operator-edit');
+  assert.equal(prepared.worktree, join(run.directory, 'worktree'));
+  assert.match(await readFile(prepared.brief, 'utf8'), /Confirmed Harness brief/);
+  assert.equal((await import('../packages/harness-core/store.js').then(m => m.loadRun(run.directory))).manifest.execution ?? null, null, 'nothing is recorded until finish');
+  await writeFile(join(prepared.worktree, 'operator-change.txt'), 'edited by the operating agent\n');
+  const execution = await finishSelfExecution({ directory: run.directory });
+  assert.equal(execution.agent.id, 'self');
+  assert.deepEqual(execution.boundaryBreaches, []);
+  assert.ok(execution.changedFiles.includes('operator-change.txt'));
+  assert.equal(execution.exitCode, 0);
+  await assert.rejects(finishSelfExecution({ directory: run.directory }), /already has an execution/);
+});
+
+test('a self execution that touches the original repository is recorded as a boundary breach', async t => {
+  const { finishSelfExecution } = await import('../packages/harness-core/runner.js');
+  const { root, run } = await plannedRun(t, 'selfbreach');
+  await executeWithAgent({ directory: run.directory, repo: root, agent: 'self' });
+  await writeFile(join(root, 'outside.txt'), 'edited the host checkout\n');
+  await assert.rejects(finishSelfExecution({ directory: run.directory }), /changed the host repository outside its worktree/);
 });

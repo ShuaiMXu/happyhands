@@ -5,20 +5,36 @@ import {spawn} from 'node:child_process';
 import {homedir} from 'node:os';
 import {verifyBundle,sha256} from './integrity.mjs';
 async function exists(path){try{await lstat(path);return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}
+// Skill directories the installer knows without being told. DeepSeek Harness
+// reads user skills from ~/.agents/skills and project skills from
+// <project>/.agents/skills, the layout Codex also uses for project scope.
+function skillRoot(agent,userHome){
+ if(agent==='codex')return{user:process.env.CODEX_HOME||join(userHome,'.codex'),project:'.agents'};
+ if(agent==='claude-code')return{user:join(userHome,'.claude'),project:'.claude'};
+ if(agent==='dsh')return{user:join(userHome,'.agents'),project:'.agents'};
+ return null;
+}
 export async function run(command,args,{cwd,env=process.env}={}){
  return new Promise((resolveResult,reject)=>{const child=spawn(command,args,{cwd,env,stdio:'inherit',shell:false,windowsHide:true});child.once('error',reject);child.once('exit',(code,signal)=>code===0?resolveResult():reject(Error(`${command} failed (${signal||code}).`)));});
+}
+// Windows exposes npm as npm.cmd, which Node refuses to spawn without a shell.
+// The command line here is built from a fixed flag list, never from user input.
+function runShell(command,{cwd,env=process.env}={}){
+ return new Promise((resolveResult,reject)=>{const child=spawn(command,{cwd,env,stdio:'inherit',shell:true,windowsHide:true});child.once('error',reject);child.once('exit',(code,signal)=>code===0?resolveResult():reject(Error(`${command} failed (${signal||code}).`)));});
 }
 export async function installSkill({source,project=process.cwd(),agent='codex',scope='user',userHome=homedir(),destination,installDependencies=async cwd=>{
  const args=['ci','--ignore-scripts','--omit=dev','--no-audit','--no-fund'];
  if(process.env.npm_execpath?.endsWith('npm-cli.js'))return run(process.execPath,[process.env.npm_execpath,...args],{cwd});
- if(process.platform==='win32')throw Error('Run the installer through npx so the npm CLI location is available.');
+ if(process.platform==='win32')return runShell('npm '+args.join(' '),{cwd});
  return run('npm',args,{cwd});
 }}){
- if(!['codex','claude-code'].includes(agent))throw Error('Select codex or claude-code; DSH uses the portable instructions as an external operator.');
+ // Codex, Claude Code and DeepSeek Harness have known Skill directories. Any other agent CLI gets the same bundle at an explicit --destination it reads Skills from.
+ const known=skillRoot(agent,userHome);
+ if(!known&&!destination)throw Error('For agents other than codex, claude-code or dsh, pass --destination with the directory that agent reads Skills or instructions from.');
+ if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(agent))throw Error('Invalid --agent ID.');
  if(!['user','project'].includes(scope))throw Error('Select --scope user or project.');
  const bundle=await verifyBundle(source),root=await realpath(project);
- const userRoot=agent==='codex'?(process.env.CODEX_HOME||join(userHome,'.codex')):join(userHome,'.claude');
- const target=resolve(destination||(scope==='user'?join(userRoot,'skills','happyhands'):join(root,agent==='codex'?'.agents':'.claude','skills','happyhands')));
+ const target=resolve(destination||(scope==='user'?join(known.user,'skills','happyhands'):join(root,known.project,'skills','happyhands')));
  if(scope==='project'&&!destination&&relative(root,target).startsWith('..'))throw Error('Skill destination escaped the selected project.');
  // Check each existing ancestor before creating anything. Never follow a project link to another location.
  let current=dirname(target);const ancestors=[];

@@ -115,7 +115,7 @@ test('source-bound brand declarations reach original-image review, require asses
 test('the shared plan and independent review receive decomposition evidence, then export both immutable phases',async t=>{
   const {repo,root,run,spec,capture}=await fixture(t);await capture('before');
   const finding=spec.findings[0].id;await confirmFinding(run.directory,finding,'supported','Fixture scope');await savePlan(run.directory,finding);
-  const brief=await readFile(join(run.directory,'codex-brief.md'),'utf8');assert.match(brief,/Design system extraction and component boundaries/);assert.match(brief,/choose reuse, extract, or keep local/);assert.match(brief,/items: \{ label: string/);
+  const brief=await readFile(join(run.directory,'execution-brief.md'),'utf8');assert.match(brief,/Design system extraction and component boundaries/);assert.match(brief,/choose reuse, extract, or keep local/);assert.match(brief,/items: \{ label: string/);
   const reuse=JSON.parse(await readFile(join(run.directory,'component-reuse-plan.json')));assert.equal(reuse.sourceCandidates[0].source,'src/components/ui/CommandStep.astro');
   await writeFile(join(repo,'src/tokens.css'),':root { --color-action: #115e59; --space-md: 16px; }');
   await writeFile(join(repo,'src/components/ui/SectionHeading.astro'),'---\ninterface Props {title: string}\n---\n<h2>{Astro.props.title}</h2>');

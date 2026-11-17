@@ -6,30 +6,50 @@ Use your existing DSH conversation to operate HappyHands from the terminal. The 
 
 ## Current support
 
-- DSH can operate the existing HappyHands CLI when its session has access to the checkout, target repository, terminal and required screenshots.
-- HappyHands registers `codex` and `claude-code` implementation adapters. There is no `--agent dsh` or `--agent deepseek`. Choose an available registered executor before editing; do not silently substitute one.
-- Built-in model diagnosis and screenshot-aware review still need a configured, signed-in Codex CLI. DSH alone does not replace that dependency.
-- Edits performed by DSH outside `harness execute` can be recaptured and reviewed, but have no Harness agent-execution record. Do not label them as registered, isolated execution.
-- This documents external orchestration, not a validated DSH-only repair and independent acceptance loop.
+- DSH can operate the HappyHands CLI when its session can reach the checkout, the target repository, a terminal and the preview.
+- **DSH can make the edit itself.** `HH execute --run RUN --repo REPO --agent self` prepares the isolated worktree and writes the brief; DSH edits only inside that worktree and runs the checks there, then `HH execute-finish --run RUN` applies the same host-repository boundary check, diff capture and ledger record as a launched CLI. That is a registered execution with an execution record, not an untracked side edit. `codex` and `claude-code` remain available when one of them should do the editing.
+- **Diagnosis and review must run on a different model than the one editing.** `HH model-diagnose` and `HH model-review` take `--agent claude-code`, or run against an API configured with `HAPPYHANDS_API_*`. A signed-in Codex CLI is no longer required. The model must read images; a text-only endpoint cannot judge screenshots.
+- Edits made outside `execute`/`execute-finish` can still be recaptured and reviewed, but they carry no execution record. Do not call them registered, isolated execution.
+- This documents external orchestration, not a validated DSH-only acceptance loop. Final accept or reject stays with a person.
+
+## Install the Skill for DSH
+
+DSH reads user skills from `~/.agents/skills` and project skills from `<project>/.agents/skills`. Build the bundle, then install it:
+
+```sh
+node scripts/build-lite.mjs --out .harness/lite
+node .harness/lite/bin/happyhands.mjs install --agent dsh --scope user
+```
+
+Use `--scope project` to install into `<project>/.agents/skills/happyhands` instead. From then on `HH` in [SKILL.md](../skills/happyhands/SKILL.md) means `node ~/.agents/skills/happyhands/bin/happyhands.mjs`.
+
+Inside a HappyHands checkout, prefer that checkout's own `node scripts/harness.mjs` (or `pnpm harness`). An installed bundle is a frozen copy of the version it was built from and will drift from the checkout.
+
+## File access and the terminal
+
+The Harness spawns `git`, `node` and a browser on almost every command. A file sandbox that blocks child processes stops `quickstart`, `capture`, `execute` and the test suite; DSH's `workspace-write` mode does exactly that, and the failure looks like `spawn EPERM`. Run the Harness with unrestricted file access, or from a terminal outside the sandbox. Read-only commands (`next`, `status`, `agents`, `doctor`, `review-costs`) work either way.
 
 ## Start in the DSH desktop app
 
 1. Open a DSH session with access to your HappyHands checkout and target product. Preserve existing, uncommitted work. Supply a working preview and one user task, such as recovering from a failed form submission.
-2. Paste the request below. Inspect the actual CLI and project rules first. Reuse an existing HappyHands checkout; otherwise follow the [installation prerequisites](../README.md#get-started) and install dependencies. You do not need `pnpm workbench`.
+2. Paste the request below. Inspect the actual CLI and project rules first. Reuse an existing HappyHands checkout; otherwise follow the [installation prerequisites](../README.md#get-started) and install dependencies. You need neither `pnpm workbench` nor a second copy of the Skill.
 3. Capture original evidence and review the finding and scope. An existing explicit repair instruction can supply the scope; a review request alone does not authorize unrelated edits.
-4. Use the selected registered executor in the Harness worktree. Preview that worktree, recapture matching states and dimensions, run applicable checks, and obtain independent review. Keep the final human accept/reject decision explicit.
+4. Use `--agent self` in the Harness worktree, or name another adapter, preview that worktree, recapture matching states and dimensions, run applicable checks, and obtain independent review. Keep the final human accept/reject decision explicit.
 
 ```text
 Use HappyHands to review one user task in this product. Read docs/dsh.md,
-docs/harness.md, skills/review-product/SKILL.md and the relevant complete
+docs/harness.md, skills/happyhands/SKILL.md and the relevant complete
 experience-remediation methods in the HappyHands checkout.
 Reuse the repository, preview and goal already supplied; ask only for missing inputs.
-Inspect the actual CLI first. Reuse one Harness run and its next/status commands;
+Inspect the actual CLI first. Reuse one Harness run and drive it with `next`;
 do not create a second acceptance store.
 Reproduce the issue and capture originals before proposing a repair. Preserve
 the project's brand, design system and shared components.
-Run pnpm harness agents. Tell me which registered implementation executor is
-available and let me choose. Never invent --agent dsh or silently switch executors.
+Prefer --agent self: edit only inside the worktree execute prepares, run the
+project's checks there, and finish with execute-finish so the run keeps its
+execution record. Ask me before choosing any other executor.
+Diagnose and review on a different model than the one that edits; never review
+your own edit in this session.
 After scoped, isolated execution, recapture matching states and obtain independent
 review. Retain failures and missing evidence. Let me accept or reject the result.
 Do not push, merge, deploy or publish anything as part of this review.
@@ -44,7 +64,7 @@ Do not push, merge, deploy or publish anything as part of this review.
 | Plan and edit | Existing confirmation/plan gates and `harness execute` | Scoped decisions, actual shared components and an isolated worktree. Reading a method is not implementation. |
 | Check and decide | Matched captures, applicable verification, independent review and human judgment | Before/after evidence, unresolved items and an explicit human decision. A clean command exit is not visual acceptance. |
 
-Use `pnpm harness next --run DIRECTORY` and `pnpm harness status --run DIRECTORY` for the same run. The [Harness guide](harness.md#one-finding-one-run) contains the real command sequence and configuration examples. Replace example directories with actual project paths.
+Use `HH next --run DIRECTORY` (or `pnpm harness next --run DIRECTORY` inside the checkout) and the same form of `status`. The [Harness guide](harness.md#one-finding-one-run) contains the real command sequence and configuration examples. Replace example directories with actual project paths.
 
 ## Optional headless DSH
 

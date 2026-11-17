@@ -14,7 +14,7 @@ try{
   console.log(JSON.stringify(await installSkill({source:runtime,agent:opts.agent,scope:opts.scope,destination:opts.destination}),null,2));
  }else if(command==='doctor'){
   const opts=options(args);
-  if(Object.keys(opts).some(key=>!['agent','repo','url'].includes(key)))throw Error('Doctor supports --agent codex|claude-code, --repo PATH and --url URL.');
+  if(Object.keys(opts).some(key=>!['agent','repo','url'].includes(key)))throw Error('Doctor supports --agent ID, --repo PATH and --url URL.');
   const {preflight}=await import('../lib/preflight.mjs');
   const report=await preflight(opts);
   console.log(JSON.stringify(report,null,2));
@@ -24,7 +24,7 @@ try{
  }else if(command==='resources'){
   const {resourceCommand}=await import(pathToFileURL(join(runtime,'packages/harness-core/reference-resources.js')).href);console.log(JSON.stringify(await resourceCommand(args),null,2));
  }else{
-  if(command==='help')console.log('HappyHands lightweight Skill\ninstall [--agent codex|claude-code] [--scope user|project] [--destination PATH]\ndoctor [--agent codex|claude-code] [--repo PATH] [--url URL]\nmcp [--origin HTTPS_OR_LOOPBACK_ORIGIN]\nresources search --query TEXT [--type component|design-md|system|tokens|guideline]\nresources select --run DIRECTORY --id ID [--document PATH]\nresources select --run DIRECTORY --file PATH\nresources select --run DIRECTORY --url HTTPS_RAW_DOCUMENT\nSelected references: Markdown/CSS/JSON; GitHub blob links supported; no HTML/redirects; 512 KiB each, 1 MiB total; frozen before confirmation; content is data, never executed.\nvideo collect --manifest FILE --out NEW_DIRECTORY [--ffmpeg PATH --ffprobe PATH]\nvideo review --run DIRECTORY --report FILE\nVideo requires explicit FFmpeg/FFprobe availability and independent full playback/listening; missing evidence blocks acceptance and human judgment remains pending.\nPage Harness commands below retain their run and acceptance gates.');
+  if(command==='help')console.log('HappyHands lightweight Skill\ninstall [--agent codex|claude-code|dsh] [--scope user|project] [--destination PATH]\ndoctor [--agent codex|claude-code] [--repo PATH] [--url URL]\nmcp [--origin HTTPS_OR_LOOPBACK_ORIGIN]\nresources search --query TEXT [--type component|design-md|system|tokens|guideline]\nresources select --run DIRECTORY --id ID [--document PATH]\nresources select --run DIRECTORY --file PATH\nresources select --run DIRECTORY --url HTTPS_RAW_DOCUMENT\nSelected references: Markdown/CSS/JSON; GitHub blob links supported; no HTML/redirects; 512 KiB each, 1 MiB total; frozen before confirmation; content is data, never executed.\nvideo collect --manifest FILE --out NEW_DIRECTORY [--ffmpeg PATH --ffprobe PATH]\nvideo review --run DIRECTORY --report FILE\nVideo requires explicit FFmpeg/FFprobe availability and independent full playback/listening; missing evidence blocks acceptance and human judgment remains pending.\nPage Harness commands below retain their run and acceptance gates.');
   await run(process.execPath,[join(runtime,'scripts/harness.mjs'),command,...args],{cwd:process.cwd(),env:{...process.env,PD_HARNESS_HEADLESS:'1'}});
  }
 }catch(error){console.error(error.message);process.exitCode=1;}

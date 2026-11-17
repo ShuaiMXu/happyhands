@@ -98,16 +98,17 @@ The [website](https://happyhands.cc) provides Design.md references, design syste
 
 ## Use your coding agent
 
-HappyHands supports working with any AI CLI as part of an open coding-agent workflow. An external agent can operate the Harness with the necessary local terminal, repository and browser access, and changes made outside the Harness can be captured and reviewed. Direct execution through `harness execute` requires a registered adapter; the current default is Codex. This does not mean every CLI has built-in integration or that every feature has been validated with every CLI.
+HappyHands supports working with any AI CLI as part of an open coding-agent workflow. An external agent can operate the Harness with the necessary local terminal, repository and browser access, and changes made outside the Harness can be captured and reviewed. `harness execute` either launches a registered adapter or, with `--agent self`, prepares the isolated worktree for the operating agent to edit and records the result through `execute-finish`; the default launched adapter is Codex. This does not mean every CLI has built-in integration or that every feature has been validated with every CLI.
 
 | Tool | Current role |
 | --- | --- |
 | Codex CLI | Built-in model diagnosis and screenshot-aware review; also the default implementation adapter. Its execution path has shipped, but this is not full-loop validation of every feature. |
-| Claude Code | Implementation adapter for confirmed tasks. Configure it before execution; complete end-to-end validation remains open. |
-| Cursor, Kimi Code, WorkBuddy | Can guide and operate the Harness when the tool has local browser, terminal and repository access. They do not have dedicated implementation adapters here. |
-| DeepSeek Harness (DSH) | Can coordinate the existing CLI from a DSH conversation. No dedicated execution adapter; built-in model diagnosis and review still need Codex. See the [DSH workflow](docs/dsh.md), including headless authentication limits. |
+| Claude Code | Implementation adapter and read-only diagnosis/review adapter (`--agent claude-code`). Works with normal login; `--bare` is added only when `ANTHROPIC_API_KEY` is set. Complete end-to-end validation remains open. |
+| Any other CLI | Declare it in `~/.happyhands/agents.json` (argv template, image flag, boundary statements) to use it for `execute`, `model-diagnose` and `model-review` without code changes. See [agent adapters](skills/happyhands/references/agent-adapters.md). |
+| Cursor, Kimi Code, WorkBuddy | Can operate the Harness by following `next` and make the edit with `--agent self`, or be declared as adapters as above. |
+| DeepSeek Harness (DSH) | Operates the CLI and can edit with `--agent self`, which still leaves an execution record. Installs as a Skill with `install --agent dsh` into `~/.agents/skills`. Screenshot review needs a vision model: `--agent claude-code` or an API configured through `HAPPYHANDS_API_*`. See the [DSH workflow](docs/dsh.md). |
 
-Run `pnpm harness agents` to inspect registered executors. Select one with `harness execute --agent ID`; `--command PATH` only changes that adapter’s binary location, not its CLI protocol. Other CLIs need an adapter for direct execution. External changes have no Harness agent-execution record and must be identified separately during review. Agent-specific behavior and limits are described in the [adapter documentation](docs/architecture.md#agent-adapters-and-the-permission-boundary).
+Run `pnpm harness agents` to inspect registered executors. Select one with `harness execute --agent ID`; `--command PATH` only changes that adapter’s binary location, not its CLI protocol. Other CLIs need an adapter for launched execution, or the operating agent can edit with `--agent self`. External changes have no Harness agent-execution record and must be identified separately during review. Agent-specific behavior and limits are described in the [adapter documentation](docs/architecture.md#agent-adapters-and-the-permission-boundary).
 
 ## Current scope
 

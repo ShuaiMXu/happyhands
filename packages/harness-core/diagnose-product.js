@@ -3,7 +3,7 @@ import {selectSkills} from '../skill-core/method-policy.js';
 import {experienceFor} from './experience-orchestration.js';
 import {readFile} from 'node:fs/promises';
 import {executeSkill} from '../skill-core/runner.js';
-import {diagnoseBaseline} from '../workbench/baseline-diagnosis.js';
+import {diagnoseBaseline} from './baseline-diagnosis.js';
 import {diagnoseRun} from './diagnosis.js';
 import {loadRun, runFilePath, saveDiagnosis} from './store.js';
 

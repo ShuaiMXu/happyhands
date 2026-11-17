@@ -159,9 +159,9 @@ async function loadFoundationEvidence(manifest, base) {
 }
 
 async function loadBrief(manifest, base) {
-  if (manifest.plan?.path !== 'codex-brief.md') return null;
+  if (manifest.plan?.path !== 'execution-brief.md') return null;
   try {
-    const response = await fetch(`${base}/codex-brief.md`, { cache: 'no-store' });
+    const response = await fetch(`${base}/execution-brief.md`, { cache: 'no-store' });
     return response.ok ? await response.text() : null;
   } catch { return null; }
 }

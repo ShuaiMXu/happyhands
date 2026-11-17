@@ -15,7 +15,7 @@ export async function buildLite(output){
   await mkdir(dirname(join(target,path)),{recursive:true});
   await copyFile(input,join(target,path));
  };
- const directories=['packages/harness-core','packages/skill-core','packages/experience-core','packages/workbench','skills','.agents','regression'];
+ const directories=['packages/harness-core','packages/skill-core','packages/experience-core','skills','.agents','regression'];
  const tracked=execFileSync('git',['ls-files','-z','--',...directories,':(top,glob)*.schema.json'],{cwd:sourceRoot,encoding:'utf8'}).split('\0').filter(Boolean);
  const skillPrefix='skills/happyhands/';
  for(const path of tracked){
@@ -43,6 +43,22 @@ export async function buildLite(output){
  await writeFile(entry,(await readFile(entry,'utf8')).replace(/\r\n/g,'\n'));
  await chmod(entry,0o755);
  const files=await Promise.all((await filesUnder(target)).map(async path=>{const bytes=await readFile(join(target,path));return {path,bytes:bytes.length,sha256:sha256(bytes)};}));
+ // Only Git-tracked files are bundled, so a new module that was never staged
+ // silently disappears and the bundle fails at runtime instead of at build time.
+ // Resolve every relative import inside the bundle before declaring it valid.
+ const inBundle=new Set(files.map(row=>row.path));
+ const missing=[];
+ for(const row of files){
+  // Vendored browser assets resolve imports against their own site root, not
+  // this package, so only our own modules are checked here.
+  if(!/\.(?:m?js)$/.test(row.path)||row.path.startsWith('skills/vendor/'))continue;
+  const text=await readFile(join(target,row.path),'utf8');
+  for(const match of text.matchAll(/from\s*['"](\.{1,2}\/[^'"]+)['"]/g)){
+   const resolved=posix.normalize(posix.join(posix.dirname(row.path),match[1]));
+   if(!inBundle.has(resolved))missing.push(`${row.path} -> ${match[1]}`);
+  }
+ }
+ if(missing.length)throw Error('Bundle is missing imported modules (stage new files with git add):\n  '+[...new Set(missing)].join('\n  '));
  const manifest={schemaVersion:'0.1',name:pkg.name,version:pkg.version,sourceRevision:revision,sourceDirty:Boolean(execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim()),files};
  await writeFile(join(target,'bundle.json'),JSON.stringify(manifest,null,2)+'\n');return {directory:target,version:pkg.version,files:files.length,bytes:files.reduce((n,row)=>n+row.bytes,0)};
 }

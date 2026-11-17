@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import {saveExperienceCase} from '../packages/harness-core/store.js';
 import {listExperienceCases} from '../packages/harness-core/experience-cases.js';
-import {runVerificationChecks} from '../packages/workbench/verification.js';
+import {runVerificationChecks} from '../packages/harness-core/run-verification.js';
 import {withdrawJudgment} from '../packages/harness-core/store.js';
 import {saveRunMemoryException} from '../packages/harness-core/store.js';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 import { createRun, loadRun, runFilePath, captureOnce, saveCapture, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveOnboarding, saveDiagnosis, saveVisualReview, recordAbsentBaseline, saveFoundationApproval } from '../packages/harness-core/store.js';
 import { captureBrowser, captureBrowserPlan, DEFAULT_VIEWPORTS } from '../packages/harness-core/browser.js';
@@ -31,6 +32,7 @@ const commandOptions = new Map([
   ['experience', 'run phase input surface'],
   ['init', 'spec url mode out'],
   ['start', 'config out'],
+  ['quickstart', 'repo url task name request out browser'],
   ['continue', 'run config reason out'],
   ['onboard', 'config out'],
   ['baseline', 'run reason'],
@@ -38,8 +40,8 @@ const commandOptions = new Map([
   ['capture', 'run phase url plan repo bind-evidence extract-design-system browser'],
   ['skills', ''],
   ['agents', ''],
-  ['model-diagnose', 'run model language'],
-  ['model-review', 'run model language max-model-calls max-total-calls max-input-tokens max-output-tokens resume-review retry-reason preflight-only'],
+  ['model-diagnose', 'run model language agent'],
+  ['model-review', 'run model language agent max-model-calls max-total-calls max-input-tokens max-output-tokens resume-review retry-reason preflight-only'],
   ['review-budget', 'run input reason'],
   ['review-costs', 'run'],
   ['review-reconcile', 'run input'],
@@ -53,6 +55,7 @@ const commandOptions = new Map([
   ['confirm', 'run finding verdict note'],
   ['plan', 'run finding'],
   ['execute', 'run repo agent command model'],
+  ['execute-finish', 'run'],
   ['evaluate', 'run'],
   ['judge', 'run decision reason'],
   ['withdraw-judgment', 'run reason'],
@@ -62,6 +65,7 @@ const commandOptions = new Map([
   ['memory-exception', 'run principle hash decision reason'],
   ['status', 'run'],
   ['next', 'run'],
+  ['report', 'run out'],
   ['export', 'run out'],
   ['compare', 'run state configuration out'],
   ['reindex', 'out']
@@ -101,14 +105,13 @@ function required(options, key) {
   return options[key];
 }
 
-// B10-H2 invariant: any command that prints a run directory also prints the
-// workbench deep link. One helper, called everywhere a run dir is printed.
-// Tries a 500ms HEAD against the dev server; when it's not running, the link
-// still prints alongside the command to start it. OSC 8 makes it clickable in
-// supporting terminals; falls back to a bare URL.
+// Optional workbench deep link. It is off by default and always goes to stderr:
+// it used to print on stdout ahead of the JSON, so `next` and `status` could not
+// be parsed by a caller that only reads stdout. Set HAPPYHANDS_WORKBENCH_LINK=1
+// to get the link back, for a terminal where the canvas is actually running.
 const SITE_URL = process.env.PD_SITE_URL || 'http://127.0.0.1:4190';
 async function printWorkbenchLink(runId, stage) {
-  if(process.env.PD_HARNESS_HEADLESS==='1')return;
+  if(process.env.PD_HARNESS_HEADLESS==='1'||process.env.HAPPYHANDS_WORKBENCH_LINK!=='1')return;
   const url = `${SITE_URL}/apps/designer/?case=run:${runId}&view=canvas${stage ? `#stage=${stage}` : ''}`;
   let alive = false;
   try {
@@ -121,13 +124,13 @@ async function printWorkbenchLink(runId, stage) {
     });
   } catch { /* not running */ }
   const prefix = '  画布 → ';
-  if (process.stdout.isTTY && process.env.TERM !== 'dumb') {
-    process.stdout.write(`\x1b]8;;${url}\x07${prefix}${url}\x1b]8;;\x07\n`);
+  if (process.stderr.isTTY && process.env.TERM !== 'dumb') {
+    process.stderr.write(`\x1b]8;;${url}\x07${prefix}${url}\x1b]8;;\x07\n`);
   } else {
-    process.stdout.write(`${prefix}${url}\n`);
+    process.stderr.write(`${prefix}${url}\n`);
   }
   if (!alive) {
-    process.stdout.write(`  未启动 → 在 HappyHands 工程目录运行 npm run workbench\n`);
+    process.stderr.write(`  未启动 → 在 HappyHands 工程目录运行 npm run workbench\n`);
   }
 }
 
@@ -172,6 +175,7 @@ pnpm harness case-admit --run DIRECTORY --id HASH --kind improved|preserved|regr
 pnpm harness memory-exception --run DIRECTORY --principle ID --hash CONTENT_HASH --decision exclude|apply --reason TEXT
 pnpm harness status --run DIRECTORY
 pnpm harness next --run DIRECTORY
+pnpm harness report --run DIRECTORY [--out FILE]
 pnpm harness export --run DIRECTORY [--out DIRECTORY]
 pnpm harness compare --run DIRECTORY --state ID --configuration ID [--out DIRECTORY]
 pnpm harness reindex [--out DIRECTORY]
@@ -211,6 +215,26 @@ finding, and evaluate reports deterministic render checks without claiming an im
     else{if(options.surface)throw Error('Surface belongs in the audit, not a command override.');console.log(JSON.stringify(await saveExperienceRecord(directory,phase,JSON.parse(await readFile(required(options,'input'),'utf8'))),null,2));}
     return;
   }
+  if(command==='quickstart'){
+    // Writes the three input files outside the repository, then runs the
+    // ordinary start and baseline capture so nothing behaves differently.
+    const {buildQuickstartInputs}=await import('../packages/harness-core/quickstart.js');
+    const {execFile}=await import('node:child_process');const {promisify}=await import('node:util');
+    const inputs=buildQuickstartInputs({repo:required(options,'repo'),url:required(options,'url'),task:required(options,'task'),name:options.name,request:options.request});
+    const outputRoot=runOutputRoot(options);
+    const inputDirectory=join(dirname(outputRoot),'inputs',new Date().toISOString().replace(/[:.]/g,'-'));
+    await mkdir(inputDirectory,{recursive:true});
+    const writeJson = async (name, value) => writeFile(join(inputDirectory, name), JSON.stringify(value, null, 2) + '\n');
+    await writeJson('experience.json', inputs.spec);
+    await writeJson('capture-plan.json', inputs.capturePlan);
+    await writeJson('project.json', inputs.config);
+    const self = (...args) => promisify(execFile)(process.execPath, [fileURLToPath(import.meta.url), ...args], { env: process.env, maxBuffer: 16 * 1024 * 1024 });
+    const run = (await self('start', '--config', join(inputDirectory, 'project.json'), '--out', outputRoot)).stdout.trim().split(/\r?\n/).pop();
+    let capture={status:'captured'};
+    try{await self('capture','--run',run,'--phase','before','--plan',join(inputDirectory,'capture-plan.json'),'--repo',inputs.config.repo,'--bind-evidence','true',...(options.browser?['--browser',options.browser]:[]));}
+    catch(error){capture={status:'failed',error:String(error.stderr||error.message).trim().slice(-2000)};process.exitCode=1;}
+    console.log(JSON.stringify({run,inputs:inputDirectory,capture,next:`next --run ${run}`},null,2));return;
+  }
   if(command==='start'){
     const config=await loadProjectConfig(required(options,'config'));
     if(config.mode!=='review'||!config.url)throw Error('Lightweight start requires an existing preview and explicit mode review; use onboard for bootstrap.');
@@ -246,7 +270,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
     if(options['preflight-only']!==undefined&&!['true','false'].includes(options['preflight-only']))throw Error('--preflight-only must be true or false.');
     if(options['resume-review']!==undefined&&!['true','false'].includes(options['resume-review']))throw Error('--resume-review must be true or false.');
     if(options['max-model-calls']!==undefined&&!/^(0|[1-9][0-9]*)$/.test(options['max-model-calls']))throw Error('--max-model-calls must be a nonnegative integer.');
-    console.log(JSON.stringify(await headlessModel({directory:required(options,'run'),phase:command==='model-diagnose'?'diagnosis':'review',model:options.model,language:options.language||'zh',...(options['max-model-calls']!==undefined?{maxModelCalls:Number(options['max-model-calls'])}:{}),resumeReview:options['resume-review']==='true',...(Object.keys(costPolicy).length?{costPolicy}:{}),retryReason:options['retry-reason'],preflightOnly:options['preflight-only']==='true'}),null,2));return;
+    console.log(JSON.stringify(await headlessModel({directory:required(options,'run'),phase:command==='model-diagnose'?'diagnosis':'review',model:options.model,...(options.agent?{agent:options.agent}:{}),language:options.language||'zh',...(options['max-model-calls']!==undefined?{maxModelCalls:Number(options['max-model-calls'])}:{}),resumeReview:options['resume-review']==='true',...(Object.keys(costPolicy).length?{costPolicy}:{}),retryReason:options['retry-reason'],preflightOnly:options['preflight-only']==='true'}),null,2));return;
   }
   if (command === 'skills') {
     const skills = await loadRegistry();
@@ -365,10 +389,17 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const manifest = (await loadRun(directory)).manifest;
     await printWorkbenchLink(manifest.id, workflowState(manifest).stage);
     process.stdout.write(JSON.stringify({ ...manifest, workflow: workflowState(manifest) }, null, 2) + '\n');
+  } else if (command === 'report') {
+    const { buildRunReport } = await import('../packages/harness-core/report.js');
+    process.stdout.write(JSON.stringify(await buildRunReport({ directory, outputPath: options.out }), null, 2) + '\n');
   } else if (command === 'next') {
     const manifest = (await loadRun(directory)).manifest;
-    await printWorkbenchLink(manifest.id, workflowState(manifest).stage);
-    process.stdout.write(JSON.stringify(workflowState(manifest), null, 2) + '\n');
+    const state = workflowState(manifest);
+    await printWorkbenchLink(manifest.id, state.stage);
+    const { nextCliCommand } = await import('../packages/harness-core/next-command.js');
+    const { hasPendingSelfExecution } = await import('../packages/harness-core/runner.js');
+    const pendingSelf = state.stage === 'needs-execution' && await hasPendingSelfExecution(directory);
+    process.stdout.write(JSON.stringify({ ...state, cli: nextCliCommand(state, manifest, directory, { pendingSelf }) }, null, 2) + '\n');
   } else if (command === 'skill') {
     const result = await executeSkill({ id: required(options, 'skill'), directory, repo: options.repo ? resolve(options.repo) : undefined });
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
@@ -451,7 +482,16 @@ finding, and evaluate reports deterministic render checks without claiming an im
       commandOverride: options.command,
       model: options.model
     });
+    if (execution.status === 'awaiting-operator-edit') {
+      process.stdout.write(JSON.stringify(execution, null, 2) + '\n');
+      return;
+    }
     await printWorkbenchLink(execution.branch.replace(/^pd\//, ""));
+    process.stdout.write(JSON.stringify(execution, null, 2) + '\n');
+    if (executionBlock({ execution })) process.exitCode = 1;
+  } else if (command === 'execute-finish') {
+    const { finishSelfExecution } = await import('../packages/harness-core/runner.js');
+    const execution = await finishSelfExecution({ directory });
     process.stdout.write(JSON.stringify(execution, null, 2) + '\n');
     if (executionBlock({ execution })) process.exitCode = 1;
   } else if (command === 'evaluate') {

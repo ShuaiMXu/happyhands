@@ -54,8 +54,21 @@ async function checkDependencies(directory, repositoryRoot) {
   }
 }
 
+// The executor binary comes from the same registry `execute` uses, so a CLI
+// declared in agents.json is checked exactly like the built-in ones.
+async function executorCommand(agent) {
+  if (agent === 'codex') return 'codex';
+  if (agent === 'claude-code') return 'claude';
+  for (const candidate of ['../packages/harness-core/agents.js', '../../../packages/harness-core/agents.js']) {
+    let module;
+    try { module = await import(new URL(candidate, import.meta.url)); } catch { continue; }
+    try { return module.resolveAgent(agent).command; } catch (error) { throw new Error(`Select --agent codex, claude-code or an agent declared in agents.json. ${error.message}`); }
+  }
+  throw new Error(`Select --agent codex or claude-code; unknown agent "${agent}".`);
+}
+
 export async function preflight({agent = 'codex', repo, url} = {}, {execute = exec, request = fetch, browserPaths = installedBrowsers} = {}) {
-  if (!['codex', 'claude-code'].includes(agent)) throw new Error('Select --agent codex or claude-code.');
+  const executor = await executorCommand(agent);
   let previewUrl;
   if (url !== undefined) {
     previewUrl = new URL(url);
@@ -64,7 +77,7 @@ export async function preflight({agent = 'codex', repo, url} = {}, {execute = ex
     }
   }
   const tools = {};
-  for (const [key, binary] of [['git', 'git'], ['executor', agent === 'codex' ? 'codex' : 'claude']]) {
+  for (const [key, binary] of [['git', 'git'], ['executor', executor]]) {
     try {
       tools[key] = {available: true, version: (await execute(binary, ['--version'], {timeout: 10000, maxBuffer: 65536})).stdout.trim()};
     } catch {

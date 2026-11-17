@@ -26,13 +26,16 @@ export function publicExecutionBrief(brief){
  return start<0?brief:brief.slice(0,start)+'\n\nPrivate planning or historical context omitted from this public display copy. Execute only from the original local run.\n';
 }
 
-// A run directory also holds a full Git worktree and the raw Codex event log.
+// A run directory also holds a full Git worktree and the raw agent event log.
 // Neither belongs in a statically served folder: the worktree is a second copy
 // of the target repository, and the log echoes repository content and local
 // paths. Export copies an allow-list instead of walking the directory.
 const CAPTURE_FILES = ['capture.json'];
 const LEGACY_SCREENSHOTS = ['desktop.png', 'mobile.png'];
-const RUN_FILES = ['experience.json', 'diagnosis.json', 'evaluation.json', 'codex-brief.md', 'component-reuse-plan.json', 'diff.patch', 'execution-context.json', ...remediationExportFiles];
+const EXECUTION_BRIEF = 'execution-brief.md';
+// Runs created before multi-agent support stored the same file as codex-brief.md.
+const LEGACY_EXECUTION_BRIEF = 'codex-brief.md';
+const RUN_FILES = ['experience.json', 'diagnosis.json', 'evaluation.json', EXECUTION_BRIEF, 'component-reuse-plan.json', 'diff.patch', 'execution-context.json', ...remediationExportFiles];
 
 async function writeJson(path, value) {
   const temporary = `${path}.${process.pid}.${randomUUID()}.tmp`;
@@ -199,8 +202,13 @@ export async function exportRun({ directory, outputRoot, allowPendingBootstrap =
   }
   if(incrementalCapture){await writeJson(join(target,'incremental-capture-plan.json'),incrementalCapture);copied.push('incremental-capture-plan.json');}
   for (const name of RUN_FILES) {
-    if(name==='codex-brief.md'){
-      try{const brief=await readFile(join(run.directory,name),'utf8');await writeFile(join(target,name),publicExecutionBrief(brief));copied.push(name);}catch(error){if(error.code!=='ENOENT')throw error;}
+    if(name===EXECUTION_BRIEF){
+      // Copy whichever name this run actually used, under that same name, so old
+      // runs keep exporting the file their manifest points at.
+      for(const candidate of new Set([run.manifest.plan?.path,EXECUTION_BRIEF,LEGACY_EXECUTION_BRIEF].filter(Boolean))){
+        try{const brief=await readFile(join(run.directory,candidate),'utf8');await writeFile(join(target,candidate),publicExecutionBrief(brief));copied.push(candidate);break;}
+        catch(error){if(error.code!=='ENOENT')throw error;}
+      }
       continue;
     }
     if (await copyIfPresent(join(run.directory, name), join(target, name))) copied.push(name);

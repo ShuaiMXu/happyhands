@@ -25,6 +25,7 @@ import { join, resolve, relative, isAbsolute, basename } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { chromium } from 'playwright-core';
 import { createJobs, runLocal, writeJson } from './jobs.js';
+import { adaptModelLauncher } from '../harness-core/model-adapters.js';
 import { resolveCanvasTarget } from './cowart-storage.js';
 import { createRun, loadRun, saveOnboarding, confirmFinding, saveRepairScope, savePlan, saveEvaluation, saveJudgment, saveVisualReview, saveReviewAttachment, saveFoundationApproval, recordAbsentBaseline, runFilePath } from '../harness-core/store.js';
 import { assertManagedPreview, loadProjectConfig, inspectRepository, publicProjectConfig, spawnPreview, stopPreview, waitForPreview } from '../harness-core/onboard.js';
@@ -69,7 +70,7 @@ export function createWorkbench(root, dependencies = {}) {
   const jobs = createJobs(root), runRoot = join(root, '.harness', 'runs'), bindings = join(root, '.harness', 'workbench-projects'), previewSessions = new Map();
   const startingPreviews = new Map();
   let closed = false;
-  const execute = dependencies.execute || executeWithAgent, generate = dependencies.generate || runLocal,createPr=dependencies.createPullRequest||createReviewedPullRequest;
+  const execute = dependencies.execute || executeWithAgent, generate = adaptModelLauncher(dependencies.generate || runLocal),createPr=dependencies.createPullRequest||createReviewedPullRequest;
   const inspect = dependencies.inspectRepository || inspectRepository, launchPreview = dependencies.spawnPreview || spawnPreview, haltPreview = dependencies.stopPreview || stopPreview, awaitPreview = dependencies.waitForPreview || waitForPreview, fingerprintPreview = dependencies.previewResponseFingerprint || previewResponseFingerprint;
   const request = dependencies.fetch || fetch;
   const capturePage = dependencies.captureBrowser || captureBrowser, capturePlan = dependencies.captureBrowserPlan || captureBrowserPlan;
