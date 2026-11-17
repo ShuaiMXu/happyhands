@@ -158,10 +158,15 @@ async function loadFoundationEvidence(manifest, base) {
   return loadFoundationEvidenceRecords(records, path => fetchJson(`${base}/${path}`));
 }
 
+// Runs created before multi-agent support recorded the brief as codex-brief.md.
+// Read whichever name this run carried, and only from that allow-list.
+const EXECUTION_BRIEF_NAMES = new Set(['execution-brief.md', 'codex-brief.md']);
+
 async function loadBrief(manifest, base) {
-  if (manifest.plan?.path !== 'execution-brief.md') return null;
+  const name = manifest.plan?.path;
+  if (!EXECUTION_BRIEF_NAMES.has(name)) return null;
   try {
-    const response = await fetch(`${base}/execution-brief.md`, { cache: 'no-store' });
+    const response = await fetch(`${base}/${name}`, { cache: 'no-store' });
     return response.ok ? await response.text() : null;
   } catch { return null; }
 }
