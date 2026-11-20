@@ -20,6 +20,8 @@ Run relevant read-only diagnostic methods, then `HH model-diagnose --run RUN`. I
 
 ## An explicit requested change
 
+If the user has already authorized an exact candidate in the current diagnosis, use `HH next --run RUN --authorized-finding ID` and execute its digest-bound repair command. If the diagnosis changes or the proposed work reaches beyond that candidate, recheck the user's authorization before recording scope.
+
 When the user asks for a concrete enhancement to an existing page, retain that intent as an authored finding in the initial Experience Spec, with `evidenceIds` citing the actual request (`origin:"authored-sample"`). Clearly distinguish this requirement from a claim that the current UI is defective. Put the concrete task and product facts in `project.goal`/`project.task` too; only selected finding evidence enters the scoped brief. Inspect the actual diagnosis context and generated brief for the complete requirements before execution. A nearby brief file is not an input binding.
 
 Capture fresh originals and diagnose the current page as usual. The original authored candidate remains available through the existing schema; after checking the user's authorization, use `HH repair-scope --run RUN --finding REQUEST_ID`, then `HH plan --run RUN --finding AUTOMATIC_REPAIR`. This records user-delegated investigation and implementation, not human verification or final acceptance. Unrequested suggestions still need the clear-defect admission policy. Preserve reasonable existing choices. A missed or rejected model candidate is not a reason to rewrite historical output or repeat diagnosis until it agrees.

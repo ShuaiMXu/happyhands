@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {fileURLToPath} from 'node:url';
 import {createWorkbench} from '../packages/workbench/service.js';
 import {createRun,saveCapture,saveDiagnosis,saveExecution,saveVisualReview,saveFoundationApproval,saveRepairScope,savePlan,loadRun,verifiedExecutionBrief,saveOnboarding} from '../packages/harness-core/store.js';
 import {primaryActionForStage} from '../packages/harness-core/primary-action.js';
@@ -66,6 +69,34 @@ test('automatic repair rejects incomplete diagnosis and unknown individual issue
  const diagnosis=JSON.parse(await readFile(join(run.directory,'diagnosis.json'),'utf8'));diagnosis.modelDiagnosis={status:'failed',summary:'Interrupted',limitations:['Test fixture']};await saveDiagnosis(run.directory,diagnosis);
  await assert.rejects(saveRepairScope(run.directory),/diagnosis is incomplete/);
  assert.equal((await loadRun(run.directory)).manifest.confirmation,null);
+});
+
+test('next carries exact prior authorization into the bound repair command without acting on a changed diagnosis', async t => {
+ const {run}=await fixture(t);
+ const cli=fileURLToPath(new URL('../scripts/harness.mjs',import.meta.url));
+ const invoke=async (...args)=>JSON.parse((await promisify(execFile)(process.execPath,[cli,...args])).stdout);
+ const next=(...args)=>invoke('next','--run',run.directory,...args);
+ assert.equal((await next()).cli.actor,'user');
+ await assert.rejects(next('--authorized-finding','UNKNOWN'),/No current evidence-backed/);
+ const approved=await next('--authorized-finding','TEST_FINDING');
+ assert.equal(approved.cli.actor,'agent');
+ const [step]=approved.cli.steps;
+ assert.deepEqual(step.argv.slice(0,-1),['repair-scope','--run',run.directory,'--finding','TEST_FINDING','--diagnosis-hash']);
+ assert.equal((await loadRun(run.directory)).manifest.confirmation,null);
+
+ const diagnosis=JSON.parse(await readFile(join(run.directory,'diagnosis.json'),'utf8'));
+ diagnosis.findings.push({...diagnosis.findings[0],id:'SECOND'});
+ await saveDiagnosis(run.directory,diagnosis);
+ await assert.rejects(invoke(...step.argv),/diagnosis changed/);
+ assert.equal((await loadRun(run.directory)).manifest.confirmation,null);
+ const current=await next('--authorized-finding','TEST_FINDING');
+ await invoke(...current.cli.steps[0].argv);
+ const {manifest}=await loadRun(run.directory);
+ assert.deepEqual(manifest.repair.findingIds,['TEST_FINDING']);
+ assert.equal(manifest.confirmation.authority,'user-delegated');
+ assert.equal(manifest.judgment,null);
+ assert.equal((await next()).stage,'needs-plan');
+ await assert.rejects(invoke(...current.cli.steps[0].argv),/confirmation is already recorded/);
 });
 
 for(const resume of [false,true])test(`one click ${resume?'resumes a bound scope':'prepares scope and plan'} before isolated execution`,async t=>{

@@ -16,7 +16,7 @@ function step(argv, needs = {}) {
   return {argv, needs};
 }
 
-export function nextCliCommand(state, manifest, directory, {pendingSelf = false, reviewCallCeiling} = {}) {
+export function nextCliCommand(state, manifest, directory, {pendingSelf = false, reviewCallCeiling, authorizedFinding} = {}) {
   const repo = manifest.onboarding?.repository?.root || 'REPO';
   const worktree = manifest.execution?.worktree || 'WORKTREE';
   const finding = manifest.confirmation?.findingId || 'FINDING_ID';
@@ -35,6 +35,9 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false,
     case 'needs-diagnosis':
       return {actor: 'agent', steps: [step(['model-diagnose', ...run(directory)])], alternatives: [step(['diagnose', ...run(directory)])]};
     case 'awaiting-confirmation':
+      if (authorizedFinding) return {actor: 'agent', steps: [
+        step(['repair-scope', ...run(directory), '--finding', authorizedFinding.id, '--diagnosis-hash', authorizedFinding.diagnosisHash])
+      ]};
       return {actor: 'user', ask: 'Show the user the diagnosed candidates and ask which to repair. Record only what they authorise.', steps: [
         step(['repair-scope', ...run(directory), '--finding', 'FINDING_ID'], {FINDING_ID: 'candidate the user chose, or replace --finding with --all true'}),
         step(['confirm', ...run(directory), '--finding', 'FINDING_ID', '--verdict', 'supported', '--note', 'NOTE'], {FINDING_ID: 'reproduced finding', NOTE: 'what you observed in the current page'})

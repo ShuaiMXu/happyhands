@@ -723,20 +723,34 @@ export async function beginExecutionContext(directory,repo,expectedPlanHash) {
   });
 }
 
+export async function readRepairCandidates(run, findingId) {
+  const {directory, manifest} = run;
+  if (manifest.mode !== 'review' || !manifest.captures.before || !manifest.diagnosis) throw Error('Diagnose the current baseline before requesting repairs.');
+  if (manifest.executionContext || manifest.execution || manifest.captures.after) throw Error('This review already started execution; start a fresh review.');
+  const diagnosis = JSON.parse(await readFile(runFilePath(directory, manifest.diagnosis.path), 'utf8'));
+  if (diagnosis.modelDiagnosis && diagnosis.modelDiagnosis.status !== 'complete') throw Error('Model diagnosis is incomplete. Complete diagnosis before requesting repairs.');
+  const binding = await verifyBaselineDiagnosis(run, diagnosis);
+  if (binding?.foundationChanged) throw Error('Design Foundation changed; diagnose the current baseline again.');
+  const selected = diagnosis.findings.filter(item =>
+    (!findingId || item.id === findingId) && isReportableFinding(item) && item.evidenceRefs?.length && item.proposal?.trim()
+  );
+  if (!selected.length) throw Error('No current evidence-backed repair candidates are available.');
+  const diagnosisHash = createHash('sha256').update(JSON.stringify(diagnosis)).digest('hex');
+  return {diagnosis, selected, diagnosisHash};
+}
+
 // A repair click delegates investigation, not human verification of every candidate.
 // Keep that provenance distinct from the legacy manual confirmation and final judgment.
-export async function saveRepairScope(directory, { findingId } = {}) {
+export async function saveRepairScope(directory, { findingId, expectedDiagnosisHash } = {}) {
   return withRunLock(directory, async () => {
     const run = await loadRun(directory);
-    if (run.manifest.mode !== 'review' || !run.manifest.captures.before || !run.manifest.diagnosis) throw Error('Diagnose the current baseline before requesting repairs.');
-    if (run.manifest.executionContext || run.manifest.execution || run.manifest.captures.after) throw Error('This review already started execution; start a fresh review.');
-    const diagnosis = JSON.parse(await readFile(runFilePath(directory, run.manifest.diagnosis.path), 'utf8'));
-    if (diagnosis.modelDiagnosis && diagnosis.modelDiagnosis.status !== 'complete') throw Error('Model diagnosis is incomplete. Complete diagnosis before requesting repairs.');
-    const binding = await verifyBaselineDiagnosis(run, diagnosis);
-    if (binding?.foundationChanged) throw Error('Design Foundation changed; diagnose the current baseline again.');
-    const eligible = diagnosis.findings.filter(item => isReportableFinding(item) && item.verificationStatus !== 'stale-candidate' && item.evidenceRefs?.length && item.proposal?.trim());
-    const selected = findingId ? eligible.filter(item => item.id === findingId) : eligible;
-    if (!selected.length) throw Error('No current evidence-backed repair candidates are available.');
+    if (expectedDiagnosisHash !== undefined && run.manifest.confirmation) {
+      throw Error('A finding confirmation is already recorded. Reload the current scope.');
+    }
+    const {diagnosis, selected, diagnosisHash} = await readRepairCandidates(run, findingId);
+    if (expectedDiagnosisHash !== undefined && diagnosisHash !== expectedDiagnosisHash) {
+      throw Error('The diagnosis changed after the authorized finding was selected.');
+    }
     const evidence = new Map();
     for (const item of selected) for (const ref of item.evidenceRefs) {
       const entry = diagnosis.evidence.find(value => value.id === ref);
@@ -745,7 +759,7 @@ export async function saveRepairScope(directory, { findingId } = {}) {
       evidence.set(id, {id, state: entry.state || entry.source || ref, observation: JSON.stringify(entry), origin: entry.source === 'source-code' ? 'source-code' : 'browser'});
     }
     const candidates = selected.map(({id,title,proposal,evidenceRefs}) => ({id,title,proposal,evidenceRefs}));
-    const request = {version:'0.1', authority:'user-delegated', requestedAt:new Date().toISOString(), findingIds:selected.map(item=>item.id), diagnosisHash:createHash('sha256').update(JSON.stringify(diagnosis)).digest('hex'), candidates};
+    const request = {version:'0.1', authority:'user-delegated', requestedAt:new Date().toISOString(), findingIds:selected.map(item=>item.id), diagnosisHash, candidates};
     await writeJson(join(directory,'repair-request.json'), request);
     const id = 'AUTOMATIC_REPAIR';
     run.spec.evidence = [...run.spec.evidence.filter(item=>!item.id.startsWith('repair:')), ...evidence.values()];

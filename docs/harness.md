@@ -307,6 +307,8 @@ The operational Skill-to-stage mapping and current-page-first execution order ar
 
 New lightweight `start` and `continue` reviews use the [audit → design decision → independent experience review](experience-orchestration.md) gates. Old low-level and workbench records are not retroactively assessed; submit an audit before diagnosis or continue in a new run. Page changes and human acceptance remain separately authorized.
 
+When the user has already authorized repair of one diagnosed finding, call `next --run RUN --authorized-finding FINDING_ID`. It validates that exact candidate and outputs the `repair-scope` command bound to the diagnosis digest. Running that command records the delegated finding. A changed diagnosis invalidates the prepared command. Use ordinary `next` when approval is missing or the proposed change expands the approved scope.
+
 
 ## Goal-bound review and measured cost (isolated candidate)
 
