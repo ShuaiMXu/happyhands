@@ -21,13 +21,13 @@ function readingGroup({id, reference, inventory, candidates, required, adapter, 
 }
 
 export function buildGuidanceReadingPlan({
-  design, ojo, local, goal, stage, implementationRefs = [], depth = process.env.HAPPYHANDS_GUIDANCE_DEPTH
+  design, ojo, local, goal, stage, repairImpact = 'unknown', implementationRefs = [], depth = process.env.HAPPYHANDS_GUIDANCE_DEPTH
 } = {}) {
   const groups = [];
   const excluded = [];
   const profile = design?.metadata.profile;
   const full = depth === 'full';
-  const narrowRepair = goal?.kind === 'repair' && ['polish', 'harden'].includes(profile?.intent);
+  const narrowRepair = repairImpact === 'local' && goal?.kind === 'repair' && ['polish', 'harden'].includes(profile?.intent);
   if (ojo) {
     // The OJO adapter requires the entry and anti-patterns. Audit and any
     // execution-contract recipes remain required in their respective stages.
@@ -76,6 +76,7 @@ export function buildGuidanceReadingPlan({
     surface: profile?.taste || null,
     depth: full ? 'full' : 'focused',
     goal: goal?.kind || null,
+    repairImpact,
     groups, excluded
   };
 }

@@ -4,7 +4,7 @@ import {reviewBatchKey} from './review-batch-key.js';
 import {reserveReviewCall,settleReviewCall,reviewUsageCollector,reviewCostReport,assertCostPolicy} from './review-costs.js';
 import {readReviewBatch,saveReviewBatch} from './review-batch-cache.js';
 import {pageStructurePrompt,aggregateStructureReviews} from './page-structure-review.js';
-import {experienceFor,experienceGuidanceProfile,EXPERIENCE_INSTRUCTIONS} from './experience-orchestration.js';
+import {confirmedRepairImpact,experienceFor,experienceGuidanceProfile,EXPERIENCE_INSTRUCTIONS} from './experience-orchestration.js';
 import {designSourceContext} from './design-sources.js';
 import {readRemediation,methodReviewPrompt,aggregateMethodChecks} from './remediation.js';
 import {readVerificationEvidence,readVerificationFile} from './verification.js';
@@ -98,7 +98,8 @@ async function reviewBatch(directory, run, {cwd,signal,generate,language='zh',pu
   const design=await stageDesignGuidance(cwd,'review',experienceGuidanceProfile(run));
   const plannedCaptures=['before','after'].flatMap(phase=>captureEntries(plannedManifest.captures[phase]).map(entry=>({phase,stateId:entry.stateId,configurationId:entry.configurationId,dom:entry.dom||null,start:entry.start,finalUrl:entry.finalUrl,actions:entry.actions||[],actionEvidence:entry.actionEvidence||[],finalStateEvidence:entry.finalStateEvidence||[],plannedScrollSurface:entry.plannedScrollSurface,scrollSurface:entry.scrollSurface,reached:entry.reached,screenshot:entry.screenshot,captureMode:entry.captureMode||'viewport',documentSize:entry.documentSize,screenshotSize:entry.screenshotSize,error:entry.error,region:entry.region})));
   const experience=await experienceFor(await loadRun(directory),'decision');
-  const readingPlan=buildGuidanceReadingPlan({design,ojo,stage:'review',goal:experience?.audit.task.goal});
+  const repairImpact=purpose==='cross-region'?'broad':confirmedRepairImpact(run,experience);
+  const readingPlan=buildGuidanceReadingPlan({design,ojo,stage:'review',goal:experience?.audit.task.goal,repairImpact});
   const context={experience,readingPlan,reviewOrder,reviewStage,reviewPurpose:purpose,regionalReviews,plannedCaptures,originalAssignment:plannedCaptures.map(entry=>({reference:entry.screenshot||null,stateId:entry.stateId,configurationId:entry.configurationId,phase:entry.phase,reached:entry.reached,assigned:!!entry.screenshot&&evidence.some(item=>item.reference===entry.screenshot),reviewedRegionally:!!entry.screenshot&&regionalReviews.some(review=>review.screenshotRefs.includes(entry.screenshot))})),ojoGuidance:ojo.metadata,designGuidancePacks:design.metadata,confirmedChange:run.manifest.confirmation?.verdict==='supported' ? run.spec.findings.find(item=>item.id===run.manifest.confirmation.findingId) || null : null,designLanguageRubric,designFoundation:run.spec.designFoundation || null,foundationApproval:run.manifest.foundationApproval || null,project:run.spec.project,requestedChanges:run.spec.findings,evidence,annotations,evaluation:run.manifest.evaluation};
   context.verification={digest:run.manifest.verificationEvidence?.digest||null,binding:run.verificationBinding||null,records:verificationRecords};
   context.previousReview=run.previousReview||null;

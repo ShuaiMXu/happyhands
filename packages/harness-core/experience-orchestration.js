@@ -42,6 +42,10 @@ const decisionSchema=object({
  chosen:text,whyBetterForTask:text,tradeoffs:text,referenceApplications:{type:'array',maxItems:128,items:object({source:text,application:text,verification:text})},
  verification:list(object({criterion:text,method:text,expectedEvidence:text})),methods:list(method)
 });
+decisionSchema.properties.repairImpact={
+ type:'string',enum:['local','broad'],
+ description:'Use local only for a confirmed repair confined to one identified component instance or usage. Use broad for shared implementation, page-level or cross-route effects. Omit when the impact is unknown.'
+};
 auditSchema.properties.task.properties.goal=reviewGoalSchema;
 auditSchema.allOf=[{if:{properties:{version:{const:CURRENT_EXPERIENCE_POLICY}}},then:{properties:{task:{type:'object',required:['goal']}}}}];
 const ajv=new Ajv({allErrors:true});
@@ -54,6 +58,15 @@ export function experienceGuidanceProfile(run){
  const configured=run.manifest.onboarding?.config?.designGuidance||{};
  const surface=run.manifest.experienceAudit?.surface;
  return surface?{...configured,taste:surface,dials:undefined}:configured;
+}
+export function confirmedRepairImpact(run, experience){
+ const {confirmation}=run.manifest;
+ const decision=experience?.decision;
+ if(experience?.audit.task.goal?.kind!=='repair'||confirmation?.verdict!=='supported'||
+    confirmation.authority==='user-delegated'||!decision||decision.findingId!==confirmation.findingId)return 'unknown';
+ const {repairImpact,problemIds,components}=decision;
+ if(repairImpact==='broad'||problemIds.length>1||components.length>1||components[0].consumers.length>1)return 'broad';
+ return repairImpact==='local'?'local':'unknown';
 }
 async function binding(run){
  const originals=[];
@@ -132,7 +145,7 @@ export async function experienceContext(directory,surface){
   ...group.embedded[0], text:adapters.find(adapter=>adapter.id===group.id).text
  }));
  const stageInstructions=audit
-  ? 'Read the frozen audit. Write the decision against decisionSchema for the current diagnosed and confirmed scope. Compare a lighter alternative or preservation.'
+  ? 'Read the frozen audit. Write the decision against decisionSchema for the current diagnosed and confirmed scope. Compare a lighter alternative or preservation. Record repairImpact only when you can identify the affected component and its consumers. A shared component or page-level change has broad impact.'
   : 'Inspect originals and write the audit against auditSchema before formal diagnosis. Record user constraints separately from operator proposals.';
  return {readingPlan,embeddedAdapters,localMethods:local,policy,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema:scopedAuditSchema,decisionSchema:scopedDecisionSchema,instructions:'Follow readingPlan for this stage. Read all mustRead documents in full and use the supplied complete adapter text without reopening it. Read onDemand references in full when relevant. The pack readFirst fields are the available routes; readingPlan determines what to read now. Inspect the actual project sources. Contract-only methods are guidance, not executed analyzers. '+stageInstructions+' A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
 }

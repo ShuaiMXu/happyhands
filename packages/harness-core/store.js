@@ -691,8 +691,9 @@ export async function saveRunMemoryException(directory,input) {
   });
 }
 
-export async function verifiedExecutionBrief(run) {
-  if(experienceRequired(run)){const experience=await experienceFor(run,'decision');if(JSON.stringify(run.manifest.plan.experience)!==JSON.stringify({auditHash:experience.auditHash,decisionHash:experience.decisionHash}))throw Error('Execution design decision changed.');}
+export async function readVerifiedExecutionPlan(run) {
+  const experience=await experienceFor(run,'decision');
+  if(experience&&JSON.stringify(run.manifest.plan.experience)!==JSON.stringify({auditHash:experience.auditHash,decisionHash:experience.decisionHash}))throw Error('Execution design decision changed.');
   if(run.manifest.repair){await repairRequestContext(run);if(run.manifest.plan?.repairRequestHash!==run.manifest.repair.hash)throw Error('Repair plan no longer matches its request.');}
   const refs=designSourceRefs(run);
   if((refs.length||run.manifest.plan.designSourcesDigest)&&run.manifest.plan.designSourcesDigest!==designSourcesDigest(refs))throw Error('Selected design sources changed after planning. Regenerate and confirm the plan.');
@@ -700,7 +701,11 @@ export async function verifiedExecutionBrief(run) {
   if (!run.manifest.plan.briefHash || createHash('sha256').update(brief).digest('hex') !== run.manifest.plan.briefHash) throw Error('Execution brief changed or lacks an integrity binding. Regenerate the plan and confirm its scope.');
   if (run.manifest.plan.kind === 'fix' && (!run.manifest.plan.confirmationHash || projectMemoryDigest(run.manifest.confirmation) !== run.manifest.plan.confirmationHash)) throw Error('Confirmed scope changed. Reopen and confirm the scope before execution.');
   if(refs.length&&!brief.endsWith(await designSourceBrief(run)))throw Error('Execution brief does not bind the selected design sources.');
-  return brief;
+  return {brief,experience};
+}
+
+export async function verifiedExecutionBrief(run) {
+  return (await readVerifiedExecutionPlan(run)).brief;
 }
 
 export async function beginExecutionContext(directory,repo,expectedPlanHash) {

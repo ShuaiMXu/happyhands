@@ -13,13 +13,16 @@ test('public-page reading is complete for design improvements and bounded for a 
   t.after(() => rm(directory, {recursive: true, force: true}));
   const design = await stageDesignGuidance(directory, 'review', {taste: 'public-page', intent: 'polish'});
   const ojo = await stageOjoGuidance(directory, 'review');
-  const plan = (kind, depth = 'focused') => buildGuidanceReadingPlan({design, ojo, goal: {kind}, depth});
-  const focused = plan('repair');
-  const complete = plan('repair', 'full');
+  const plan = (kind, repairImpact, depth = 'focused') => buildGuidanceReadingPlan({design, ojo, goal: {kind}, repairImpact, depth});
+  const focused = plan('repair', 'local');
+  const complete = plan('repair', 'local', 'full');
   const web = value => value.groups.find(group => group.id === 'web-taste');
   const required = value => web(value).mustRead.map(file => file.path);
-  assert.deepEqual(required(plan('improvement')), required(complete));
+  assert.deepEqual(required(plan('improvement', 'local')), required(complete));
+  assert.deepEqual(required(plan('mixed', 'local')), required(complete));
   assert.deepEqual(required(plan(undefined)), required(complete));
+  assert.deepEqual(required(plan('repair')), required(complete));
+  assert.deepEqual(required(plan('repair', 'broad')), required(complete));
   assert.deepEqual(required(focused), [web(focused).reference + '/upstream/SKILL.md']);
   assert.equal(web(focused).onDemand.length, 5);
   assert.ok(web(focused).onDemand.some(file => file.path.endsWith('/layout-v4.md')));
@@ -39,6 +42,7 @@ test('public-page reading is complete for design improvements and bounded for a 
   assert.ok(await requiredBytes(focused) < (await requiredBytes(complete)) / 2,
     'the scoped web-taste required file bytes should be less than half the full route');
   const prompt = ojoGuidancePrompt(ojo, directory, focused) + designGuidancePrompt(design, directory, focused);
+  assert.match(prompt, /read the complete public-page route before proceeding/);
   for (const source of [...web(focused).mustRead, ...web(focused).onDemand]) {
     assert.ok(prompt.includes(join(directory, source.path)));
   }

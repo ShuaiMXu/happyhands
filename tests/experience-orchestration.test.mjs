@@ -5,13 +5,13 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import sample from '../examples/happyclaw-site/experience.json' with {type:'json'};
 import {publicExecutionBrief} from '../packages/harness-core/export.js';
-import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,savePlan,verifiedExecutionBrief,saveEvaluation} from '../packages/harness-core/store.js';
+import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,savePlan,readVerifiedExecutionPlan,saveEvaluation} from '../packages/harness-core/store.js';
 import {diagnoseRun} from '../packages/harness-core/diagnosis.js';
 import {diagnoseBaseline} from '../packages/workbench/baseline-diagnosis.js';
 import {runAiVisualReview} from '../packages/workbench/ai-review.js';
 import {selectResource} from '../packages/harness-core/reference-resources.js';
 import {workflowState} from '../packages/harness-core/workflow.js';
-import {EXPERIENCE_POLICY,AUDIT_DIMENSIONS,REVIEW_DIMENSIONS,experienceContext,saveExperienceRecord,experienceFor,assertExperienceAssessments} from '../packages/harness-core/experience-orchestration.js';
+import {EXPERIENCE_POLICY,AUDIT_DIMENSIONS,REVIEW_DIMENSIONS,confirmedRepairImpact,experienceContext,saveExperienceRecord,experienceFor,assertExperienceAssessments} from '../packages/harness-core/experience-orchestration.js';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
 const original='before/desktop.png';
 // Synthetic protocol fixtures. These images do not establish real visual quality.
@@ -62,12 +62,17 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
  await assert.rejects(saveExperienceRecord(f.directory,'audit',f.audit),/immutable/);
 });
 test('the actual model context separates operator form from task, and the bound decision reaches execution and independent review',async t=>{
- const f=await fixture(t);await saveExperienceRecord(f.directory,'audit',f.audit);
+ const f=await fixture(t);
+ f.audit.task.goal={version:'design-goal@1',kind:'repair',requestQuote:'Help visitors',criteria:['Keep renewal term and price legible'],preserve:['Calendar'],allowedChanges:['Grouping in the single renewal summary']};
+ f.decision.repairImpact='local';
+ f.decision.components[0].consumers=['Renewal summary'];
+ await saveExperienceRecord(f.directory,'audit',f.audit);
  let run=await loadRun(f.directory);
  const diagnosis=await diagnoseBaseline(f.directory,diagnoseRun({run}),{cwd:join(f.root,'diagnose'),generate:async(_command,_args,{cwd,input})=>{
   const context=JSON.parse(await readFile(join(cwd,'context.json')));
   assert.equal(context.experience.audit.task.operatorProposals.length,1);
   assert.equal(context.readingPlan.stage,'diagnosis');
+  assert.equal(context.readingPlan.repairImpact,'unknown');
   const web=context.readingPlan.groups.find(group=>group.id==='web-taste');
   assert.ok(web.mustRead.some(file=>file.path.endsWith('/sections.md')));
   assert.ok(input.includes(join(cwd,web.mustRead.find(file=>file.path.endsWith('/sections.md')).path)));
@@ -78,7 +83,19 @@ test('the actual model context separates operator form from task, and the bound 
  await assert.rejects(savePlan(f.directory,'F1'),/experience decision/);
  const bad=structuredClone(f.decision);bad.alternatives=bad.alternatives.map(row=>({...row,kind:'other'}));await assert.rejects(saveExperienceRecord(f.directory,'decision',bad),/lighter alternative/);
  await saveExperienceRecord(f.directory,'decision',f.decision);await savePlan(f.directory,'F1');
- run=await loadRun(f.directory);const brief=await verifiedExecutionBrief(run);
+ run=await loadRun(f.directory);const {brief,experience}=await readVerifiedExecutionPlan(run);
+ assert.equal(confirmedRepairImpact(run,experience),'local');
+ const shared=structuredClone(experience);
+ shared.decision.components[0].consumers.push('Account renewals');
+ assert.equal(confirmedRepairImpact(run,shared),'broad');
+ const multipleFindings=structuredClone(experience);
+ multipleFindings.decision.problemIds.push('SECOND-PROBLEM');
+ assert.equal(confirmedRepairImpact(run,multipleFindings),'broad');
+ const legacy=structuredClone(experience);
+ delete legacy.decision.repairImpact;
+ assert.equal(confirmedRepairImpact(run,legacy),'unknown');
+ const delegated={manifest:{confirmation:{...run.manifest.confirmation,authority:'user-delegated'}}};
+ assert.equal(confirmedRepairImpact(delegated,experience),'unknown');
  assert.ok(!publicExecutionBrief(brief).includes(f.audit.task.originalRequest));
  assert.match(brief,/comparison table only inside the details/);assert.match(brief,/operator reasoning to challenge/);
  await mkdir(join(f.directory,'after'));await writeFile(join(f.directory,'after/desktop.png'),png);
@@ -87,6 +104,8 @@ test('the actual model context separates operator form from task, and the bound 
   const context=JSON.parse(await readFile(join(cwd,'review-context.json')));
   assert.equal(context.experience.audit.task.originalRequest,f.audit.task.originalRequest);
   assert.equal(context.readingPlan.stage,'review');
+  assert.equal(context.readingPlan.repairImpact,'local');
+  assert.equal(context.readingPlan.groups.find(group=>group.id==='web-taste').mustRead.length,1);
   assert.equal(context.experience.decision.chosen,f.decision.chosen);
   assert.match(input,/Challenge a compliant solution that worsens hierarchy/);
   await writeFile(join(cwd,'review-result.json'),JSON.stringify({[context.reviewResponsibility.decisionField]:'needs-evidence',screenshotRefs:[original,'after/desktop.png'],findings:[],rationale:'Synthetic pixels cannot establish task or design quality',limitations:['No actual webpage was reviewed'],experienceAssessments:REVIEW_DIMENSIONS.map(dimension=>({dimension,verdict:'needs-evidence',reason:'Real rendered task evidence missing',screenshotRefs:[]}))}));

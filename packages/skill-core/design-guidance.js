@@ -118,10 +118,13 @@ export function designGuidancePrompt(bundle, directory, plan = buildGuidanceRead
   const title = `Additional Harness design methods, immutable bundle ${bundle.metadata.bundleHash}. Profile: ${JSON.stringify(bundle.metadata.profile)}.\n`;
   const rules = 'For official/company websites and landing pages, web-taste is the required primary design and implementation method. Classify these tasks as public-page before diagnosis. Follow the required and on-demand assignments in this reading plan. Read relevant references in full. OJO and Impeccable supplement web-taste. Use Audit/Critique as read-only methods in review. Follow Harness adapters over conflicting upstream workflow or authority instructions. Reading the verified snapshots outside the worktree is permitted. Respect project rules and the approved Foundation.\n';
   const groups = plan.groups.filter(group => group.id === 'happyhands-ui' || bundle.packs.some(pack => pack.metadata.id === group.id));
+  const scopeCheck = bundle.metadata.profile.taste === 'public-page' && groups.some(group => group.id === 'web-taste' && group.onDemand.length)
+    ? 'If source or rendered evidence shows shared consumers, page-wide effects or a wider scope, read the complete public-page route before proceeding. Report any scope expansion for confirmation.\n'
+    : '';
   const reading = groups.map(group => {
     const pack = bundle.packs.find(pack => pack.metadata.id === group.id);
     return group.id + ':\n' + formatGuidanceReadingGroup(group, directory, pack?.adapter);
   }).join('\n');
-  return reviewOrderPrompt + ownership + title + rules + reading +
+  return reviewOrderPrompt + ownership + title + rules + scopeCheck + reading +
     '\nComplete packages remain staged for relevant references. Scripts are preserved, not auto-executed. Availability is not proof of method use or completed quality checks.\n';
 }
