@@ -5,6 +5,7 @@ import {join} from 'node:path';
 import {captureOriginals} from './capture-state.js';
 import {readVerificationFile,verificationHash,readVerificationEvidence} from './verification.js';
 import {assertVisualReview} from './visual-review.js';
+import {assertCriterionFiles} from './criterion-source-evidence.js';
 import {designSystemContext} from '../skill-core/design-system.js';
 import {assertBrandAssessments} from '../skill-core/brand-review.js';
 
@@ -64,7 +65,8 @@ export async function readVisualReviewBinding(run,reference,{requireBound=false,
     let sidecar=false;try{await readVerificationFile(run.directory,reference.path.replace(/\.json$/,'.binding.json'),8*1024*1024);sidecar=true;}catch(error){if(error.code!=='ENOENT')throw error;}
     if(sidecar)throw Error('Visual review binding reference is missing.');
     if(requireBound)throw Error('Visual review has no durable evidence binding; collect a fresh review.');
-    const review=JSON.parse(await readVerificationFile(run.directory,reference.path,1024*1024));if(checkContext)assertVisualReview(review,await reviewManifest(run));
+    const review=JSON.parse(await readVerificationFile(run.directory,reference.path,1024*1024));
+    if(checkContext){assertVisualReview(review,await reviewManifest(run));await assertCriterionFiles(run,review);}
     if(review.skillId!==reference.skillId||review.verdict!==reference.verdict||JSON.stringify(review.reviewer)!==JSON.stringify(reference.reviewer)||review.reviewedAt!==reference.reviewedAt||(review.verificationDigest||null)!==(reference.verificationDigest||null))throw Error('Legacy visual review reference changed.');
     return {status:'legacy-unbound',review,record:null};
   }
@@ -78,7 +80,7 @@ export async function readVisualReviewBinding(run,reference,{requireBound=false,
   if(checkContext&&review.skillId==='visual-qa-evaluator'&&(review.reviewer?.type==='model'||review.brandAssessments))assertBrandAssessments(review,await designSystemContext(run));
   if(review.skillId!==reference.skillId||review.verdict!==reference.verdict||review.reviewedAt!==reference.reviewedAt||JSON.stringify(review.reviewer)!==JSON.stringify(reference.reviewer)||(review.verificationDigest||null)!==(reference.verificationDigest||null))throw Error('Visual review reference changed.');
   if(checkContext&&record.contextHash!==verificationHash(context(run,review)))throw Error('Visual review context changed; collect a fresh review.');
-  if(checkContext)assertVisualReview(review,await reviewManifest(run));
+  if(checkContext){assertVisualReview(review,await reviewManifest(run));await assertCriterionFiles(run,review);}
   if(record.annotationArtifactsVersion!==undefined||review.annotationArtifacts){
     if(record.annotationArtifactsVersion!==1||review.annotationArtifacts?.version!==1)throw Error('Rendered annotation artifacts are missing or unsupported.');
     await assertReviewAnnotationArtifacts({directory:run.directory,review,manifest:run.manifest,artifacts:review.annotationArtifacts.images,checkOriginals});

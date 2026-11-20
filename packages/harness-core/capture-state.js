@@ -59,6 +59,21 @@ export function captureEntries(capture) {
   }));
 }
 
+export function capturedTaskContext(entry) {
+  const route = url => {
+    const parsed = new URL(url);
+    return parsed.pathname + parsed.search + parsed.hash;
+  };
+  return {
+    route: entry.start?.url ? route(entry.start.url) : null,
+    actions: (entry.actions || []).map(action => action.type === 'navigate' ? {...action, url:route(action.url)} : action),
+    scroll: entry.dom?.scroll,
+    language: entry.dom?.language,
+    appearance: entry.dom?.appearance,
+    scrollSurface: entry.plannedScrollSurface || null
+  };
+}
+
 export function entriesByKey(capture) {
   return new Map(captureEntries(capture).map(entry => [captureKey(entry.stateId, entry.configurationId), entry]));
 }

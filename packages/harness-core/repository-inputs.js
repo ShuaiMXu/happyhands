@@ -35,6 +35,8 @@ export async function readRepositoryInputs(run,phase){
   if(verificationHash(bytes)!==reference.hash)throw Error('Repository input artifact changed.');
   const record=validate(JSON.parse(bytes));
   if(!sameRepositoryFingerprint(record.fingerprint,reference.fingerprint)||capture.verificationSource&&!sameRepositoryFingerprint(record.fingerprint,capture.verificationSource))throw Error('Repository input capture binding changed.');
-  if(capture.designSystemSource?.status!=='capture-scan-match'||capture.designSystemSource.repositoryCommit!==record.fingerprint.commit||capture.designSystemSource.dirty!==record.fingerprint.dirty)throw Error('Repository inputs are not bound to the captured source.');
+  const design=capture.designSystemSource;
+  const sourceBound=design?.status==='not-extracted'&&capture.verificationSource;
+  if(!sourceBound&&(design?.status!=='capture-scan-match'||design.repositoryCommit!==record.fingerprint.commit||design.dirty!==record.fingerprint.dirty))throw Error('Repository inputs are not bound to the captured source.');
   return record;
 }

@@ -1,4 +1,5 @@
 import {assertReviewGoal} from './review-goal.js';
+import {assertCriterionAssessments} from './criterion-evidence.js';
 import {assertPageStructureReview,PAGE_STRUCTURE_RULE} from './page-structure-review.js';
 import {experienceRequired,assertExperienceAssessments} from './experience-contract.js';
 import {assertMethodChecks,HERO_MOTION_RULE,HERO_VERIFICATION_ID,isHomepageHero} from './remediation-validation.js';
@@ -21,6 +22,7 @@ function availableScreenshots(manifest) {
 export function assertVisualReview(review, manifest, {regional=false}={}) {
   if (!validate(review)) throw new Error(validate.errors.map(error => `${error.instancePath || '/'} ${error.message}`).join('; '));
   if(review.skillId==='visual-qa-evaluator')assertReviewGoal(review,manifest.experienceAudit?.goal,{regional});
+  assertCriterionAssessments(review,manifest,{regional});
   const available = availableScreenshots(manifest);
   if(review.designComparison){
     const comparison=review.designComparison;

@@ -20,6 +20,8 @@ Run relevant read-only diagnostic methods, then `HH model-diagnose --run RUN`. I
 
 ## An explicit requested change
 
+For a newly recorded goal-bound design decision, a passing independent review must include `criterionAssessments` in the attestation. Give each original task criterion's one-based index, verdict, reason, changed paths from the capture-bound delta, inspected matched original paths and applicable verification record IDs. Record missing associations without guessing. The `report` command shows this evidence separately from execution and final judgment.
+
 If the user has already authorized an exact candidate in the current diagnosis, use `HH next --run RUN --authorized-finding ID` and execute its digest-bound repair command. If the diagnosis changes or the proposed work reaches beyond that candidate, recheck the user's authorization before recording scope.
 
 When the user asks for a concrete enhancement to an existing page, retain that intent as an authored finding in the initial Experience Spec, with `evidenceIds` citing the actual request (`origin:"authored-sample"`). Clearly distinguish this requirement from a claim that the current UI is defective. Put the concrete task and product facts in `project.goal`/`project.task` too; only selected finding evidence enters the scoped brief. Inspect the actual diagnosis context and generated brief for the complete requirements before execution. A nearby brief file is not an input binding.

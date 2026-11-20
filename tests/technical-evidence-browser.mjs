@@ -73,6 +73,7 @@ for (const scenario of cases) {
     await unrelated.close();
     const after = JSON.parse(await p.invoke('verify','--run',run,'--phase','after','--repo',p.candidate));
     assert.equal(after.status, 'pass');
+    assert.deepEqual(after.changedFiles, ['index.html']);
     assert.equal(after.visual, 'not-reviewed');
     assert.notEqual(after.source.commit, before.source.commit);
     assert.ok(before.preview.fingerprint && after.preview.fingerprint);
@@ -83,6 +84,10 @@ for (const scenario of cases) {
     assert.deepEqual(await readdir(join(run,'technical','before')), ['capture.json']);
     assert.deepEqual(await readdir(join(run,'technical','after')), ['capture.json']);
     assert.equal(JSON.parse(await p.invoke('next','--run',run)).stage, 'technical-verified');
+    const report=JSON.parse(await p.invoke('report','--run',run));
+    const reportHtml=await readFile(report.path,'utf8');
+    assert.match(reportHtml,/Changed files in the candidate<\/dt><dd>index\.html/);
+    assert.match(reportHtml,/default--phone · 390×844 · \/: fail → pass/);
   });
 }
 

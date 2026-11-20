@@ -8,8 +8,11 @@ import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {configureReviewCosts,reviewCostReport} from '../packages/harness-core/review-costs.js';
 import sample from '../examples/happyclaw-site/experience.json' with {type:'json'};
-import {publicExecutionBrief} from '../packages/harness-core/export.js';
-import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,savePlan,readVerifiedExecutionPlan,saveEvaluation} from '../packages/harness-core/store.js';
+import {exportRun,publicExecutionBrief} from '../packages/harness-core/export.js';
+import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,savePlan,readVerifiedExecutionPlan,saveEvaluation,saveVisualReview} from '../packages/harness-core/store.js';
+import {captureWithDesignSystem} from '../packages/harness-core/design-system.js';
+import {buildRunReport} from '../packages/harness-core/report.js';
+import {assertVisualReview} from '../packages/harness-core/visual-review.js';
 import {diagnoseRun} from '../packages/harness-core/diagnosis.js';
 import {diagnoseBaseline} from '../packages/workbench/baseline-diagnosis.js';
 import {runAiVisualReview} from '../packages/workbench/ai-review.js';
@@ -19,12 +22,23 @@ import {EXPERIENCE_POLICY,AUDIT_DIMENSIONS,REVIEW_DIMENSIONS,confirmedRepairImpa
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
 const original='before/desktop.png';
 // Synthetic protocol fixtures. These images do not establish real visual quality.
-async function fixture(t){
+async function fixture(t,{sourceBound=false}={}){
  const root=await mkdtemp(join(tmpdir(),'hh-experience-'));t.after(()=>rm(root,{recursive:true,force:true}));
  const spec=structuredClone(sample);spec.project={...spec.project,name:'Renewal protocol fixture',goal:'Help domain owners identify an upcoming renewal and decide what to do',audience:'Domain owners',task:'Find upcoming renewal, understand cost and choose next action'};
  const {directory}=await createRun({spec,url:'http://localhost',outputRoot:root,experiencePolicy:EXPERIENCE_POLICY});
- await mkdir(join(directory,'before'));await writeFile(join(directory,original),png);
- await saveCapture(directory,'before',{viewports:{desktop:{screenshot:original}}});
+ const capture=async phase=>{
+  const path=`${phase}/desktop.png`;
+  await mkdir(join(directory,phase));await writeFile(join(directory,path),png);
+  return {viewports:{desktop:{screenshot:path,finalUrl:'http://localhost/renewals',reached:true,width:1280,height:800}}};
+ };
+ const repo=join(root,'product');
+ const boundCapture=phase=>captureWithDesignSystem({directory,repo,phase,extract:false,bindVerificationSource:true,verificationUrl:'http://localhost/renewals',fingerprintPreview:async()=> 'f'.repeat(64),capture:()=>capture(phase)});
+ if(sourceBound){
+  await mkdir(repo);await writeFile(join(repo,'renewal.html'),'<h1>Renewals</h1>');
+  const git=(...args)=>promisify(execFile)('git',args,{cwd:repo});
+  await git('init','-q');await git('add','.');await git('-c','user.name=Fixture','-c','user.email=fixture@example.test','commit','-qm','Fixture');
+  await boundCapture('before');
+ }else await saveCapture(directory,'before',await capture('before'));
  const file=join(root,'reference.md');await writeFile(file,'# Comparable terms\nAlign term, price and action when comparison is the actual task.');
  await selectResource({directory,file});
  const context=await experienceContext(directory,'public-page'),ref=context.designSources[0];
@@ -37,7 +51,7 @@ async function fixture(t){
  const methods=[{path,quote,application:'Use hierarchy to answer the immediate decision before secondary proof; preserve real pricing terms.'}];
  const audit={version:EXPERIENCE_POLICY,surface:'public-page',task:{originalRequest:'Help visitors find a renewal, understand its cost and decide what to do.',user:'Domain owner',scenario:'A renewal is due soon',outcome:'Identify the renewal and a justified next action',constraints:['Preserve calendar and truthful sample scope'],operatorProposals:['Five labelled fields are only a candidate, not a user requirement'],assumptions:[],scope:'First-screen decision and its next action',outOfScope:'Uncaptured account and payment screens'},journey:[{step:'Understand the next renewal',userQuestion:'Which domain needs a decision and at what cost?',action:'Review renewal',observation:'Synthetic protocol context; no real visual judgment',screenshotRefs:[original],unknowns:['Real payment is not tested']}],issues:[{id:'READING-DISTANCE',kind:'hypothesis',problem:'Repeated labels may separate the price from the term and action',impact:'A visitor may need more scanning',rootCause:'Operator prescribed fields before deciding hierarchy',priority:'high',screenshotRefs:[original]}],checks:AUDIT_DIMENSIONS.map(dimension=>({dimension,status:'needs-evidence',observation:'Synthetic protocol coverage, not a real audit',screenshotRefs:[],reason:'Inspect real page and runtime before making a claim'})),designBasis:{sources:[{source:ref.id,sha256:ref.sha256,authority:'reference',section:'# Comparable terms',problem:'Compare price for an equal term',adopt:'Keep comparable cost and term adjacent',preserve:'Original calendar and controls',avoid:'Unrelated visual style or card quota'}],missingSourcesReason:'No project design-system document was supplied; external reference is not approval.'},methods};
  const decision={version:EXPERIENCE_POLICY,findingId:'F1',problemIds:['READING-DISTANCE'],readingOrder:['Urgency and domain','Comparable cost and term','Next action'],grouping:'Group cost with term instead of five equally weighted labels',primaryAction:'Review renewal',content:{show:['Domain, due date and cost for its actual term'],merge:['Price and term in the same reading unit'],defer:['Secondary explanation until details'],reason:'Reduce scanning while preserving decision facts'},layout:'Reuse existing calendar alignment; do not add a new card grid',components:[{source:'Inspect target existing implementation before editing',consumers:['Renewal summary','Comparison detail'],states:['Default','Selected','Keyboard focus'],decision:'Reuse existing control APIs after actual inspection; discovery remains incomplete'}],alternatives:[{kind:'preserve',description:'Keep the existing summary',benefit:'No added reading burden',cost:'Urgency may remain hard to identify'},{kind:'lighter',description:'Reorder existing text and group price with term',benefit:'Answers the immediate decision without more labels',cost:'Moves secondary explanation to details'}],chosen:'A comparison table only inside the details where users compare multiple options',whyBetterForTask:'Rows align equal terms and costs; the first screen keeps one clear decision',tradeoffs:'Details take one action; the calendar remains available',referenceApplications:[{source:ref.id,application:'Use aligned comparable terms in details, preserve summary hierarchy',verification:'Inspect task reading order and equal-term costs in real matched originals'}],verification:[{criterion:'The upcoming domain and equal-term cost are clear before action',method:'Independent inspection and real task replay',expectedEvidence:'Matched originals and actual action records, not field counts'}],methods};
- return {root,directory,audit,decision};
+ return {root,directory,audit,decision,repo,boundCapture};
 }
 test('strict start cannot diagnose or plan without an audit; source adaptation and method provenance cannot be forged',async t=>{
  const f=await fixture(t),run=await loadRun(f.directory);
@@ -166,4 +180,48 @@ test('next prepares a budgeted review, which still rejects a preservation pass f
   const context=JSON.parse(await readFile(join(cwd,'review-context.json'))),refs=[original,'after/desktop.png'];await writeFile(join(cwd,'review-result.json'),JSON.stringify({[context.reviewResponsibility.decisionField]:'pass',screenshotRefs:refs,findings:[],rationale:'Synthetic scoped repair only',limitations:['Not actual visual evidence'],designComparison:{verdict:'preserved',reason:'Only a local repair; no hierarchy benefit established',screenshotRefs:refs},experienceAssessments:REVIEW_DIMENSIONS.map(dimension=>({dimension,verdict:'pass',reason:'Synthetic contract result only',screenshotRefs:refs}))}));
  }}),/design improvement goal requires/);
  assert.equal((await loadRun(f.directory)).manifest.visualReviews.length,0);assert.equal((await loadRun(f.directory)).manifest.judgment,null);
+});
+
+test('a new goal-bound decision requires independently cited criteria and the report preserves their source links',async t=>{
+ const f=await fixture(t,{sourceBound:true});
+ f.audit.version=f.decision.version='task-design-review@2';
+ f.audit.task.goal={version:'design-goal@1',kind:'repair',requestQuote:'Help visitors',criteria:['Explain the renewal price','Keep the primary action visible'],preserve:['Existing navigation'],allowedChanges:['Renewal content']};
+ await saveExperienceRecord(f.directory,'audit',f.audit);
+ await saveDiagnosis(f.directory,diagnoseRun({run:await loadRun(f.directory)}));
+ await confirmFinding(f.directory,'F1','supported','Fixture scope, no human acceptance');
+ await saveExperienceRecord(f.directory,'decision',f.decision);
+ await savePlan(f.directory,'F1');
+ await writeFile(join(f.repo,'renewal.html'),'<h1>Renewals</h1><p>$15 per year</p>');
+ await f.boundCapture('after');
+ await saveEvaluation(f.directory,{status:'synthetic-functional-pass'});
+ const refs=[original,'after/desktop.png'];
+ const review={schemaVersion:'0.1',skillId:'visual-qa-evaluator',reviewer:{type:'human',name:'Fixture reviewer',version:'fixture'},reviewedAt:new Date().toISOString(),verdict:'pass',screenshotRefs:refs,findings:[],rationale:'Fixture only',limitations:['Synthetic originals.'],experienceAssessments:REVIEW_DIMENSIONS.map(dimension=>({dimension,verdict:'pass',reason:'Fixture only',screenshotRefs:refs}))};
+ await assert.rejects(saveVisualReview(f.directory,review),/every design goal criterion/);
+ const first={criterion:1,verdict:'pass',reason:'Price is grouped with its term',changedFiles:['renewal.html'],screenshotRefs:refs,verificationRefs:[]};
+ const second={...first,criterion:2,reason:'The primary action remains visible',changedFiles:[]};
+ const mismatched=(await loadRun(f.directory)).manifest;
+ mismatched.captures.after.viewports.desktop.dom={language:'de'};
+ assert.throws(()=>assertVisualReview({...review,criterionAssessments:[first,second]},mismatched),/matched, reached/);
+ await assert.rejects(saveVisualReview(f.directory,{...review,criterionAssessments:[first,first]}),/exactly once/);
+ await assert.rejects(saveVisualReview(f.directory,{...review,criterionAssessments:[{...first,screenshotRefs:[original]},second]}),/matched, reached/);
+ await assert.rejects(saveVisualReview(f.directory,{...review,criterionAssessments:[{...first,changedFiles:['unchanged.html']},second]}),/without a recorded change/);
+ await assert.rejects(saveVisualReview(f.directory,{...review,criterionAssessments:[first,{...second,verdict:'not-applicable'}]}),/unresolved design goal/);
+ await runAiVisualReview(f.directory,{cwd:join(f.root,'criteria-review'),signal:new AbortController().signal,maxModelCalls:1,generate:async(_command,_args,{cwd,input})=>{
+  const context=JSON.parse(await readFile(join(cwd,'review-context.json'),'utf8'));
+  assert.deepEqual(context.criterionEvidence,{changedFiles:['renewal.html'],additionalChangedFiles:0});
+  assert.match(input,/return criterionAssessments/);
+  await writeFile(join(cwd,'review-result.json'),JSON.stringify({...review,[context.reviewResponsibility.decisionField]:'pass',criterionAssessments:[first,second]}));
+ }});
+ const report=await buildRunReport({directory:f.directory});
+ const html=await readFile(report.path,'utf8');
+ assert.match(html,/Explain the renewal price[\s\S]*?renewal\.html[\s\S]*?page--desktop[\s\S]*?pass · Price is grouped with its term/);
+ assert.match(html,/Keep the primary action visible[\s\S]*?No changed files associated/);
+ assert.match(html,/Human judgment<\/th><td>pending/);
+ const exported=await exportRun({directory:f.directory,outputRoot:join(f.root,'exported')});
+ const exportedReview=JSON.parse(await readFile(join(exported.directory,'reviews/visual-qa-evaluator.json'),'utf8'));
+ assert.deepEqual(exportedReview.criterionAssessments,[first,second]);
+ const inventory=join(f.directory,'after/repository-inputs.json');
+ await writeFile(inventory,(await readFile(inventory,'utf8'))+'\n');
+ await buildRunReport({directory:f.directory});
+ assert.match(await readFile(report.path,'utf8'),/review or source evidence is missing or changed/);
 });
