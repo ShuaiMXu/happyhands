@@ -143,10 +143,13 @@ async function reviewBatch(directory, run, {cwd,signal,generate,language='zh',pu
   if(cached){await writeFile(join(cwd,'review-result.json'),cached.rawResult);await writeFile(join(cwd,'batch-reuse.json'),JSON.stringify({key:cacheKey,callId:cached.callId,source:'bound raw result; not a new model inspection'}));}
   else{
     signal.throwIfAborted();
+    const command=process.env.WORKBENCH_CODEX || 'codex',argv=[...args,'--','-'];
+    const invoke=generate.prepare ? await generate.prepare(command,argv) : options=>generate(command,argv,options);
+    signal.throwIfAborted();
     if(invocationBudget){assertReviewCallBudget(invocationBudget.limit,invocationBudget.started+1);invocationBudget.started++;}
     callId=await reserveReviewCall(directory,{key:cacheKey,stage:purpose+':'+reviewStage,policy:costPolicy,modelIdentity:{...modelIdentity,...(resumeIdentity?{runtimeHash:hash(JSON.stringify(resumeIdentity))}: {})},deduplicate:!!resumeIdentity,retryReason});
     const usage=reviewUsageCollector();let failure=null;
-    try{await generate(process.env.WORKBENCH_CODEX || 'codex',[...args,'--','-'],{cwd,input:effectivePrompt,signal,onOutput:chunk=>{usage.push(chunk);events=(events+chunk).slice(-4*1024*1024);}});
+    try{await invoke({cwd,input:effectivePrompt,signal,onOutput:chunk=>{usage.push(chunk);events=(events+chunk).slice(-4*1024*1024);}});
       if(resumeIdentity){const resultPath=await realpath(join(cwd,'review-result.json'));if(relative(await realpath(cwd),resultPath)!=='review-result.json')throw Error('Invalid AI review output path');const raw=await readVerificationFile(cwd,'review-result.json',1024*1024);if(raw.length>1024*1024)throw Error('AI review output too large');batchRecord=await saveReviewBatch(directory,cacheKey,raw.toString('utf8'),callId);}
     }
     catch(error){failure=error;throw error;}
@@ -205,8 +208,10 @@ export function visualReviewBatches(manifest) {
 }
 
 async function saveNativeReviewPlan(directory,options,{regionalCalls,crossCalls}){
- const plan={version:'native-review-preflight@1',requestedCostPolicy:options.costPolicy||null,potentialModelCalls:regionalCalls+crossCalls,regionalCalls,crossCalls,originals:Object.keys(options.plannedInputs.hashes).map(path=>({path,sha256:options.plannedInputs.hashes[path]})),resumeEnabled:!!options.resumeIdentity,costs:await reviewCostReport(directory),assurance:'Bound files are readable PNG originals prepared for native CLI -i arguments. This is not proof of model inspection or human acceptance.',limitations:['Potential calls are an upper bound before valid batch recovery.','No token prediction or external adapter delivery is certified.']};
- await mkdir(options.cwd,{recursive:true});await writeFile(join(options.cwd,'native-review-plan.json'),JSON.stringify(plan,null,2));return plan;
+ await mkdir(options.cwd,{recursive:true});
+ const visualInput=await options.generate?.visualCapability?.(undefined,options.cwd) || {status:'unassessed',model:null,source:'direct-launcher'};
+ const plan={version:'native-review-preflight@1',requestedCostPolicy:options.costPolicy||null,potentialModelCalls:regionalCalls+crossCalls,regionalCalls,crossCalls,originals:Object.keys(options.plannedInputs.hashes).map(path=>({path,sha256:options.plannedInputs.hashes[path]})),resumeEnabled:!!options.resumeIdentity,costs:await reviewCostReport(directory),visualInput,visual:'not-reviewed',assurance:'Original PNG files checked locally. Adapter capability records configured image-input support. Actual delivery and inspection require an independent review.',limitations:['Potential calls are an upper bound before valid batch recovery.','No token prediction or external adapter delivery is certified.']};
+ await writeFile(join(options.cwd,'native-review-plan.json'),JSON.stringify(plan,null,2));return plan;
 }
 
 function assertGoalBoundCallCeiling(run,options,plan){
@@ -251,8 +256,6 @@ export async function runAiVisualReview(directory, options) {
     const preflight=await saveNativeReviewPlan(directory,options,{regionalCalls:1,crossCalls:0});assertGoalBoundCallCeiling(run,options,preflight);if(options.preflightOnly)return {status:'preflight-only',plan:preflight};
     return reviewBatch(directory,{...run,manifest:{...run.manifest,captures}},{...options,reviewStage,plannedManifest:run.manifest});
   }
-  const existing=visualReviewFor(run.manifest,'visual-qa-evaluator');
-  if(existing&&!run.retryAttempt)return (await readVisualReviewBinding(await loadRun(directory),existing)).review;
   if(!run.manifest.captures.after || !run.manifest.evaluation)throw new Error('Capture and evaluate the changed interface before AI review.');
   const reviews=[],hashes={},taskScope=[...scopeReviewCaptures(run),...(run.counterCaptures||[])];
   const assignedBatches=batches.map(batch=>regionalTaskCaptures(batch,taskScope));
@@ -267,7 +270,7 @@ export async function runAiVisualReview(directory, options) {
     const actual=pngDimensions(await readFile(runFilePath(directory,entry.screenshot)));
     if(actual.width!==entry.screenshotSize.width||actual.height!==entry.screenshotSize.height)throw Error('Whole-page screenshot dimensions do not match capture metadata: '+entry.screenshot);
   }
-  assertReviewCallBudget(options.maxModelCalls,options.resumeIdentity?0:batches.length+(whole.ready?1:0));
+  if(!active||run.retryAttempt)assertReviewCallBudget(options.maxModelCalls,options.resumeIdentity?0:batches.length+(whole.ready?1:0));
   const preflight=await saveNativeReviewPlan(directory,options,{regionalCalls:batches.length,crossCalls:whole.ready?1:0});assertGoalBoundCallCeiling(run,options,preflight);if(options.preflightOnly)return {status:'preflight-only',plan:preflight};
   for(const [index,batch] of batches.entries()){
     options.signal.throwIfAborted();

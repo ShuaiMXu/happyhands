@@ -170,7 +170,24 @@ async function runOpenAiCompatible({config, prompt, images, cwd, signal}) {
 
 export async function runApiModel(options) {
   if (!options.config?.model) throw Error('Set a model: --model ID, HAPPYHANDS_API_MODEL, or "model" in the agents.json "api" entry.');
+  if (options.images?.length) assertVisualInput(apiVisionCapability(options.config));
   return options.config.provider === 'anthropic' ? runAnthropic(options) : runOpenAiCompatible(options);
+}
+
+export const declaredModelIds = value => (value || '').split(',').map(id => id.trim()).filter(Boolean);
+
+export function apiVisionCapability(config) {
+  const model = config.model || null;
+  const supported = Boolean(model && Array.isArray(config.visionModels) && config.visionModels.includes(model));
+  return {status:supported?'supported':'unknown', model, source:'api-model-declaration',
+    ...(!supported ? {reason:'Declare the exact vision-capable model in HAPPYHANDS_API_VISION_MODELS or api.visionModels for this provider.'} : {})};
+}
+
+export function assertVisualInput(capability) {
+  if (capability.status === 'supported') return;
+  const error = new Error(`Visual input unavailable for ${capability.model || 'the selected model'}. ${capability.reason} Visual review remains not-reviewed.`);
+  error.code = 'MODEL_VISION_NOT_READY';
+  throw error;
 }
 
 // Built-in API adapter IDs and how each reads its configuration.
@@ -180,21 +197,22 @@ export async function runApiModel(options) {
 //                       HAPPYHANDS_API_KEY, HAPPYHANDS_API_MODEL; for any other service
 export function builtInApiConfig(id, env = process.env) {
   const model = env.HAPPYHANDS_API_MODEL;
-  if (id === 'anthropic') return {provider: 'anthropic', apiKey: env.HAPPYHANDS_API_KEY || env.ANTHROPIC_API_KEY, baseUrl: env.HAPPYHANDS_API_BASE_URL, model: model || 'claude-opus-5-5'};
-  if (id === 'openai') return {provider: 'openai-compatible', apiKey: env.HAPPYHANDS_API_KEY || env.OPENAI_API_KEY, baseUrl: env.HAPPYHANDS_API_BASE_URL || 'https://api.openai.com/v1', model};
+  const visionModels = declaredModelIds(env.HAPPYHANDS_API_VISION_MODELS);
+  if (id === 'anthropic') return {provider: 'anthropic', apiKey: env.HAPPYHANDS_API_KEY || env.ANTHROPIC_API_KEY, baseUrl: env.HAPPYHANDS_API_BASE_URL, model: model || 'claude-opus-5-5', visionModels};
+  if (id === 'openai') return {provider: 'openai-compatible', apiKey: env.HAPPYHANDS_API_KEY || env.OPENAI_API_KEY, baseUrl: env.HAPPYHANDS_API_BASE_URL || 'https://api.openai.com/v1', model, visionModels};
   if (id === 'api') {
     const provider = env.HAPPYHANDS_API_PROVIDER === 'anthropic' ? 'anthropic' : 'openai-compatible';
-    return provider === 'anthropic' ? builtInApiConfig('anthropic', env) : {provider, apiKey: env.HAPPYHANDS_API_KEY, baseUrl: env.HAPPYHANDS_API_BASE_URL, model};
+    return provider === 'anthropic' ? builtInApiConfig('anthropic', env) : {provider, apiKey: env.HAPPYHANDS_API_KEY, baseUrl: env.HAPPYHANDS_API_BASE_URL, model, visionModels};
   }
   return null;
 }
 
-// A declared agent with an "api" block: {"provider", "baseUrl", "apiKeyEnv", "model", "effort"}.
+// A declared agent with an "api" block: {"provider", "baseUrl", "apiKeyEnv", "model", "visionModels", "effort"}.
 export function declaredApiConfig(spec, env = process.env) {
   const api = spec.api;
   if (!api || typeof api !== 'object') return null;
   const provider = api.provider === 'anthropic' ? 'anthropic' : 'openai-compatible';
-  return {provider, baseUrl: api.baseUrl, apiKey: api.apiKeyEnv ? env[api.apiKeyEnv] : undefined, model: api.model, effort: api.effort};
+  return {provider, baseUrl: api.baseUrl, apiKey: api.apiKeyEnv ? env[api.apiKeyEnv] : undefined, model: api.model, visionModels: api.visionModels, effort: api.effort};
 }
 
 // API first: when an API is configured for HappyHands and no adapter is named,

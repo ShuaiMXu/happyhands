@@ -9,6 +9,7 @@ import {confirmFinding, createRun, loadRun, saveCapture} from '../packages/harne
 import sample from '../examples/happyclaw-site/experience.json' with {type: 'json'};
 
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=', 'base64');
+const inspectCodex = async (_command, _cwd, model) => ({model: model || 'test-model', modalities: ['text', 'image']});
 
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'diagnose-product-'));
@@ -40,7 +41,7 @@ async function savedDiagnosis(directory) {
 
 test('lightweight diagnosis shares the stage while retaining narrow coverage and selected model', async t => {
   const {directory} = await fixture(t);
-  const result = await headlessModel({directory, phase: 'diagnosis', model: 'test-model', generate: async (command, args, context) => {
+  const result = await headlessModel({directory, phase: 'diagnosis', model: 'test-model', agent: 'codex', inspectCodex, generate: async (command, args, context) => {
     assert.equal(args[args.indexOf('-m') + 1], 'test-model');
     await completeModel(command, args, context);
   }});
@@ -69,7 +70,7 @@ test('project diagnosis executes current default Skills and retains failure for 
 
 test('headless failure stays nonzero through rejection and preserves its diagnosis', async t => {
   const {directory} = await fixture(t);
-  await assert.rejects(headlessModel({directory, phase: 'diagnosis', generate: async () => {
+  await assert.rejects(headlessModel({directory, phase: 'diagnosis', agent: 'codex', inspectCodex, generate: async () => {
     throw new Error('Synthetic model failure');
   }}), /Synthetic model failure/);
   assert.equal((await savedDiagnosis(directory)).modelDiagnosis.status, 'failed');

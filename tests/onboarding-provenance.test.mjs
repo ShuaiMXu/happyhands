@@ -22,6 +22,7 @@ async function fixture(t, overrides = {}) {
   const calls = { spawned: 0, stopped: 0, captured: 0 };
   const child = { exitCode: null, signalCode: null, killed: false };
   const service = createWorkbench(root, {
+    inspectCodex:async()=>({model:'fixture-vision',modalities:['image']}),
     generate:async()=>{throw Error("Model unavailable in deterministic onboarding fixture");},
     inspectRepository: async () => ({ root: repo, commit, dirty: false }),
     fetch: async () => { throw new Error('No server'); },
