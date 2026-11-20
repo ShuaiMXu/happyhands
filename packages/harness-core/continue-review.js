@@ -1,3 +1,4 @@
+import {evidenceLevel} from './evidence-policy.js';
 import {packContinuationSnapshot,readContinuationSnapshot} from './continuation-snapshot.js';
 import {readReviewCosts,summarizeReviewCosts} from './review-costs.js';
 import {CURRENT_EXPERIENCE_POLICY} from './experience-orchestration.js';
@@ -27,6 +28,7 @@ async function commonRepository(repo){
 export async function continueReview({directory,configPath,outputRoot,reason}){
   if(typeof reason!=='string'||reason.trim().length<5||reason.length>10000)throw Error('Explain why this attempt needs another repair (5–10000 characters).');
   const config=await loadProjectConfig(configPath);
+  if (evidenceLevel(config.evidencePolicy) !== 'visual') throw Error('Start technical evidence in a fresh scoped Run.');
   if(config.mode!=='review'||!config.url)throw Error('Continuation requires an explicit review config and an already-running preview.');
   const repository=await inspectRepository(config.repo);
   if(repository.dirty)throw Error('Continuation needs a clean chosen checkout. Commit the intended isolated edits first, then preview that checkout.');

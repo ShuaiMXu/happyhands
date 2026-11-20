@@ -1,3 +1,4 @@
+import {validateEvidencePolicy,evidenceLevel} from './evidence-policy.js';
 import {validateVerificationChecks} from './verification.js';
 import {collectDesignSources} from './design-sources.js';
 import {designGuidanceProfile} from '../skill-core/design-guidance.js';
@@ -56,6 +57,16 @@ export async function loadProjectConfig(path) {
   // CLI onboarding must calculate the same source snapshot as workbench configuration.
   if(config.designSourcePaths!==undefined)config.designSources=await collectDesignSources(resolveFrom(base,config.repo),config.designSourcePaths);
   validateVerificationChecks(config.verificationChecks);
+  validateEvidencePolicy(config.evidencePolicy);
+  const level = evidenceLevel(config.evidencePolicy);
+  if (level !== 'visual' && (config.mode !== 'review' || config.verificationChecks?.length)) {
+    throw Error('Use an explicit review config and the start command for technical evidence. Specialist visual checks use the default policy.');
+  }
+  if (level === 'source' && config.start) throw Error('A source check runs without a preview command.');
+  if (level === 'runtime' && (!config.start || config.capturePlan === undefined)) {
+    throw Error('Technical runtime verification requires a managed start command and Capture Plan.');
+  }
+
   const mode = config.mode || 'auto';
   if (!['auto', 'review', 'bootstrap'].includes(mode)) throw new Error('Project mode must be auto, review or bootstrap.');
   let capturePlanPath = null;
@@ -77,7 +88,7 @@ export async function loadProjectConfig(path) {
   if (parsed && !['http:', 'https:'].includes(parsed.protocol)) throw new Error('Project URL must use http or https.');
   const planUrl = capturePlanDocument ? new URL(capturePlanDocument.states[0].start.url) : null;
   const effectiveUrl = parsed || planUrl;
-  if (!effectiveUrl && mode === 'review') throw new Error('Review mode requires url or capturePlan; without a preview there is no baseline to capture.');
+  if (!effectiveUrl && mode === 'review' && level !== 'source') throw new Error('Review mode requires url or capturePlan; without a preview there is no baseline to capture.');
   if (!effectiveUrl && config.start) throw new Error('start requires url or capturePlan; the Harness needs an address to wait for.');
   if (config.routes !== undefined) {
     if (!Array.isArray(config.routes) || config.routes.length === 0) throw new Error('routes must be a non-empty array when it is set.');

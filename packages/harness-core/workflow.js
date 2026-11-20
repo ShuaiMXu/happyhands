@@ -1,3 +1,4 @@
+import {technicalWorkflow} from './evidence-policy.js';
 import { missingAfterStates } from './whole-page.js';
 export const DEFAULT_LIMITS = Object.freeze({ maxRounds: 3, maxMinutes: 60, round: 1 });
 
@@ -62,6 +63,8 @@ export function workflowState(manifest) {
   const result = { stage: 'unknown', next: null, blocked: false, reason: null, mode: manifest.mode || 'review', experiencePolicy: manifest.experiencePolicy || 'legacy-unassessed' };
   if(manifest.judgmentWithdrawal)return {...result,stage:'judgment-withdrawn',blocked:true,reason:'The recorded human judgment was withdrawn. Preserve this history and start a new review to reassess the current project.',next:'Start a new run.'};
   if (manifest.onboarding?.status === 'failed') return { ...result, stage: 'onboarding-failed', blocked: true, reason: manifest.onboarding.error || 'Project onboarding failed.', next: 'Fix the preview and start a new run.' };
+  const technical = technicalWorkflow(manifest, result);
+  if (technical) return technical;
   if (result.mode === 'bootstrap') return bootstrapWorkflow(manifest, result);
   if (!manifest.captures?.before) return { ...result, stage: 'needs-baseline', next: 'capture --phase before' };
   if(manifest.patternAdmissions?.length&&!manifest.foundationApproval)return {...result,stage:'needs-foundation-approval',blocked:true,reason:'Staged patterns need explicit decisions and a Foundation version approval before planning.',next:'foundation-approve --input FILE'};
