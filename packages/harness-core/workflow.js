@@ -41,7 +41,10 @@ function fromExecution(manifest, result) {
   if (!manifest.captures.after) return { ...result, stage: 'needs-after-capture', next: 'Start the retained worktree preview, then capture --phase after.' };
   if (!manifest.evaluation) return { ...result, stage: 'needs-structural-evaluation', next: 'evaluate' };
   if (missingAfterStates(manifest).length) return {...result,stage:'visual-qa-needs-evidence',blocked:true,reason:'Some planned after states were not captured. Complete the capture plan and start a new review.',next:'Start a new run with the missing states.'};
-  if(manifest.verificationEvidence?.retryable&&manifest.onboarding?.config?.verificationChecks?.length)return {...result,stage:'needs-specialist-verification',next:'ai-review',reason:'Specialist checks need another execution against the same captured source.'};
+  if(manifest.onboarding?.config?.verificationChecks?.length&&(!manifest.verificationEvidence||manifest.verificationEvidence.retryable)){
+    return {...result,stage:'needs-specialist-verification',next:'ai-review',reason:manifest.verificationEvidence?
+      'Specialist checks need another execution against the same captured source.':'Run the configured specialist checks against the captured candidate.'};
+  }
   const qa = visualReviewFor(manifest, 'visual-qa-evaluator');
   if (!qa) return { ...result, stage: 'needs-visual-qa', next: 'attest --input VISUAL_QA.json' };
   if (qa.verdict === 'needs-evidence') return { ...result, stage: 'visual-qa-needs-evidence', blocked: true, reason: 'Visual QA needs more evidence.', next: 'Start a new run with the missing states.' };

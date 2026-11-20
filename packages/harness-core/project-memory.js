@@ -1,24 +1,70 @@
 import {createHash} from 'node:crypto';
-import {mkdir,readFile,realpath,writeFile} from 'node:fs/promises';
+import {execFile} from 'node:child_process';
+import {lstat,mkdir,readFile,realpath,writeFile} from 'node:fs/promises';
 import {basename,dirname,join} from 'node:path';
+import {promisify} from 'node:util';
 import {projectMemory} from './memory.js';
+import {memoryScopeContext,recallMemory} from './memory-scope.js';
+import {readIncrementalCapturePlan} from './incremental-capture.js';
 
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const exec=promisify(execFile);
 function hostRoot(directory) {
   const runs=dirname(directory),harness=dirname(runs);
   return basename(runs)==='runs'&&basename(harness)==='.harness'?dirname(harness):null;
 }
-async function currentContext(run,repository) {
+export async function projectMemoryRegistry(run, repository=run.manifest.onboarding?.repository?.root||run.manifest.onboarding?.config?.repo) {
+  if(!repository)return null;
+  const checkout=await realpath(repository).catch(error=>{
+    if(['ENOENT','ENOTDIR'].includes(error.code))return null;
+    throw error;
+  });
+  if(!checkout)return null;
+  let identity=checkout;
+  const gitMarker=await lstat(join(checkout,'.git')).catch(error=>{
+    if(error.code==='ENOENT')return null;
+    throw error;
+  });
+  if(gitMarker&&!gitMarker.isDirectory()){
+    try {
+      const {stdout}=await exec('git',['rev-parse','--path-format=absolute','--show-toplevel','--git-common-dir'],
+        {cwd:checkout,timeout:5000,windowsHide:true});
+      const [topLevel,commonDir]=stdout.trimEnd().split(/\r?\n/);
+      if(await realpath(topLevel)===checkout){
+        const common=await realpath(commonDir);
+        // The ordinary checkout keeps its historical key. Linked worktrees share
+        // that key through their common Git directory; remote names never grant access.
+        identity=basename(common)==='.git'?dirname(common):common;
+      }
+    }catch{ /* No verified Git relationship: use only this checkout. */ }
+  }
   const root=hostRoot(run.directory);
-  if(!root||!repository)return null;
-  const canonical=await realpath(repository);
-  const entries=await projectMemory(root,canonical).active();
+  const runs=await realpath(dirname(run.directory));
+  const store=root?projectMemory(root,identity,{runs}):projectMemory(runs,identity,{storage:join(runs,'.project-memory'),runs});
+  return {store,identity,workbench:!!root};
+}
+
+async function currentContext(run,repository) {
+  const registry=await projectMemoryRegistry(run,repository);
+  if(!registry)return null;
+  const inventory=await registry.store.active();
   const record=await readRunMemoryExceptions(run);
-  if(!record)return {schemaVersion:'0.1',repositoryHash:digest(canonical),entries};
+  if(!registry.workbench&&!inventory.length&&!record)return null;
+  const recall=[];
+  const scopeContext=inventory.some(entry=>entry.scope)?memoryScopeContext(run,await readIncrementalCapturePlan(run)):null;
+  const asOf=new Date().toISOString().slice(0,10);
+  const entries=inventory.filter(entry=>{
+    if(!entry.scope)return true;
+    const result=recallMemory(entry,scopeContext,asOf);
+    recall.push({id:entry.id,version:entry.version,contentHash:entry.contentHash,...result});
+    return result.reason==='matched';
+  });
+  const context={schemaVersion:'0.1',repositoryHash:digest(registry.identity),entries,...(recall.length?{recall}:{})};
+  if(!record)return context;
   const latest=new Map(record.events.map(event=>[event.principleId,event]));
   const excludedEntries=entries.filter(entry=>latest.get(entry.id)?.decision==='exclude'&&latest.get(entry.id).principleHash===entry.contentHash).map(entry=>({...entry,exclusion:latest.get(entry.id)}));
   const excluded=new Set(excludedEntries.map(entry=>entry.id));
-  return {schemaVersion:'0.1',repositoryHash:digest(canonical),entries:entries.filter(entry=>!excluded.has(entry.id)),excludedEntries,exceptions:record.events};
+  return {...context,entries:entries.filter(entry=>!excluded.has(entry.id)),excludedEntries,exceptions:record.events};
 }
 export async function stageProjectMemory(run) {
   const repository=run.manifest.onboarding?.repository?.root||run.manifest.onboarding?.config?.repo;
@@ -42,7 +88,8 @@ export async function verifyProjectMemory(run,repository,reference=run.manifest.
     return null;
   }
   const stored=await readProjectMemorySnapshot(run,reference);
-  if(!current||digest(current)!==reference.hash)throw Error('Project memory changed after planning. Regenerate the plan and confirm its scope.');
+  const applicable=({recall,...context})=>({...context,...(recall?.some(row=>row.reason==='matched')?{recall:recall.filter(row=>row.reason==='matched')}: {})});
+  if(!current||digest(applicable(current))!==digest(applicable(stored)))throw Error('Project memory changed after planning. Regenerate the plan and confirm its scope.');
   return stored;
 }
 
@@ -64,6 +111,12 @@ export async function projectMemoryForReview(run) {
 export async function verifyReviewMemory(run,memory) {
   const repository=run.manifest.onboarding?.repository?.root||run.manifest.onboarding?.config?.repo;
   return verifyProjectMemory(run,repository,memory?.reference||null);
+}
+
+export async function memoryForRegressionChecks(run) {
+  if (run.manifest.plan?.projectMemory) return readProjectMemorySnapshot(run,run.manifest.plan.projectMemory);
+  const repository=run.manifest.onboarding?.repository?.root||run.manifest.onboarding?.config?.repo;
+  return currentContext(run,repository);
 }
 
 export async function readRunMemoryExceptions(run) {

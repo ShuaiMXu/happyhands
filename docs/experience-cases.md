@@ -40,7 +40,38 @@ New plans retrieve up to 20 currently admitted examples from sibling runs for th
 
 The plan records a digest of this reference set. Before and after execution the host recomputes it: changed evidence, withdrawn judgments or changed admissions block execution success and require replanning. This is provenance regression protection, not an automatic rerun of historical UI tests. To verify a new Skill against old pages, capture and review them as new runs; never rewrite historical verdicts.
 
-Remaining work: a visual case browser, task-aware ranking, and an explicitly scheduled historical UI replay suite. Existing command-line collection, admission, search and plan integration are usable without those interfaces.
+Historical examples and scoped project memory serve different roles. Examples retain the original evidence. An approved scoped memory entry records where a particular lesson applies and which existing check tests it. Remaining work for examples includes a visual case browser, task-aware ranking, and a historical UI replay suite.
+
+### Scoped project memory
+
+Use a locally retained source Run with a recorded human judgment. `memory --action propose` records a candidate. A separate `decide` action with `approve` and a reason activates it. A source withdrawal, missing or changed source record, retirement, or expired review date stops new recall. Earlier project-wide approvals remain readable and keep their existing scope.
+
+```sh
+hh memory --run SOURCE_RUN --action propose --input PROPOSAL.json
+hh memory --run SOURCE_RUN --action decide --input DECISION.json
+hh memory --run CURRENT_RUN --action checks
+```
+
+The proposal uses the existing `principle`, `context`, `reason` and optional `exceptions` fields. Add `scope` with a `failureClass`, `trigger`, optional UTC `reviewBy` date, and `check`. For example:
+
+```json
+{
+  "principle": "The save button should have the accessible name Save changes",
+  "context": "The default state of the editor save control",
+  "reason": "The original icon-only button had no accessible name",
+  "scope": {
+    "failureClass": "missing-button-name",
+    "trigger": {"states": ["editor-default"], "files": ["src/editor/SaveButton.tsx"]},
+    "check": {"type": "technical", "policy": {"kind": "button-name", "selector": "#save", "name": "Save changes"}}
+  }
+}
+```
+
+`trigger` accepts exact `tasks`, `states`, `components`, and repository-relative `files`. Within a field, any value can match. Across the fields, the task must match and one captured baseline state must supply the selected state, component and file evidence. Files come from declared capture source entries, a component region source, a verified incremental delta, or the declared file from a source check. An absent state or file reference appears as missing scope evidence. Unrelated principles stay out of the model's reading context.
+
+`check` can refer to the exact built-in technical policy from the Run, a `specialist` check with `id` and its recorded `sha256` (`checkHash` in verification evidence), or a `visual` remediation `ruleId`. These use the existing verification and independent review stages. Recall alone does not execute a command. The CLI and report show selected checks that have not run, checks skipped with a reason, failures, and passing checks backed by evidence. An unrelated check with the same name or a changed definition cannot certify the rule. A visual rule needs its own state-level independent review.
+
+Linked Git worktrees share a memory registry under the same local Harness run root because Git identifies their common directory. Standalone clones or forks remain separate. Lightweight runs keep memory alongside their run directories. The full source Run remains local, and explicit run exceptions still exclude rules without removing the original approval.
 
 ## Validation
 

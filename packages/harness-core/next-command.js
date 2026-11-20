@@ -69,8 +69,10 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false,
       ]};
     case 'needs-structural-evaluation':
       return {actor: 'agent', steps: [step(['evaluate', ...run(directory)])]};
-    case 'needs-specialist-verification':
-      return {actor: 'agent', steps: [step(['verify', ...run(directory), '--config', 'PROJECT_CONFIG', '--repo', worktree], {PROJECT_CONFIG: 'the project config used for start/onboard'})]};
+    case 'needs-specialist-verification': {
+      const config=manifest.onboarding?.config?.configPath;
+      return {actor: 'agent', steps: [step(['verify', ...run(directory), '--config', config||'PROJECT_CONFIG', '--repo', worktree], config?{}:{PROJECT_CONFIG: 'the project config used for start/onboard'})]};
+    }
     case 'needs-visual-qa': {
       const review = ['model-review', ...run(directory)];
       const needsCeiling = manifest.experiencePolicy === CURRENT_EXPERIENCE_POLICY && reviewCallCeiling === undefined;

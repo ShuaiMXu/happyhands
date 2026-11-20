@@ -5,10 +5,11 @@ import {createInterface} from 'node:readline';
 // model turn or pass images to Codex.
 export async function inspectCodexVision(command, cwd, requestedModel) {
   const child = spawn(command, ['app-server'], {cwd, stdio:['pipe','pipe','ignore'], windowsHide:true});
+  const closed = new Promise(resolve => child.once('close', resolve));
   const output = createInterface({input:child.stdout, crlfDelay:Infinity});
   const lines = output[Symbol.asyncIterator]();
   let id = 0;
-  const stop = () => {output.close(); child.kill();};
+  const stop = () => {output.close(); child.kill('SIGKILL');};
   const timer = setTimeout(stop, 8000);
   child.on('error', stop);
   child.stdin.on('error', stop);
@@ -50,6 +51,7 @@ export async function inspectCodexVision(command, cwd, requestedModel) {
   } finally {
     clearTimeout(timer);
     stop();
+    await closed;
   }
   return {model,provider,modalities:null};
 }
