@@ -1,3 +1,4 @@
+import {buildGuidanceReadingPlan} from '../skill-core/guidance-reading-plan.js';
 import {reviewGoalSchema} from './review-goal.js';
 import {auditReadingMethods, METHOD_POLICY} from '../skill-core/method-policy.js';
 import {EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY,supportedExperiencePolicy,REVIEW_DIMENSIONS,experienceRequired} from './experience-contract.js';
@@ -114,15 +115,23 @@ function assertReferences(audit,sources){
  if(used.size!==refs.size)throw Error('Explain adaptation or rejection of every selected design source.');
 }
 const runObserved=ref=>ref.origin==='observed'||ref.status==='observed';
-export async function experienceContext(directory,surface='app-screen'){
- if(!['app-screen','public-page'].includes(surface))throw Error('Choose public-page or app-screen.');
+export async function experienceContext(directory,surface){
  const run=await loadRun(directory),bound=await binding(run);
+ const audit=run.manifest.experienceAudit ? await readExperienceRecord(run,'audit') : null;
+ surface ??= audit?.data.surface || 'app-screen';
+ if(!['app-screen','public-page'].includes(surface))throw Error('Choose public-page or app-screen.');
+ if(audit && surface!==audit.data.surface)throw Error('The experience surface is frozen by the audit. Choose a new Run to change it.');
  const design=await stageDesignGuidance(directory,'review',{...run.manifest.onboarding?.config?.designGuidance,taste:surface,dials:undefined});
  const ojo=await stageOjoGuidance(directory,'review'),local=await stageLocalMethods(directory);
  const policy=run.manifest.experiencePolicy||CURRENT_EXPERIENCE_POLICY;
  const scopedAuditSchema=structuredClone(auditSchema);scopedAuditSchema.properties.version={const:policy};
  const scopedDecisionSchema=structuredClone(decisionSchema);scopedDecisionSchema.properties.version={const:policy};
- return {localMethods:local,policy,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema:scopedAuditSchema,decisionSchema:scopedDecisionSchema,instructions:'Read every complete readFirst method and actual source; consult the remaining staged methods only for a demonstrated task need. Planning and learning share the existing decision/review/candidate records, not additional reports. Contract-only methods are guidance, not executed analyzers. Inspect originals; write the audit before formal diagnosis. Record user constraints separately from operator proposals. A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
+ const readingPlan=buildGuidanceReadingPlan({design,ojo,local,stage:audit?'decision':'audit',goal:audit?.data.task.goal});
+ const adapters=[{id:ojo.metadata.id,text:ojo.adapter},...design.packs.map(pack=>({id:pack.metadata.id,text:pack.adapter}))];
+ const embeddedAdapters=readingPlan.groups.filter(group=>group.embedded.length).map(group=>({
+  ...group.embedded[0], text:adapters.find(adapter=>adapter.id===group.id).text
+ }));
+ return {readingPlan,embeddedAdapters,localMethods:local,policy,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema:scopedAuditSchema,decisionSchema:scopedDecisionSchema,instructions:'Follow readingPlan for this stage. Read all mustRead documents in full and use the supplied complete adapter text without reopening it. Read onDemand references in full when relevant. The pack readFirst fields are the available routes; readingPlan determines what to read now. Inspect the actual project sources. Planning and learning share the existing decision/review/candidate records, not additional reports. Contract-only methods are guidance, not executed analyzers. Inspect originals; write the audit before formal diagnosis. Record user constraints separately from operator proposals. A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
 }
 export async function saveExperienceRecord(directory,phase,input){
  if(!['audit','decision'].includes(phase))throw Error('Choose audit or decision.');

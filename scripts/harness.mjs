@@ -211,7 +211,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
   }
   if(command==='experience'){
     const directory=required(options,'run'),phase=required(options,'phase');
-    if(phase==='context'){if(options.input)throw Error('Context does not take --input.');console.log(JSON.stringify(await experienceContext(directory,options.surface||'app-screen'),null,2));}
+    if(phase==='context'){if(options.input)throw Error('Context does not take --input.');console.log(JSON.stringify(await experienceContext(directory,options.surface),null,2));}
     else{if(options.surface)throw Error('Surface belongs in the audit, not a command override.');console.log(JSON.stringify(await saveExperienceRecord(directory,phase,JSON.parse(await readFile(required(options,'input'),'utf8'))),null,2));}
     return;
   }

@@ -24,6 +24,11 @@ async function fixture(t){
  const file=join(root,'reference.md');await writeFile(file,'# Comparable terms\nAlign term, price and action when comparison is the actual task.');
  await selectResource({directory,file});
  const context=await experienceContext(directory,'public-page'),ref=context.designSources[0];
+ const route=context.readingPlan.groups.find(group=>group.id==='web-taste');
+ assert.equal(context.readingPlan.stage,'audit');
+ assert.ok(route.mustRead.some(file=>file.path.endsWith('/sections.md')));
+ assert.equal(context.embeddedAdapters.filter(adapter=>adapter.path===route.embedded[0].path).length,1);
+ assert.match(context.instructions,/Follow readingPlan/);
  const path=context.designGuidance.reference+'/web-taste/upstream/SKILL.md',quote=(await readFile(join(directory,path),'utf8')).split('\n').find(line=>line.trim().length>10);
  const methods=[{path,quote,application:'Use hierarchy to answer the immediate decision before secondary proof; preserve real pricing terms.'}];
  const audit={version:EXPERIENCE_POLICY,surface:'public-page',task:{originalRequest:'Help visitors find a renewal, understand its cost and decide what to do.',user:'Domain owner',scenario:'A renewal is due soon',outcome:'Identify the renewal and a justified next action',constraints:['Preserve calendar and truthful sample scope'],operatorProposals:['Five labelled fields are only a candidate, not a user requirement'],assumptions:[],scope:'First-screen decision and its next action',outOfScope:'Uncaptured account and payment screens'},journey:[{step:'Understand the next renewal',userQuestion:'Which domain needs a decision and at what cost?',action:'Review renewal',observation:'Synthetic protocol context; no real visual judgment',screenshotRefs:[original],unknowns:['Real payment is not tested']}],issues:[{id:'READING-DISTANCE',kind:'hypothesis',problem:'Repeated labels may separate the price from the term and action',impact:'A visitor may need more scanning',rootCause:'Operator prescribed fields before deciding hierarchy',priority:'high',screenshotRefs:[original]}],checks:AUDIT_DIMENSIONS.map(dimension=>({dimension,status:'needs-evidence',observation:'Synthetic protocol coverage, not a real audit',screenshotRefs:[],reason:'Inspect real page and runtime before making a claim'})),designBasis:{sources:[{source:ref.id,sha256:ref.sha256,authority:'reference',section:'# Comparable terms',problem:'Compare price for an equal term',adopt:'Keep comparable cost and term adjacent',preserve:'Original calendar and controls',avoid:'Unrelated visual style or card quota'}],missingSourcesReason:'No project design-system document was supplied; external reference is not approval.'},methods};
@@ -39,6 +44,11 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
   const bad=structuredClone(f.audit);mutate(bad);await assert.rejects(saveExperienceRecord(f.directory,'audit',bad));
  }
  await saveExperienceRecord(f.directory,'audit',f.audit);
+ const decisionContext=await experienceContext(f.directory);
+ assert.equal(decisionContext.surface,'public-page');
+ assert.equal(decisionContext.readingPlan.stage,'decision');
+ assert.ok(decisionContext.readingPlan.groups.find(group=>group.id==='local-experience').mustRead.some(file=>file.path.endsWith('/fix-planner/SKILL.md')));
+ await assert.rejects(experienceContext(f.directory,'app-screen'),/surface is frozen/);
  assert.equal((await experienceFor(await loadRun(f.directory))).audit.issues[0].kind,'hypothesis');
  await assert.rejects(selectResource({directory:f.directory,file:join(f.root,'reference.md')}),/frozen/);
  await assert.rejects(saveExperienceRecord(f.directory,'audit',f.audit),/immutable/);
@@ -49,6 +59,10 @@ test('the actual model context separates operator form from task, and the bound 
  const diagnosis=await diagnoseBaseline(f.directory,diagnoseRun({run}),{cwd:join(f.root,'diagnose'),generate:async(_command,_args,{cwd,input})=>{
   const context=JSON.parse(await readFile(join(cwd,'context.json')));
   assert.equal(context.experience.audit.task.operatorProposals.length,1);
+  assert.equal(context.readingPlan.stage,'diagnosis');
+  const web=context.readingPlan.groups.find(group=>group.id==='web-taste');
+  assert.ok(web.mustRead.some(file=>file.path.endsWith('/sections.md')));
+  assert.ok(input.includes(join(cwd,web.mustRead.find(file=>file.path.endsWith('/sections.md')).path)));
   assert.match(input,/Missing implementation of an operator proposal is not a defect/);
   await writeFile(join(cwd,'result.json'),JSON.stringify({status:'complete',summary:'Protocol fixture, not a visual pass',screenshotRefs:[original],limitations:['Synthetic image'],findings:[]}));
  }});
@@ -64,6 +78,7 @@ test('the actual model context separates operator form from task, and the bound 
  await runAiVisualReview(f.directory,{cwd:join(f.root,'review'),signal:new AbortController().signal,generate:async(_command,_args,{cwd,input})=>{
   const context=JSON.parse(await readFile(join(cwd,'review-context.json')));
   assert.equal(context.experience.audit.task.originalRequest,f.audit.task.originalRequest);
+  assert.equal(context.readingPlan.stage,'review');
   assert.equal(context.experience.decision.chosen,f.decision.chosen);
   assert.match(input,/Challenge a compliant solution that worsens hierarchy/);
   await writeFile(join(cwd,'review-result.json'),JSON.stringify({[context.reviewResponsibility.decisionField]:'needs-evidence',screenshotRefs:[original,'after/desktop.png'],findings:[],rationale:'Synthetic pixels cannot establish task or design quality',limitations:['No actual webpage was reviewed'],experienceAssessments:REVIEW_DIMENSIONS.map(dimension=>({dimension,verdict:'needs-evidence',reason:'Real rendered task evidence missing',screenshotRefs:[]}))}));

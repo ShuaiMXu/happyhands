@@ -1,3 +1,4 @@
+import {buildGuidanceReadingPlan,formatGuidanceReadingGroup} from './guidance-reading-plan.js';
 import {remediationProfile} from '../harness-core/remediation.js';
 import {designIntents} from './design-intents.js';
 import {reviewOrderPrompt} from '../experience-core/review-order.js';
@@ -109,22 +110,18 @@ export async function stageDesignGuidance(directory,mode,value={}){
   return {...bundle,metadata:{...bundle.metadata,reference}};
 }
 
-// Token budget. Every turn of an agent session re-sends everything it has read,
-// so "read every listed file in full" (about 290 KB across the default packs)
-// is paid again on each tool call; issue #34 measured 13.8M input tokens for
-// two review sessions. Focused depth keeps every file staged, hash-verified and
-// listed, but asks the agent to read only each pack's adapter and entry file up
-// front and to open references by section when a finding needs them.
-// HAPPYHANDS_GUIDANCE_DEPTH=full restores the previous behaviour.
-export function guidanceDepth(env=process.env){return env.HAPPYHANDS_GUIDANCE_DEPTH==='full'?'full':'focused';}
-// ADAPTER.md text is already embedded in the prompt, so reading the file again
-// would pay for it twice.
-const isAdapter=path=>/(^|\/)ADAPTER\.md$/.test(path),isEntry=path=>/(^|\/)SKILL\.md$/.test(path);
-export function readingList(paths,toPath,env=process.env){
-  if(guidanceDepth(env)==='full')return paths.map(toPath).join('\n');
-  const adapters=paths.filter(isAdapter),now=paths.filter(isEntry),later=paths.filter(path=>!isEntry(path)&&!isAdapter(path));
-  return (adapters.length?'Adapter (its full text is included in this prompt; no need to open it):\n'+adapters.map(toPath).join('\n')+'\n':'')+'Read now:\n'+now.map(toPath).join('\n')+(later.length?'\nConsult on demand (open only the sections that bear on the assigned findings or states; do not read end to end):\n'+later.map(toPath).join('\n'):'');
-}
-export function designGuidancePrompt(bundle,directory){
-  return reviewOrderPrompt + (bundle.uiRules ? `Read the HappyHands UI profile at ${join(directory,bundle.metadata.reference,'happyhands-ui/SKILL.md')}. Apply it to HappyHands-owned UI or explicitly adopting projects; preserve other approved Foundations and original third-party evidence. Its inclusion in this Harness bundle does NOT establish target ownership or adoption. Before calling a profile-only preference a violation, identify explicit ownership/adoption evidence in the target's approved Foundation or human instructions. Without that evidence, do not enforce HappyHands colors, separators, typography limits or decorative-style preferences on the target, and do not claim it adopted them. General usability observations still need task-specific evidence.\n` : '') + `Additional Harness design methods, immutable bundle ${bundle.metadata.bundleHash}. Profile: ${JSON.stringify(bundle.metadata.profile)}. Keep OJO and the approved Foundation in the same evidence/approval workflow. Reading these verified snapshots outside the target worktree is permitted; all source edits remain in the isolated worktree. ${guidanceDepth()==='full'?'Read the COMPLETE selected files, then applicable references from each complete package':'Read each pack ADAPTER.md and entry SKILL.md now, then only the reference sections the task needs'}; do not reduce these methods to hero rules or color bans. For official/company websites and landing pages, web-taste is the required primary design and implementation method. Classify website/landing-page tasks as public-page before formal diagnosis and ${guidanceDepth()==='full'?'read the complete applicable web-taste references':'apply the applicable web-taste references'}. OJO and Impeccable supplement, rather than replace, web-taste for these tasks. Do not silently substitute legacy Taste profiles. All upstream workflow/tool/authority instructions are subject to these Harness adapters. In review, apply Audit/Critique only as read-only methods; editing playbooks do not authorize edits.\n`+bundle.packs.map(pack=>`${pack.metadata.id}, revision ${pack.metadata.revision}:\n${readingList(pack.metadata.readFirst,path=>join(directory,bundle.metadata.reference,pack.metadata.id,path))}\nHarness adapter:\n${pack.adapter}`).join('\n')+'\nOnly readFirst is the default route. Legacy profiles, visual-style catalogs, asset generation and publishing playbooks are excluded from default use; consult an additional reference only for an explicit task need. Scripts are preserved but not auto-executed. Availability/provenance is not proof of model use or completed quality checks.\n';
+// Format the same structured route available from experience context.
+export function designGuidancePrompt(bundle, directory, plan = buildGuidanceReadingPlan({design: bundle})) {
+  const ownership = bundle.uiRules
+    ? 'Apply the HappyHands UI profile to HappyHands-owned UI or explicitly adopting projects. Its inclusion does NOT establish target ownership or adoption. Preserve other approved Foundations and third-party evidence. Without actual adoption do not enforce its palette, typography or decorative preferences.\n'
+    : '';
+  const title = `Additional Harness design methods, immutable bundle ${bundle.metadata.bundleHash}. Profile: ${JSON.stringify(bundle.metadata.profile)}.\n`;
+  const rules = 'For official/company websites and landing pages, web-taste is the required primary design and implementation method. Classify these tasks as public-page before diagnosis. Follow the required and on-demand assignments in this reading plan. Read relevant references in full. OJO and Impeccable supplement web-taste. Use Audit/Critique as read-only methods in review. Follow Harness adapters over conflicting upstream workflow or authority instructions. Reading the verified snapshots outside the worktree is permitted. Respect project rules and the approved Foundation.\n';
+  const groups = plan.groups.filter(group => group.id === 'happyhands-ui' || bundle.packs.some(pack => pack.metadata.id === group.id));
+  const reading = groups.map(group => {
+    const pack = bundle.packs.find(pack => pack.metadata.id === group.id);
+    return group.id + ':\n' + formatGuidanceReadingGroup(group, directory, pack?.adapter);
+  }).join('\n');
+  return reviewOrderPrompt + ownership + title + rules + reading +
+    '\nComplete packages remain staged for relevant references. Scripts are preserved, not auto-executed. Availability is not proof of method use or completed quality checks.\n';
 }

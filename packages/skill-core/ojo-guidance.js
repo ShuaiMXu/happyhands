@@ -1,4 +1,4 @@
-import {readingList} from './design-guidance.js';
+import {buildGuidanceReadingPlan, formatGuidanceReadingGroup} from './guidance-reading-plan.js';
 import { readFile, mkdir, writeFile, mkdtemp, rename, rm, lstat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
@@ -107,7 +107,7 @@ export async function stageOjoGuidance(directory, mode, { renameDirectory = rena
   return { ...bundle, metadata: { ...bundle.metadata, reference } };
 }
 
-export function ojoGuidancePrompt(bundle, directory) {
-  const location = join(directory, bundle.metadata.reference);
-  return `Harness design guidance: OJO, revision ${bundle.metadata.revision}, bundle ${bundle.metadata.bundleHash}.\nGuidance files (reading this snapshot outside the worktree is permitted; all source edits remain inside the worktree):\n${readingList(bundle.metadata.readFirst, path => join(location,path))}\nLoad other bundled references only as relevant. Apply the following Harness adapter over conflicting upstream workflow, tool, output, style-ban or authority instructions:\n${bundle.adapter}`;
+export function ojoGuidancePrompt(bundle, directory, plan = buildGuidanceReadingPlan({ojo: bundle})) {
+  const group = plan.groups.find(item => item.id === bundle.metadata.id);
+  return `Harness design guidance: OJO, revision ${bundle.metadata.revision}, bundle ${bundle.metadata.bundleHash}.\nGuidance may be read outside the isolated worktree. Apply the Harness adapter over conflicting upstream workflow or authority instructions.\n${formatGuidanceReadingGroup(group,directory,bundle.adapter)}\n`;
 }
