@@ -309,7 +309,7 @@ export async function verifyRegionSource(page, region, sourceRoot) {
   };
 }
 
-export async function captureBrowserPlan({ plan, directory, phase, channel = 'chrome', sourceRoot = null, signal }) {
+export async function captureBrowserPlan({ plan, directory, phase, channel = 'chrome', sourceRoot = null, signal, measureRuntime = null }) {
   signal?.throwIfAborted();
   if (!['before', 'after'].includes(phase)) throw new Error('Phase must be before or after.');
   assertCapturePlan(plan);
@@ -357,6 +357,12 @@ export async function captureBrowserPlan({ plan, directory, phase, channel = 'ch
           const terminalAssertions=[];
           for(let i=state.actions.length-1;i>=0&&['assert-state','wait-for'].includes(state.actions[i].type);i--){
             if(state.actions[i].type==='assert-state')terminalAssertions.unshift(state.actions[i]);
+          }
+          if (measureRuntime) {
+            result.finalStateEvidence = await verifyTerminalState(page, terminalAssertions);
+            const measurement = await measureRuntime(page);
+            Object.assign(result, {reached: true, status: response.status(), finalUrl: page.url(), measurement});
+            continue;
           }
           const region = state.region ? await verifyRegionSource(page,state.region,sourceRoot) : null;
           const screenshot = `${captureKey(state.id, configuration.id)}.png`;

@@ -1,0 +1,29 @@
+name: Windows lock microprobe
+on:
+  pull_request:
+    paths:
+      - scripts/probe-run-lock-windows.mjs
+      - .github/workflows/windows-lock-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    name: Native Windows (Node ${{ matrix.node }})
+    runs-on: windows-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node scripts/probe-run-lock-windows.mjs run-lock-probe.ndjson
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-lock-probe-node${{ matrix.node }}
+          path: run-lock-probe.ndjson

@@ -22,6 +22,15 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false,
   const finding = manifest.confirmation?.findingId || 'FINDING_ID';
   const capturePlan = manifest.onboarding?.config?.capturePlan || 'CAPTURE_PLAN';
   switch (state.stage) {
+    case 'needs-technical-before':
+      return {actor: 'agent', steps: [step(['verify', ...run(directory), '--phase', 'before'])]};
+    case 'needs-technical-after':
+      return {actor: 'agent', steps: [step(['verify', ...run(directory), '--phase', 'after', '--repo', 'WORKTREE'], {
+        WORKTREE: 'isolated worktree of the same repository with the intended fix committed'
+      })]};
+    case 'technical-verified':
+      return {actor: null, steps: []};
+
     case 'needs-baseline':
       return {actor: 'agent', steps: [step(['capture', ...run(directory), '--phase', 'before', '--plan', capturePlan, '--repo', repo, '--bind-evidence', 'true'], {CAPTURE_PLAN: 'Capture Plan JSON covering the task states (schema: capture-state.schema.json)'})]};
     case 'needs-experience-audit': {
