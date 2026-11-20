@@ -73,7 +73,7 @@ export function workflowState(manifest) {
   if (!manifest.diagnosis) return { ...result, stage: 'needs-diagnosis', next: 'diagnose' };
   if (!manifest.confirmation) return { ...result, stage: 'awaiting-confirmation', blocked: true, reason: 'Diagnosis is ready. Request automatic repair; final acceptance remains with the user.', next: 'repair' };
   if (manifest.confirmation.verdict === 'stale') return { ...result, stage: 'finding-stale', blocked: true, reason: 'The selected finding no longer matches the baseline.', next: 'Start a new diagnosis or run.' };
-  if(['task-design-review@1','task-design-review@2'].includes(manifest.experiencePolicy)&&!manifest.designDecision)return {...result,stage:'needs-design-decision',next:'experience --phase decision --input FILE'};
+  if(['task-design-review@1','task-design-review@2'].includes(manifest.experiencePolicy)&&!manifest.designDecision)return {...result,stage:'needs-design-decision',next:'experience --phase context, then experience --phase decision --input FILE'};
   if (!manifest.plan) return { ...result, stage: 'needs-plan', next: 'plan' };
   return fromExecution(manifest, result);
 }

@@ -26,7 +26,7 @@ For HappyHands-owned interfaces or explicitly adopting projects, read the comple
 
 ## Required website and landing-page method
 
-For official/company websites and landing pages, web-taste is the required primary design and implementation method. Classify these tasks as public-page before formal diagnosis; read its complete copy, voice, system, layout and section references and applicable asset/motion references. OJO and Impeccable supplement this execution; they do not replace web-taste. Preserve user-approved project rules and evidence boundaries. Do not silently route website/landing-page work through a legacy Taste profile.
+For official/company websites and landing pages, web-taste is the required primary design and implementation method. Classify these tasks as public-page before formal diagnosis; follow the Run reading plan. Read complete copy, voice, system, layout and section references up front for creation, redesign or broad public-page work. For a confirmed narrow repair, read complete applicable references from the on-demand list. Use relevant asset and motion references when the task calls for them. OJO and Impeccable supplement this execution; they do not replace web-taste. Preserve user-approved project rules and evidence boundaries. Do not silently route website/landing-page work through a legacy Taste profile.
 
 
 ## Required task and design handoff
