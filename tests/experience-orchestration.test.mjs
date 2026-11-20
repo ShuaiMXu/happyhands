@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {fileURLToPath} from 'node:url';
+import {configureReviewCosts,reviewCostReport} from '../packages/harness-core/review-costs.js';
 import sample from '../examples/happyclaw-site/experience.json' with {type:'json'};
 import {publicExecutionBrief} from '../packages/harness-core/export.js';
 import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,savePlan,readVerifiedExecutionPlan,saveEvaluation} from '../packages/harness-core/store.js';
@@ -140,11 +144,25 @@ test('repair goals may preserve design; improvement/mixed require improved final
  assert.doesNotThrow(()=>assertReviewGoal({verdict:'pass'},null));
 });
 
-test('the real frozen audit-to-native-review path rejects a preservation pass for an improvement goal',async t=>{
+test('next prepares a budgeted review, which still rejects a preservation pass for an improvement goal',async t=>{
  const f=await fixture(t);f.audit.version='task-design-review@2';f.audit.task.goal={version:'design-goal@1',kind:'improvement',requestQuote:'Help visitors',criteria:['Clearer hierarchy for the next decision'],preserve:['Original brand'],allowedChanges:['Grouping and reading order']};f.decision.version=f.audit.version;
  await saveExperienceRecord(f.directory,'audit',f.audit);let run=await loadRun(f.directory);await saveDiagnosis(f.directory,diagnoseRun({run}));await confirmFinding(f.directory,'F1','supported','Synthetic scope, not human acceptance');await saveExperienceRecord(f.directory,'decision',f.decision);await savePlan(f.directory,'F1');
  await mkdir(join(f.directory,'after'));await writeFile(join(f.directory,'after/desktop.png'),png);await saveCapture(f.directory,'after',{viewports:{desktop:{screenshot:'after/desktop.png'}}});await saveEvaluation(f.directory,{status:'synthetic-functional-pass'});
- await assert.rejects(runAiVisualReview(f.directory,{cwd:join(f.root,'goal-review'),maxModelCalls:1,signal:new AbortController().signal,generate:async(c,a,{cwd})=>{
+ const cli = fileURLToPath(new URL('../scripts/harness.mjs', import.meta.url));
+ const invoke = async (...args) => JSON.parse((await promisify(execFile)(process.execPath, [cli, ...args])).stdout);
+ const next = async () => (await invoke('next', '--run', f.directory)).cli.steps;
+ await configureReviewCosts(f.directory, {maxInputTokens: 50000}, 'Fixture token budget without a call ceiling');
+ const [preflight, review] = await next();
+ assert.equal(preflight.argv.at(-2), '--preflight-only');
+ const preview = await invoke(...preflight.argv);
+ assert.equal(preview.status, 'preflight-only');
+ assert.equal(preview.plan.potentialModelCalls, 1);
+ assert.equal((await reviewCostReport(f.directory)).totals.calls, 0);
+ assert.deepEqual(review.argv.slice(-2), ['--max-model-calls', 'MAX_MODEL_CALLS']);
+ assert.ok(review.needs.MAX_MODEL_CALLS);
+ await configureReviewCosts(f.directory, {maxInputTokens: 50000, maxCalls: 1}, 'Fixture cumulative call ceiling');
+ assert.deepEqual((await next()).map(step => step.argv), [['model-review', '--run', f.directory]]);
+ await assert.rejects(runAiVisualReview(f.directory,{cwd:join(f.root,'goal-review'),signal:new AbortController().signal,generate:async(c,a,{cwd})=>{
   const context=JSON.parse(await readFile(join(cwd,'review-context.json'))),refs=[original,'after/desktop.png'];await writeFile(join(cwd,'review-result.json'),JSON.stringify({[context.reviewResponsibility.decisionField]:'pass',screenshotRefs:refs,findings:[],rationale:'Synthetic scoped repair only',limitations:['Not actual visual evidence'],designComparison:{verdict:'preserved',reason:'Only a local repair; no hierarchy benefit established',screenshotRefs:refs},experienceAssessments:REVIEW_DIMENSIONS.map(dimension=>({dimension,verdict:'pass',reason:'Synthetic contract result only',screenshotRefs:refs}))}));
  }}),/design improvement goal requires/);
  assert.equal((await loadRun(f.directory)).manifest.visualReviews.length,0);assert.equal((await loadRun(f.directory)).manifest.judgment,null);

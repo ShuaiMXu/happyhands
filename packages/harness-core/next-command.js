@@ -8,13 +8,15 @@ import {configuredExperienceSurface} from './experience-contract.js';
 // be decided by the user. The agent loop becomes: call `next`, run `cli.steps`,
 // ask the user when `cli.actor` is "user", repeat.
 
+import {CURRENT_EXPERIENCE_POLICY} from './experience-contract.js';
+
 const run = directory => ['--run', directory];
 
 function step(argv, needs = {}) {
   return {argv, needs};
 }
 
-export function nextCliCommand(state, manifest, directory, {pendingSelf = false} = {}) {
+export function nextCliCommand(state, manifest, directory, {pendingSelf = false, reviewCallCeiling} = {}) {
   const repo = manifest.onboarding?.repository?.root || 'REPO';
   const worktree = manifest.execution?.worktree || 'WORKTREE';
   const finding = manifest.confirmation?.findingId || 'FINDING_ID';
@@ -57,8 +59,17 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false}
       return {actor: 'agent', steps: [step(['evaluate', ...run(directory)])]};
     case 'needs-specialist-verification':
       return {actor: 'agent', steps: [step(['verify', ...run(directory), '--config', 'PROJECT_CONFIG', '--repo', worktree], {PROJECT_CONFIG: 'the project config used for start/onboard'})]};
-    case 'needs-visual-qa':
-      return {actor: 'agent', steps: [step(['model-review', ...run(directory)])], alternatives: [step(['attest', ...run(directory), '--input', 'VISUAL_QA_JSON'], {VISUAL_QA_JSON: 'independent review in visual-review.schema.json format'})]};
+    case 'needs-visual-qa': {
+      const review = ['model-review', ...run(directory)];
+      const needsCeiling = manifest.experiencePolicy === CURRENT_EXPERIENCE_POLICY && reviewCallCeiling === undefined;
+      const steps = needsCeiling ? [
+        step([...review, '--preflight-only', 'true']),
+        step([...review, '--max-model-calls', 'MAX_MODEL_CALLS'], {
+          MAX_MODEL_CALLS: 'Set the call ceiling for this invocation within the authorized budget. The free preflight reports the estimated calls in plan.potentialModelCalls.'
+        })
+      ] : [step(review)];
+      return {actor: 'agent', steps, alternatives: [step(['attest', ...run(directory), '--input', 'VISUAL_QA_JSON'], {VISUAL_QA_JSON: 'independent review in visual-review.schema.json format'})]};
+    }
     case 'awaiting-judgment':
     case 'visual-qa-failed':
       return {actor: 'user', ask: 'Present the before/after originals (compare), checks and open items. Record the decision the user gives you; never decide yourself.', steps: [
