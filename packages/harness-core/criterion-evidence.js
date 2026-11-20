@@ -1,7 +1,9 @@
-import {isDeepStrictEqual} from 'node:util';
 import {captureEntries, captureKey, capturedTaskContext} from './capture-state.js';
-import {readRepositoryInputs, repositoryChanges} from './repository-inputs.js';
 import {captureRouteKey} from './whole-page.js';
+
+// Capture manifests are JSON. Object key order does not change a replay.
+const stableJson = value => JSON.stringify(value, (_key, member) => member && typeof member === 'object' && !Array.isArray(member)
+  ? Object.fromEntries(Object.keys(member).sort().map(key => [key, member[key]])) : member);
 
 export function matchedCriterionStates(manifest, refs) {
   const cited = new Set(refs);
@@ -18,7 +20,7 @@ export function matchedCriterionStates(manifest, refs) {
     if (!baseline || baseline.reached === false || after.reached === false || baseline.error || after.error || baseline.status >= 400 || after.status >= 400 || !afterRoute ||
         route(baseline) !== afterRoute || ![after.width, after.height].every(size => Number.isSafeInteger(size) && size > 0) ||
         baseline.width !== after.width || baseline.height !== after.height ||
-        !isDeepStrictEqual(capturedTaskContext(baseline), capturedTaskContext(after))) return [];
+        stableJson(capturedTaskContext(baseline)) !== stableJson(capturedTaskContext(after))) return [];
     return [{state, stateId:after.stateId}];
   });
 }
@@ -47,17 +49,4 @@ export function assertCriterionAssessments(review, manifest, {regional=false}={}
     }
     if (review.verdict === 'pass' && row.verdict !== 'pass') throw Error('An unresolved design goal criterion prevents passing Visual QA.');
   }
-}
-
-export async function criterionSourceChanges(run) {
-  const [before, after] = await Promise.all([readRepositoryInputs(run,'before'), readRepositoryInputs(run,'after')]);
-  if (!before || !after) return null;
-  return repositoryChanges(before.files, after.files).map(change => change.path);
-}
-
-export async function assertCriterionFiles(run, review) {
-  const cited = review.criterionAssessments?.flatMap(row => row.changedFiles) || [];
-  if (!cited.length) return;
-  const actual = new Set(await criterionSourceChanges(run));
-  if (cited.some(path => !actual.has(path))) throw Error('Criterion cites a file without a recorded change between the captured sources.');
 }

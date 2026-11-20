@@ -8,7 +8,7 @@ import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {configureReviewCosts,reviewCostReport} from '../packages/harness-core/review-costs.js';
 import sample from '../examples/happyclaw-site/experience.json' with {type:'json'};
-import {publicExecutionBrief} from '../packages/harness-core/export.js';
+import {exportRun,publicExecutionBrief} from '../packages/harness-core/export.js';
 import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,savePlan,readVerifiedExecutionPlan,saveEvaluation,saveVisualReview} from '../packages/harness-core/store.js';
 import {captureWithDesignSystem} from '../packages/harness-core/design-system.js';
 import {buildRunReport} from '../packages/harness-core/report.js';
@@ -217,6 +217,9 @@ test('a new goal-bound decision requires independently cited criteria and the re
  assert.match(html,/Explain the renewal price[\s\S]*?renewal\.html[\s\S]*?page--desktop[\s\S]*?pass · Price is grouped with its term/);
  assert.match(html,/Keep the primary action visible[\s\S]*?No changed files associated/);
  assert.match(html,/Human judgment<\/th><td>pending/);
+ const exported=await exportRun({directory:f.directory,outputRoot:join(f.root,'exported')});
+ const exportedReview=JSON.parse(await readFile(join(exported.directory,'reviews/visual-qa-evaluator.json'),'utf8'));
+ assert.deepEqual(exportedReview.criterionAssessments,[first,second]);
  const inventory=join(f.directory,'after/repository-inputs.json');
  await writeFile(inventory,(await readFile(inventory,'utf8'))+'\n');
  await buildRunReport({directory:f.directory});

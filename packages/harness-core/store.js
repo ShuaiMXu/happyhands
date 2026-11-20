@@ -12,7 +12,7 @@ import {stageProjectMemory,projectMemoryBrief,projectMemoryForReview,readRunMemo
 import {readVerificationEvidence,verificationHash} from './verification.js';
 import { captureEntries } from './capture-state.js';
 import { assertVisualReview } from './visual-review.js';
-import {assertCriterionFiles} from './criterion-evidence.js';
+import {assertCriterionFiles} from './criterion-source-evidence.js';
 import { randomUUID, createHash } from 'node:crypto';
 import { lstat, mkdir, readdir, readFile, rename, rm, rmdir, unlink, writeFile, realpath } from 'node:fs/promises';
 import { join, resolve } from 'node:path';

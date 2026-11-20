@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {captureOriginals} from './capture-state.js';
 import {readVerificationFile,verificationHash,readVerificationEvidence} from './verification.js';
 import {assertVisualReview} from './visual-review.js';
-import {assertCriterionFiles} from './criterion-evidence.js';
+import {assertCriterionFiles} from './criterion-source-evidence.js';
 import {designSystemContext} from '../skill-core/design-system.js';
 import {assertBrandAssessments} from '../skill-core/brand-review.js';
 

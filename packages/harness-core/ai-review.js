@@ -1,6 +1,6 @@
 import {buildGuidanceReadingPlan} from '../skill-core/guidance-reading-plan.js';
 import {defaultModelAgent} from './api-models.js';
-import {assertCriterionFiles,criterionSourceChanges} from './criterion-evidence.js';
+import {assertCriterionFiles,criterionSourceChanges} from './criterion-source-evidence.js';
 import {CURRENT_EXPERIENCE_POLICY} from './experience-contract.js';
 import {reviewBatchKey} from './review-batch-key.js';
 import {reserveReviewCall,settleReviewCall,reviewUsageCollector,reviewCostReport,assertCostPolicy} from './review-costs.js';
