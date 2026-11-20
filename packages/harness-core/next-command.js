@@ -24,15 +24,10 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false,
   switch (state.stage) {
     case 'needs-technical-before':
       return {actor: 'agent', steps: [step(['verify', ...run(directory), '--phase', 'before'])]};
-    case 'needs-technical-after': {
-      const args = ['verify', ...run(directory), '--phase', 'after', '--repo', 'WORKTREE'];
-      const needs = {WORKTREE: 'isolated worktree of the same repository with the intended fix committed'};
-      if (state.level === 'runtime') {
-        args.push('--url', 'AFTER_URL');
-        needs.AFTER_URL = 'URL serving the candidate worktree on a separate local preview';
-      }
-      return {actor: 'agent', steps: [step(args, needs)]};
-    }
+    case 'needs-technical-after':
+      return {actor: 'agent', steps: [step(['verify', ...run(directory), '--phase', 'after', '--repo', 'WORKTREE'], {
+        WORKTREE: 'isolated worktree of the same repository with the intended fix committed'
+      })]};
     case 'technical-verified':
       return {actor: null, steps: []};
 

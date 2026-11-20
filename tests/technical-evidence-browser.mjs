@@ -5,15 +5,26 @@ import {createServer} from 'node:http';
 import {join} from 'node:path';
 import {technicalProject} from './helpers/technical-project.mjs';
 
-async function serve(t, checkout) {
+async function serve(t, checkout, port=0) {
   const server = createServer(async (request, response) => {
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.end(await readFile(join(checkout, 'index.html')));
   });
-  await new Promise((resolve, reject) => server.once('error', reject).listen(0, '127.0.0.1', resolve));
-  t.after(() => server.close());
-  return `http://127.0.0.1:${server.address().port}/`;
+  await new Promise((resolve, reject) => server.once('error', reject).listen(port, '127.0.0.1', resolve));
+  const close=()=>new Promise(resolve=>server.close(resolve));
+  t.after(close);
+  return {url:`http://127.0.0.1:${server.address().port}/`,port:server.address().port,close};
 }
+
+const managedServer=`
+  import {createServer} from 'node:http';
+  import {readFile} from 'node:fs/promises';
+  const html=await readFile('index.html');
+  createServer((request,response)=>{
+    response.setHeader('Content-Type','text/html; charset=utf-8');
+    response.end(html);
+  }).listen(Number(process.argv[2]),'127.0.0.1');
+`;
 
 const cases = [
   {
@@ -42,25 +53,30 @@ const cases = [
 for (const scenario of cases) {
   test(`runtime ${scenario.policy.kind} compares real browser evidence with no screenshots`, async t => {
     const html = body => '<!doctype html><meta name="viewport" content="width=device-width"><title>Fixture</title><main style="margin:0">' + body + '</main>';
-    const p = await technicalProject(t, {'index.html':html(scenario.before)});
-    const url = await serve(t, p.repo);
+    const p = await technicalProject(t, {'index.html':html(scenario.before),'serve.mjs':managedServer});
+    const reservation = await serve(t, p.repo);
+    const {url,port}=reservation;
+    await reservation.close();
     const planPath = join(p.root,'capture.json');
     await writeFile(planPath, JSON.stringify({
       schemaVersion:'0.1', adapter:'web',
       configurations:[{id:'phone', viewport:{width:390,height:844}}],
       states:[{id:'default',start:{url},actions:[]}]
     }));
-    const run = await p.start({url,capturePlan:planPath,evidencePolicy:scenario.policy});
+    await assert.rejects(p.start({url,capturePlan:planPath,evidencePolicy:scenario.policy}),/managed start command/);
+    const run = await p.start({url,capturePlan:planPath,start:{command:'node',args:['serve.mjs',String(port)]},evidencePolicy:scenario.policy});
     const before = JSON.parse(await p.invoke('verify','--run',run,'--phase','before'));
     assert.equal(before.status, 'fail');
     await p.fix({'index.html':html(scenario.after)});
-    const candidateUrl = await serve(t,p.candidate);
-    await assert.rejects(p.invoke('verify','--run',run,'--phase','after','--repo',p.candidate,'--url',url), /own preview URL/);
-    const after = JSON.parse(await p.invoke('verify','--run',run,'--phase','after','--repo',p.candidate,'--url',candidateUrl));
+    const unrelated = await serve(t,p.candidate,port);
+    await assert.rejects(p.invoke('verify','--run',run,'--phase','after','--repo',p.candidate), /port is already in use/);
+    await unrelated.close();
+    const after = JSON.parse(await p.invoke('verify','--run',run,'--phase','after','--repo',p.candidate));
     assert.equal(after.status, 'pass');
     assert.equal(after.visual, 'not-reviewed');
     assert.notEqual(after.source.commit, before.source.commit);
     assert.ok(before.preview.fingerprint && after.preview.fingerprint);
+    assert.equal(after.preview.binding,'managed-checkout');
     assert.equal(after.checks[0].key, before.checks[0].key);
     assert.equal(after.checks[0].route, before.checks[0].route);
     scenario.check(before.checks, after.checks);
@@ -74,14 +90,14 @@ test('a Hero layout change stays at the visual gate after real matched captures 
   const page = size => '<!doctype html><meta name="viewport" content="width=device-width"><title>Hero</title>' +
     `<main><h1 style="font-size:${size}px">Browse design resources</h1><a href="#library">Browse library</a></main>`;
   const p = await technicalProject(t, {'index.html':page(28)});
-  const baseline = await serve(t,p.repo);
+  const {url:baseline} = await serve(t,p.repo);
   // The low-level visual entry still enforces independent QA and keeps this
   // fixture focused on the evidence gate rather than authoring a design audit.
   const run = await p.invoke('init','--spec',join(p.root,'experience.json'),'--url',baseline,'--out',join(p.root,'runs'));
   await p.invoke('capture','--run',run,'--phase','before');
   await p.invoke('confirm','--run',run,'--finding',p.spec.findings[0].id,'--verdict','supported','--note','Fixture Hero typography change');
   await p.fix({'index.html':page(34)});
-  const candidate = await serve(t,p.candidate);
+  const {url:candidate} = await serve(t,p.candidate);
   await p.invoke('capture','--run',run,'--phase','after','--url',candidate);
   await p.invoke('evaluate','--run',run);
   const status = JSON.parse(await p.invoke('status','--run',run));

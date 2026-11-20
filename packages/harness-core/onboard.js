@@ -59,10 +59,13 @@ export async function loadProjectConfig(path) {
   validateVerificationChecks(config.verificationChecks);
   validateEvidencePolicy(config.evidencePolicy);
   const level = evidenceLevel(config.evidencePolicy);
-  if (level !== 'visual' && (config.mode !== 'review' || config.start || config.verificationChecks?.length)) {
-    throw Error('Use an explicit review config and the start command for technical evidence. Specialist visual checks and managed previews use the default policy.');
+  if (level !== 'visual' && (config.mode !== 'review' || config.verificationChecks?.length)) {
+    throw Error('Use an explicit review config and the start command for technical evidence. Specialist visual checks use the default policy.');
   }
-  if (level === 'runtime' && config.capturePlan === undefined) throw Error('Runtime evidence requires a matched Capture Plan.');
+  if (level === 'source' && config.start) throw Error('A source check runs without a preview command.');
+  if (level === 'runtime' && (!config.start || config.capturePlan === undefined)) {
+    throw Error('Technical runtime verification requires a managed start command and Capture Plan.');
+  }
 
   const mode = config.mode || 'auto';
   if (!['auto', 'review', 'bootstrap'].includes(mode)) throw new Error('Project mode must be auto, review or bootstrap.');

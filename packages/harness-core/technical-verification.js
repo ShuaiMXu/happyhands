@@ -1,10 +1,12 @@
 import {execFile} from 'node:child_process';
+import {once} from 'node:events';
 import {readFile, realpath} from 'node:fs/promises';
-import {join} from 'node:path';
+import {join, relative} from 'node:path';
 import {promisify} from 'node:util';
 import {captureBrowserPlan} from './browser.js';
 import {assertCapturePlan, captureKey} from './capture-state.js';
 import {evidenceLevel} from './evidence-policy.js';
+import {assertManagedPreview, loadProjectConfig, publicProjectConfig, spawnPreview, stopPreview, waitForPreview} from './onboard.js';
 import {verificationPreviewFingerprint} from './preview-fingerprint.js';
 import {repositoryFingerprint, sameRepositoryFingerprint} from './repository-fingerprint.js';
 import {loadRun, withRunLock, writeJson} from './store.js';
@@ -26,19 +28,7 @@ function route(value) {
   return url.pathname + url.search + url.hash;
 }
 
-function rebasePlan(plan, initialUrl, url) {
-  const origin = localUrl(initialUrl).origin;
-  const remap = value => {
-    if (localUrl(value).origin !== origin) throw Error('Use one preview origin in the technical capture plan.');
-    return new URL(route(value), localUrl(url).origin).href;
-  };
-  return assertCapturePlan({...plan, states: plan.states.map(state => ({
-    ...state, start: {...state.start, url: remap(state.start.url)},
-    actions: state.actions.map(action => action.type === 'navigate' ? {...action, url: remap(action.url)} : action)
-  }))});
-}
-
-async function readRuntimePlan(run, url) {
+async function readRuntimePlan(run) {
   const config = run.manifest.onboarding.config;
   const planBytes = await readFile(config.capturePlan);
   if (verificationHash(planBytes) !== config.capturePlanDigest) throw Error('Technical capture plan changed after start.');
@@ -46,8 +36,7 @@ async function readRuntimePlan(run, url) {
   if (plan.states.some(state => (state.captureMode && state.captureMode !== 'viewport') || state.region || state.scrollSurface)) {
     throw Error('Technical browser checks use the viewport and action replay. Use visual review for regions or full-page capture.');
   }
-  if (route(url) !== route(config.url)) throw Error('Use the same preview entry path, query and fragment in both phases.');
-  return rebasePlan(plan, config.url, url);
+  return plan;
 }
 
 async function checkSyntax(repo, file) {
@@ -81,22 +70,52 @@ async function measurePage(page, policy) {
   return {selector: policy.selector, expectedName: policy.name, status: await named.count() === 1 ? 'pass' : 'fail'};
 }
 
-async function checkRuntime({run, repo, url, phase}) {
-  const plan = await readRuntimePlan(run, url);
-  const capture = await captureBrowserPlan({
-    plan, directory: join(run.directory, 'technical'), phase, sourceRoot: repo,
-    channel: run.manifest.onboarding.config.browser,
-    measureRuntime: page => measurePage(page, run.manifest.evidencePolicy)
-  });
-  return capture.states.map(state => {
-    const reached = state.reached && new URL(state.finalUrl).origin === localUrl(url).origin;
-    return {
-      key: captureKey(state.stateId, state.configurationId),
-      viewport: {width: state.width, height: state.height},
-      route: reached ? route(state.finalUrl) : null,
-      ...(reached ? state.measurement : {status: 'needs-evidence', diagnostic: state.error || 'Preview left the local origin.'})
-    };
-  });
+async function checkRuntime({run, repo, original, url, phase}) {
+  const frozen = run.manifest.onboarding.config;
+  const config = await loadProjectConfig(frozen.configPath);
+  const current = publicProjectConfig(config);
+  if (!config.start || config.url !== frozen.url || current.repo !== frozen.repo ||
+      JSON.stringify(current.start) !== JSON.stringify(frozen.start)) {
+    throw Error('Technical preview configuration changed after start.');
+  }
+  const cwd = join(repo, relative(original, await realpath(config.start.cwd)));
+  const start = {...config.start, cwd};
+  const plan = await readRuntimePlan(run);
+  await assertManagedPreview({repo, start, url});
+  const child = spawnPreview(start);
+  child.ref();
+  const lifetime = new AbortController();
+  const stopped = () => lifetime.abort(new Error('The checkout preview stopped during technical verification.'));
+  child.once('error', stopped);
+  child.once('exit', stopped);
+  try {
+    const entry = await waitForPreview(url, {timeoutMs: config.timeoutMs ?? 10000, signal: lifetime.signal});
+    if (new URL(entry.finalUrl).origin !== localUrl(url).origin) throw Error('The checkout preview redirected to another origin.');
+    const preview = {url, fingerprint: await verificationPreviewFingerprint(url), binding: 'managed-checkout'};
+    const capture = await captureBrowserPlan({
+      plan, directory: join(run.directory, 'technical'), phase, sourceRoot: repo,
+      channel: frozen.browser, signal: lifetime.signal,
+      measureRuntime: page => measurePage(page, run.manifest.evidencePolicy)
+    });
+    if (preview.fingerprint !== await verificationPreviewFingerprint(url)) throw Error('Preview changed during technical verification.');
+    lifetime.signal.throwIfAborted();
+    const checks = capture.states.map(state => {
+      const reached = state.reached && new URL(state.finalUrl).origin === localUrl(url).origin;
+      return {
+        key: captureKey(state.stateId, state.configurationId),
+        viewport: {width: state.width, height: state.height},
+        route: reached ? route(state.finalUrl) : null,
+        ...(reached ? state.measurement : {status: 'needs-evidence', diagnostic: state.error || 'Preview left the local origin.'})
+      };
+    });
+    return {checks, preview};
+  } finally {
+    if (child.pid && child.exitCode === null && child.signalCode === null) {
+      const closed = once(child, 'close', {signal: AbortSignal.timeout(5000)});
+      stopPreview(child);
+      await closed;
+    }
+  }
 }
 
 async function commonGitDir(repo) {
@@ -114,7 +133,7 @@ function comparableStates(before, after) {
   return JSON.stringify(scope(before)) === JSON.stringify(scope(after));
 }
 
-export async function verifyTechnicalRepair({directory, phase, repo, url}) {
+export async function verifyTechnicalRepair({directory, phase, repo}) {
   if (!['before', 'after'].includes(phase)) throw Error('Technical verification requires --phase before|after.');
   return withRunLock(directory, async () => {
     const run = await loadRun(directory);
@@ -137,16 +156,10 @@ export async function verifyTechnicalRepair({directory, phase, repo, url}) {
       }
       await exec('git', ['merge-base', '--is-ancestor', before.source.commit, source.commit], {cwd: checkout});
     }
-    if (level === 'source' && url !== undefined) throw Error('A source check does not use a preview URL.');
-    if (phase === 'before' && url !== undefined && localUrl(url).href !== manifest.url) throw Error('Baseline preview URL changed after start.');
-    const previewUrl = level === 'runtime' ? localUrl(url || manifest.url).href : null;
-    if (phase === 'after' && previewUrl && localUrl(previewUrl).origin === localUrl(before.preview.url).origin) throw Error('Provide the isolated candidate’s own preview URL.');
-    const preview = previewUrl ? {url: previewUrl, fingerprint: await verificationPreviewFingerprint(previewUrl)} : null;
-    const checks = level === 'source'
-      ? await checkSyntax(checkout, manifest.evidencePolicy.file)
-      : await checkRuntime({run, repo: checkout, url: previewUrl, phase});
+    const {checks, preview} = level === 'source'
+      ? {checks: await checkSyntax(checkout, manifest.evidencePolicy.file), preview: null}
+      : await checkRuntime({run, repo: checkout, original, url: manifest.url, phase});
     if (!sameRepositoryFingerprint(source, await repositoryFingerprint(checkout))) throw Error('Repository inputs changed during technical verification.');
-    if (preview && preview.fingerprint !== await verificationPreviewFingerprint(preview.url)) throw Error('Preview changed during technical verification.');
     const scopeChanged = phase === 'after' && level === 'runtime' && !comparableStates(before.checks, checks);
     const record = {
       status: scopeChanged ? 'needs-evidence' : resultStatus(checks),

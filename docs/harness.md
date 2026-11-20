@@ -319,17 +319,17 @@ The default Run still uses matched captures and independent visual review. Choos
 | `{"kind":"button-name","selector":"#save","name":"Save changes"}` | Replay the Capture Plan and check the browser-computed accessible name of one visible button per state. |
 | `{"kind":"horizontal-overflow"}` | Replay the Capture Plan and compare document scroll width and viewport width at each matching state and viewport. |
 
-For the two browser checks, use `capturePlan` with explicit viewports and local URLs. Serve the candidate from its own preview origin. The same routes, action replay and viewport settings are reused. Browser results include checkout fingerprints and an entry-response fingerprint checked around the replay. Serve each preview from its declared checkout. These fingerprints are evidence of the observed checkout and response, and the producer must ensure the preview serves that checkout.
+For the two browser checks, configure `capturePlan` with explicit viewports and local URLs, and set `start` to the project's preview command. Leave that port free. Harness starts and stops the preview from the baseline checkout and then from the candidate worktree, using the same configured address, routes and action replay in both phases. A pre-existing server on that port is rejected. The report binds the observed checkout, managed preview and entry-response fingerprint checked around each replay.
 
 ```bash
 hh start --config PROJECT.json
 hh verify --run RUN --phase before
 # Apply the scoped fix in an isolated worktree and commit it.
-hh verify --run RUN --phase after --repo WORKTREE --url CANDIDATE_URL
+hh verify --run RUN --phase after --repo WORKTREE
 hh report --run RUN
 ```
 
-Omit `--url` on the after command for a source check. The before phase must reproduce the declared failure. The candidate must pass every matching check. `next`, `status` and `report` distinguish technical verification from independent visual QA and human judgment. Technical Runs use `technical-verified` and `visual: not-reviewed`. Browser actions and measurements are retained as JSON. For visual evidence or acceptance, use a visual Run against the actual candidate. A passing overflow check is limited to document overflow and does not establish whether content was clipped or the layout is good.
+The before phase must reproduce the declared failure. The candidate must pass every matching check. `next`, `status` and `report` distinguish technical verification from independent visual QA and human judgment. Technical Runs use `technical-verified` and `visual: not-reviewed`. Browser actions and measurements are retained as JSON. For visual evidence or acceptance, use a visual Run against the actual candidate. A passing overflow check is limited to document overflow and does not establish whether content was clipped or the layout is good.
 
 ## Goal-bound review and measured cost (isolated candidate)
 
