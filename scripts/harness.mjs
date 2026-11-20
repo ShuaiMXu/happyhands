@@ -399,7 +399,12 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const { nextCliCommand } = await import('../packages/harness-core/next-command.js');
     const { hasPendingSelfExecution } = await import('../packages/harness-core/runner.js');
     const pendingSelf = state.stage === 'needs-execution' && await hasPendingSelfExecution(directory);
-    process.stdout.write(JSON.stringify({ ...state, cli: nextCliCommand(state, manifest, directory, { pendingSelf }) }, null, 2) + '\n');
+    let reviewCallCeiling;
+    if (state.stage === 'needs-visual-qa' && manifest.experiencePolicy === CURRENT_EXPERIENCE_POLICY) {
+      const {reviewCostReport} = await import('../packages/harness-core/review-costs.js');
+      reviewCallCeiling = (await reviewCostReport(directory)).policy.maxCalls;
+    }
+    process.stdout.write(JSON.stringify({ ...state, cli: nextCliCommand(state, manifest, directory, { pendingSelf, reviewCallCeiling }) }, null, 2) + '\n');
   } else if (command === 'skill') {
     const result = await executeSkill({ id: required(options, 'skill'), directory, repo: options.repo ? resolve(options.repo) : undefined });
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');

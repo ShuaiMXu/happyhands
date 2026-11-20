@@ -1,4 +1,5 @@
 import {defaultModelAgent} from './api-models.js';
+import {CURRENT_EXPERIENCE_POLICY} from './experience-contract.js';
 import {reviewBatchKey} from './review-batch-key.js';
 import {reserveReviewCall,settleReviewCall,reviewUsageCollector,reviewCostReport,assertCostPolicy} from './review-costs.js';
 import {readReviewBatch,saveReviewBatch} from './review-batch-cache.js';
@@ -205,7 +206,7 @@ async function saveNativeReviewPlan(directory,options,{regionalCalls,crossCalls}
 }
 
 function assertGoalBoundCallCeiling(run,options,plan){
- if(run.manifest.experiencePolicy==='task-design-review@2'&&!options.preflightOnly&&options.maxModelCalls===undefined&&options.costPolicy?.maxCalls===undefined&&plan.costs.policy.maxCalls===undefined)throw Error('A goal-bound review requires an explicit call ceiling: configure review-budget or --max-model-calls before invoking models. The prepared plan is retained.');
+ if(run.manifest.experiencePolicy===CURRENT_EXPERIENCE_POLICY&&!options.preflightOnly&&options.maxModelCalls===undefined&&options.costPolicy?.maxCalls===undefined&&plan.costs.policy.maxCalls===undefined)throw Error('A goal-bound review requires an explicit call ceiling: configure review-budget or --max-model-calls before invoking models. The prepared plan is retained.');
 }
 
 export async function runAiVisualReview(directory, options) {
