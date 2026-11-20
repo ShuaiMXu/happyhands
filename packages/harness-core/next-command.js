@@ -70,8 +70,10 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false,
     case 'needs-structural-evaluation':
       return {actor: 'agent', steps: [step(['evaluate', ...run(directory)])]};
     case 'needs-specialist-verification': {
-      const config=manifest.onboarding?.config?.configPath;
-      return {actor: 'agent', steps: [step(['verify', ...run(directory), '--config', config||'PROJECT_CONFIG', '--repo', worktree], config?{}:{PROJECT_CONFIG: 'the project config used for start/onboard'})]};
+      const config=manifest.onboarding?.config;
+      const checkout=manifest.execution?.worktree;
+      if(config?.start && config.configPath)return {actor:'agent',steps:[step(['verify',...run(directory),'--managed','true'])]};
+      return {actor:'agent',steps:[step(['verify',...run(directory),'--config',config?.configPath||'PROJECT_CONFIG',...(checkout?['--repo',checkout]:[])],config?.configPath?{}:{PROJECT_CONFIG:'the project config used for start/onboard'})]};
     }
     case 'needs-visual-qa': {
       const review = ['model-review', ...run(directory)];
