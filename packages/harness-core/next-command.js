@@ -20,6 +20,20 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false}
   const surface = 'SURFACE';
   const surfaceNeed = {SURFACE: 'public-page for websites and landing pages, app-screen for working interfaces'};
   switch (state.stage) {
+    case 'needs-technical-before':
+      return {actor: 'agent', steps: [step(['verify', ...run(directory), '--phase', 'before'])]};
+    case 'needs-technical-after': {
+      const args = ['verify', ...run(directory), '--phase', 'after', '--repo', 'WORKTREE'];
+      const needs = {WORKTREE: 'isolated worktree of the same repository with the intended fix committed'};
+      if (state.level === 'runtime') {
+        args.push('--url', 'AFTER_URL');
+        needs.AFTER_URL = 'URL serving the candidate worktree on a separate local preview';
+      }
+      return {actor: 'agent', steps: [step(args, needs)]};
+    }
+    case 'technical-verified':
+      return {actor: null, steps: []};
+
     case 'needs-baseline':
       return {actor: 'agent', steps: [step(['capture', ...run(directory), '--phase', 'before', '--plan', capturePlan, '--repo', repo, '--bind-evidence', 'true'], {CAPTURE_PLAN: 'Capture Plan JSON covering the task states (schema: capture-state.schema.json)'})]};
     case 'needs-experience-audit':

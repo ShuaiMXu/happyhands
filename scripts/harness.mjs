@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {saveExperienceCase} from '../packages/harness-core/store.js';
 import {listExperienceCases} from '../packages/harness-core/experience-cases.js';
+import {evidenceLevel} from '../packages/harness-core/evidence-policy.js';
 import {runVerificationChecks} from '../packages/harness-core/run-verification.js';
 import {withdrawJudgment} from '../packages/harness-core/store.js';
 import {saveRunMemoryException} from '../packages/harness-core/store.js';
@@ -50,7 +51,7 @@ const commandOptions = new Map([
   ['skill', 'run skill repo'],
   ['diagnose', 'run rubric'],
   ['prioritize', 'run finding priority reason'],
-  ['verify', 'run config repo'],
+  ['verify', 'run config repo phase url'],
   ['attest', 'run input'],
   ['confirm', 'run finding verdict note'],
   ['plan', 'run finding'],
@@ -162,6 +163,7 @@ pnpm harness skill --run DIRECTORY --skill ID [--repo DIRECTORY]
 pnpm harness diagnose --run DIRECTORY [--rubric FILE]
 pnpm harness prioritize --run DIRECTORY --finding ID --priority NUMBER --reason TEXT
 pnpm harness verify --run DIRECTORY --config FILE [--repo DIRECTORY]
+pnpm harness verify --run DIRECTORY --phase before|after [--repo DIRECTORY] [--url URL]
 pnpm harness attest --run DIRECTORY --input FILE
 pnpm harness confirm --run DIRECTORY --finding ID --verdict supported|stale --note TEXT
 pnpm harness plan --run DIRECTORY [--finding ID] (required for review)
@@ -237,11 +239,15 @@ finding, and evaluate reports deterministic render checks without claiming an im
   }
   if(command==='start'){
     const config=await loadProjectConfig(required(options,'config'));
-    if(config.mode!=='review'||!config.url)throw Error('Lightweight start requires an existing preview and explicit mode review; use onboard for bootstrap.');
-    const repository=await inspectRepository(config.repo);await waitForPreview(config.url,{timeoutMs:config.timeoutMs ?? 10000});
+    const level = evidenceLevel(config.evidencePolicy);
+    if(config.mode!=='review'||(!config.url && level !== 'source'))throw Error('Lightweight start requires an existing preview and explicit mode review; use onboard for bootstrap.');
+    const repository=await inspectRepository(config.repo);
+    if (level !== 'visual' && repository.dirty) throw Error('Technical start requires a committed baseline.');
+    if (level !== 'source') await waitForPreview(config.url,{timeoutMs:config.timeoutMs ?? 10000});
     const spec=JSON.parse(await readFile(config.spec,'utf8'));
     const outputRoot=runOutputRoot(options);await mkdir(outputRoot,{recursive:true});
-    const run=await createRun({spec,url:config.url,outputRoot,mode:'review',experiencePolicy:CURRENT_EXPERIENCE_POLICY});
+    const run=await createRun({spec,url:config.url,outputRoot,mode:'review',
+      experiencePolicy:level === 'visual' ? CURRENT_EXPERIENCE_POLICY : null, evidencePolicy:config.evidencePolicy});
     await saveOnboarding(run.directory,{status:'ready',mode:'review',config:publicProjectConfig(config),repository,preview:{url:config.url,managed:false},viewports:DEFAULT_VIEWPORTS,completedAt:new Date().toISOString()});
     console.log(run.directory);return;
   }
@@ -301,6 +307,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
   if (command === 'onboard') {
     const startedAt = new Date().toISOString();
     const config = await loadProjectConfig(required(options, 'config'));
+    if (evidenceLevel(config.evidencePolicy) !== 'visual') throw Error('Technical evidence uses start, then verify.');
     const spec = JSON.parse(await readFile(config.spec, 'utf8'));
     const repository = await inspectRepository(config.repo);
     const outputRoot = runOutputRoot(options);
@@ -428,6 +435,15 @@ finding, and evaluate reports deterministic render checks without claiming an im
     await saveDiagnosis(directory, diagnosis);
     process.stdout.write(JSON.stringify(diagnosis.findings, null, 2) + '\n');
   } else if (command === 'verify') {
+    if (options.phase !== undefined) {
+      if (options.config !== undefined) throw Error('Technical verify uses the policy frozen by start.');
+      const {verifyTechnicalRepair} = await import('../packages/harness-core/technical-verification.js');
+      const result = await verifyTechnicalRepair({directory,phase:options.phase,repo:options.repo,url:options.url});
+      process.stdout.write(JSON.stringify(result,null,2)+'\n');
+      if (result.status !== (options.phase === 'before' ? 'fail' : 'pass')) process.exitCode = 1;
+      return;
+    }
+    if (options.url !== undefined) throw Error('--url on verify requires a technical phase.');
     const config=await loadProjectConfig(required(options,'config'));
     const result=await runVerificationChecks({directory,repo:options.repo?resolve(options.repo):config.repo,url:config.url,checks:config.verificationChecks,signal:new AbortController().signal});
     process.stdout.write(JSON.stringify(result,null,2)+'\n');

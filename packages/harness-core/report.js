@@ -1,3 +1,4 @@
+import {technicalWorkflow} from './evidence-policy.js';
 // One self-contained HTML file per run: no server, no build step, no network.
 //
 // A finished run already holds everything a reviewer needs, but it is spread over
@@ -19,6 +20,8 @@ export function escapeHtml(value) {
 }
 
 function stageLine(manifest) {
+  const technical = technicalWorkflow(manifest, {});
+  if (technical) return technical.stage;
   if (manifest.judgment) return 'judged';
   if (manifest.visualReviews?.length) return 'visual QA recorded';
   if (manifest.evaluation) return 'evaluated';
@@ -65,7 +68,15 @@ function findingsTable(diagnosis) {
 
 function gateList(run) {
   const m = run.manifest;
-  const rows = [
+  const technical = technicalWorkflow(m, {});
+  const rows = technical ? [
+    ['Evidence level', technical.level],
+    ['Declared check', m.evidencePolicy.kind],
+    ['Before', m.technicalEvidence?.before?.status || 'missing'],
+    ['After', m.technicalEvidence?.after?.status || 'missing'],
+    ['Independent visual QA', technical.visual],
+    ['Human judgment', 'not recorded']
+  ] : [
     ['Baseline capture', m.captures?.before ? 'recorded' : 'missing'],
     ['Diagnosis', m.diagnosis ? 'recorded' : 'missing'],
     ['User confirmation', m.confirmation ? `${m.confirmation.verdict} · ${m.confirmation.note}` : 'missing'],
@@ -155,6 +166,7 @@ export async function buildRunReport({directory, outputPath} = {}) {
 <h2>Gates</h2>
 ${gateList(run)}
 
+${manifest.technicalEvidence ? `<h2>Technical verification</h2><pre>${escapeHtml(JSON.stringify(manifest.technicalEvidence, null, 2))}</pre>` : ''}
 <h2>Findings</h2>
 ${findingsTable(diagnosis)}
 

@@ -308,6 +308,29 @@ The operational Skill-to-stage mapping and current-page-first execution order ar
 New lightweight `start` and `continue` reviews use the [audit → design decision → independent experience review](experience-orchestration.md) gates. Old low-level and workbench records are not retroactively assessed; submit an audit before diagnosis or continue in a new run. Page changes and human acceptance remain separately authorized.
 
 
+## Scoped technical repair checks
+
+The default Run still uses matched captures and independent visual review. Choose a technical criterion at `start` when a narrow defect can be reproduced and verified without a visual judgment. A technical Run records the failure and the result of an already authorized repair. Make the repair in a separate Git worktree of the same repository, then verify its committed candidate.
+
+| Project config `evidencePolicy` | Minimum evidence |
+| --- | --- |
+| Omitted or `{"kind":"visual"}` | Standard review. Use this for Hero, layout hierarchy, typography, imagery, brand and changes whose visual impact needs assessment. |
+| `{"kind":"node-syntax","file":"src/index.mjs"}` | Run Node's syntax check on the same declared JavaScript file before and after. The file is checked without execution. A source-only project config can omit `url`. |
+| `{"kind":"button-name","selector":"#save","name":"Save changes"}` | Replay the Capture Plan and check the browser-computed accessible name of one visible button per state. |
+| `{"kind":"horizontal-overflow"}` | Replay the Capture Plan and compare document scroll width and viewport width at each matching state and viewport. |
+
+For the two browser checks, use `capturePlan` with explicit viewports and local URLs. Serve the candidate from its own preview origin. The same routes, action replay and viewport settings are reused. Browser results include checkout fingerprints and an entry-response fingerprint checked around the replay. Serve each preview from its declared checkout. These fingerprints are evidence of the observed checkout and response, and the producer must ensure the preview serves that checkout.
+
+```bash
+hh start --config PROJECT.json
+hh verify --run RUN --phase before
+# Apply the scoped fix in an isolated worktree and commit it.
+hh verify --run RUN --phase after --repo WORKTREE --url CANDIDATE_URL
+hh report --run RUN
+```
+
+Omit `--url` on the after command for a source check. The before phase must reproduce the declared failure. The candidate must pass every matching check. `next`, `status` and `report` distinguish technical verification from independent visual QA and human judgment. Technical Runs use `technical-verified` and `visual: not-reviewed`. Browser actions and measurements are retained as JSON. For visual evidence or acceptance, use a visual Run against the actual candidate. A passing overflow check is limited to document overflow and does not establish whether content was clipped or the layout is good.
+
 ## Goal-bound review and measured cost (isolated candidate)
 
 New lightweight start/continue runs adopt task-design-review@2. The runtime experience context supplies the mandatory goal schema. Repair, design comparison, regression, independent QA and actual human judgment remain separate; old @1 records are not retrospectively upgraded.

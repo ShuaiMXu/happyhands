@@ -1,3 +1,4 @@
+import {validateEvidencePolicy,evidenceLevel} from './evidence-policy.js';
 import {buildReviewAnnotationArtifacts} from './review-annotations.js';
 import {experienceFor,experienceRequired,EXPERIENCE_POLICY,supportedExperiencePolicy,EXPERIENCE_INSTRUCTIONS} from './experience-orchestration.js';
 import {collectExperienceCase,admitExperienceCase,experienceCaseBrief} from './experience-cases.js';
@@ -204,20 +205,24 @@ async function withLedgerLock(directory, name, operation, {maxAttempts, interval
   }
 }
 
-export async function createRun({ spec, url, outputRoot, id = randomUUID().slice(0, 8), mode = 'review', entry = null, experiencePolicy = null }) {
+export async function createRun({ spec, url, outputRoot, id = randomUUID().slice(0, 8), mode = 'review', entry = null, experiencePolicy = null, evidencePolicy }) {
   assertExperienceSpec(spec);
   if(experiencePolicy!==null&&!supportedExperiencePolicy(experiencePolicy))throw Error('Unsupported experience policy.');
   if(experiencePolicy&&mode!=='review')throw Error('Experience policy requires an existing review baseline.');
   if (!['review', 'bootstrap'].includes(mode)) throw new Error('Run mode must be review or bootstrap.');
   const parsed = url ? new URL(url) : null;
   if (parsed && !['http:', 'https:'].includes(parsed.protocol)) throw new Error('Capture URL must use http or https.');
-  if (!parsed && mode !== 'bootstrap') throw new Error('A review run requires a capture URL.');
+  validateEvidencePolicy(evidencePolicy);
+  const level = evidenceLevel(evidencePolicy);
+  if (level !== 'visual' && (mode !== 'review' || experiencePolicy)) throw Error('Technical evidence requires its own scoped review Run.');
+  if (!parsed && mode !== 'bootstrap' && level !== 'source') throw new Error('A review run requires a capture URL.');
   if (!/^[a-zA-Z0-9_-]{4,64}$/.test(id)) throw new Error('Run ID must be 4–64 letters, digits, underscores or hyphens.');
   const directory = resolve(outputRoot, id);
   await mkdir(directory, { recursive: false });
   const manifest = {
     version: '0.1',
     ...(experiencePolicy?{experiencePolicy}:{}),
+    ...(evidencePolicy?{evidencePolicy}:{}),
     id,
     createdAt: new Date().toISOString(),
     limits: { ...DEFAULT_LIMITS },
@@ -305,6 +310,7 @@ export async function loadRun(directory) {
   const root = resolve(directory);
   const manifest = JSON.parse(await readFile(join(root, MANIFEST), 'utf8'));
   const spec = assertExperienceSpec(JSON.parse(await readFile(join(root, SPEC), 'utf8')));
+  validateEvidencePolicy(manifest.evidencePolicy);
   if(manifest.experiencePolicy!==undefined&&!supportedExperiencePolicy(manifest.experiencePolicy))throw Error('Unsupported experience policy.');
   if (manifest.version !== '0.1') throw new Error('Unsupported run version.');
   if (!Array.isArray(manifest.skills)) manifest.skills = [];
@@ -558,6 +564,7 @@ export async function saveCapture(directory, phase, capture) {
   if (!['before', 'after'].includes(phase)) throw new Error('Phase must be before or after.');
   return withRunLock(directory, async () => {
     const run = await loadRun(directory);
+    if (evidenceLevel(run.manifest.evidencePolicy) !== 'visual') throw Error('Technical Runs record before and after through verify.');
     const bootstrap = run.manifest.mode === 'bootstrap';
     if (bootstrap && phase === 'before') throw new Error('A bootstrap run has no baseline; record the absent baseline, then capture the first render as after.');
     // A change made outside the Harness can still be captured, in either mode, as long as the
