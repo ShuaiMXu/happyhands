@@ -11,7 +11,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
-import { createRun, loadRun, runFilePath, captureOnce, saveCapture, confirmFinding, savePlan, saveEvaluation, saveJudgment, saveOnboarding, saveDiagnosis, saveVisualReview, recordAbsentBaseline, saveFoundationApproval } from '../packages/harness-core/store.js';
+import { createRun, loadRun, runFilePath, captureOnce, saveCapture, confirmFinding, readRepairCandidates, savePlan, saveEvaluation, saveJudgment, saveOnboarding, saveDiagnosis, saveVisualReview, recordAbsentBaseline, saveFoundationApproval } from '../packages/harness-core/store.js';
 import { captureBrowser, captureBrowserPlan, DEFAULT_VIEWPORTS } from '../packages/harness-core/browser.js';
 import { evaluateCaptures, evaluateFirstRender } from '../packages/harness-core/evaluate.js';
 import { resolveMode } from '../packages/harness-core/entry.js';
@@ -47,7 +47,7 @@ const commandOptions = new Map([
   ['review-costs', 'run'],
   ['review-reconcile', 'run input'],
   ['review-normalize', 'run input out'],
-  ['repair-scope', 'run finding all'],
+  ['repair-scope', 'run finding all diagnosis-hash'],
   ['skill', 'run skill repo'],
   ['diagnose', 'run rubric'],
   ['prioritize', 'run finding priority reason'],
@@ -65,7 +65,7 @@ const commandOptions = new Map([
   ['case-admit', 'run id kind reason tags'],
   ['memory-exception', 'run principle hash decision reason'],
   ['status', 'run'],
-  ['next', 'run'],
+  ['next', 'run authorized-finding'],
   ['report', 'run out'],
   ['export', 'run out'],
   ['compare', 'run state configuration out'],
@@ -158,7 +158,7 @@ pnpm harness review-costs --run DIRECTORY
 pnpm harness review-budget --run DIRECTORY --input POLICY.json --reason TEXT
 pnpm harness review-reconcile --run DIRECTORY --input RECEIPT-REFERENCE.json
 pnpm harness review-normalize --run DIRECTORY --input REVIEW.json --out NEW.json
-pnpm harness repair-scope --run DIRECTORY (--finding ID | --all true)
+pnpm harness repair-scope --run DIRECTORY (--finding ID | --all true) [--diagnosis-hash SHA256]
 pnpm harness skill --run DIRECTORY --skill ID [--repo DIRECTORY]
 pnpm harness diagnose --run DIRECTORY [--rubric FILE]
 pnpm harness prioritize --run DIRECTORY --finding ID --priority NUMBER --reason TEXT
@@ -176,7 +176,7 @@ pnpm harness case-list --run DIRECTORY [--query TEXT]
 pnpm harness case-admit --run DIRECTORY --id HASH --kind improved|preserved|regressed|withdrawn --reason TEXT [--tags comma,separated]
 pnpm harness memory-exception --run DIRECTORY --principle ID --hash CONTENT_HASH --decision exclude|apply --reason TEXT
 pnpm harness status --run DIRECTORY
-pnpm harness next --run DIRECTORY
+pnpm harness next --run DIRECTORY [--authorized-finding FINDING_ID]
 pnpm harness report --run DIRECTORY [--out FILE]
 pnpm harness export --run DIRECTORY [--out DIRECTORY]
 pnpm harness compare --run DIRECTORY --state ID --configuration ID [--out DIRECTORY]
@@ -254,7 +254,8 @@ finding, and evaluate reports deterministic render checks without claiming an im
   }
   if(command==='repair-scope'){
     if(Boolean(options.finding)===(options.all==='true')||options.all!==undefined&&options.all!=='true')throw Error('Explicitly choose --finding ID or --all true within the user-authorized repair scope.');
-    console.log(JSON.stringify(await saveRepairScope(required(options,'run'),{findingId:options.finding}),null,2));return;
+    if(options['diagnosis-hash']!==undefined&&(!options.finding||!/^[0-9a-f]{64}$/.test(options['diagnosis-hash'])))throw Error('--diagnosis-hash requires --finding and a SHA-256 digest.');
+    console.log(JSON.stringify(await saveRepairScope(required(options,'run'),{findingId:options.finding,expectedDiagnosisHash:options['diagnosis-hash']}),null,2));return;
   }
   if(['review-budget','review-costs','review-reconcile'].includes(command)){
     const {configureReviewCosts,reviewCostReport,reconcileReviewCall}=await import('../packages/harness-core/review-costs.js');
@@ -401,8 +402,16 @@ finding, and evaluate reports deterministic render checks without claiming an im
     const { buildRunReport } = await import('../packages/harness-core/report.js');
     process.stdout.write(JSON.stringify(await buildRunReport({ directory, outputPath: options.out }), null, 2) + '\n');
   } else if (command === 'next') {
-    const manifest = (await loadRun(directory)).manifest;
+    const run = await loadRun(directory);
+    const {manifest} = run;
     const state = workflowState(manifest);
+    let authorizedFinding;
+    if (options['authorized-finding'] !== undefined) {
+      if (state.stage !== 'awaiting-confirmation') throw Error('--authorized-finding is only for the current unconfirmed diagnosis.');
+      const id = required(options,'authorized-finding');
+      const {diagnosisHash} = await readRepairCandidates(run, id);
+      authorizedFinding = {id, diagnosisHash};
+    }
     await printWorkbenchLink(manifest.id, state.stage);
     const { nextCliCommand } = await import('../packages/harness-core/next-command.js');
     const { hasPendingSelfExecution } = await import('../packages/harness-core/runner.js');
@@ -412,7 +421,7 @@ finding, and evaluate reports deterministic render checks without claiming an im
       const {reviewCostReport} = await import('../packages/harness-core/review-costs.js');
       reviewCallCeiling = (await reviewCostReport(directory)).policy.maxCalls;
     }
-    process.stdout.write(JSON.stringify({ ...state, cli: nextCliCommand(state, manifest, directory, { pendingSelf, reviewCallCeiling }) }, null, 2) + '\n');
+    process.stdout.write(JSON.stringify({ ...state, cli: nextCliCommand(state, manifest, directory, { pendingSelf, reviewCallCeiling, authorizedFinding }) }, null, 2) + '\n');
   } else if (command === 'skill') {
     const result = await executeSkill({ id: required(options, 'skill'), directory, repo: options.repo ? resolve(options.repo) : undefined });
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
