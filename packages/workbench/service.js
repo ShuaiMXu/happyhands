@@ -70,7 +70,7 @@ export function createWorkbench(root, dependencies = {}) {
   const jobs = createJobs(root), runRoot = join(root, '.harness', 'runs'), bindings = join(root, '.harness', 'workbench-projects'), previewSessions = new Map();
   const startingPreviews = new Map();
   let closed = false;
-  const execute = dependencies.execute || executeWithAgent, generate = adaptModelLauncher(dependencies.generate || runLocal),createPr=dependencies.createPullRequest||createReviewedPullRequest;
+  const execute = dependencies.execute || executeWithAgent, generate = adaptModelLauncher(dependencies.generate || runLocal,undefined,{inspectCodex:dependencies.inspectCodex}),createPr=dependencies.createPullRequest||createReviewedPullRequest;
   const inspect = dependencies.inspectRepository || inspectRepository, launchPreview = dependencies.spawnPreview || spawnPreview, haltPreview = dependencies.stopPreview || stopPreview, awaitPreview = dependencies.waitForPreview || waitForPreview, fingerprintPreview = dependencies.previewResponseFingerprint || previewResponseFingerprint;
   const request = dependencies.fetch || fetch;
   const capturePage = dependencies.captureBrowser || captureBrowser, capturePlan = dependencies.captureBrowserPlan || captureBrowserPlan;

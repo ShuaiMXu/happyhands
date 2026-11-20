@@ -410,6 +410,25 @@ test('headless review forwards zero budget before launching a CLI model',async t
  assert.equal(calls,0);
 });
 
+test('headless visual preflight with an unknown API model keeps originals and reserves no calls',async t=>{
+ const {headlessModel}=await import('../packages/harness-core/headless-models.js');
+ const {reviewCostReport}=await import('../packages/harness-core/review-costs.js');
+ const {run}=await fixture(t);
+ const saved=process.env.HAPPYHANDS_API_VISION_MODELS;
+ process.env.HAPPYHANDS_API_VISION_MODELS='declared-other-model';
+ t.after(()=>{if(saved===undefined)delete process.env.HAPPYHANDS_API_VISION_MODELS;else process.env.HAPPYHANDS_API_VISION_MODELS=saved;});
+ const options={directory:run.directory,phase:'review',agent:'api',model:'unknown-image-model',maxModelCalls:1};
+ const preview=await headlessModel({...options,preflightOnly:true});
+ assert.equal(preview.plan.visualInput.status,'unknown');
+ assert.equal(preview.plan.visualInput.model,'unknown-image-model');
+ assert.equal(preview.plan.visual,'not-reviewed');
+ assert.equal(preview.plan.originals.length,2);
+ await assert.rejects(headlessModel(options),{code:'MODEL_VISION_NOT_READY'});
+ assert.equal((await reviewCostReport(run.directory)).totals.calls,0);
+ assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);
+ assert.deepEqual(await readFile(join(run.directory,'before/desktop.png')),png);
+});
+
 test('batch recovery reuses three bound regional results and spends only on the missing cross review',async t=>{
  const {run,cwd}=await wholeFixture(t);const resumeIdentity={model:'synthetic',version:'fixture@1'},costPolicy={maxCalls:5};let first=0,second=0;
  const usage=o=>o.onOutput(JSON.stringify({type:'turn.completed',usage:{input_tokens:100,cached_input_tokens:50,output_tokens:10}})+'\n');

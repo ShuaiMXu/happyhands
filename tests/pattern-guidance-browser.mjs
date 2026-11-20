@@ -27,7 +27,7 @@ try{
   await executeSkill({id:'pattern-library-curator',directory:run.directory,repo});
   await exportRun({directory:parent.directory,outputRoot:join(root,'public/runs')});
   await exportRun({directory:run.directory,outputRoot:join(root,'public/runs')});
-  server=await createServer({configFile:false,root:project,publicDir:join(root,'public'),cacheDir:join(root,'vite-cache'),plugins:[workbenchServicePlugin(root,{generate:async(...args)=>{calls++;await fakeModel(...args);}})],
+  server=await createServer({configFile:false,root:project,publicDir:join(root,'public'),cacheDir:join(root,'vite-cache'),plugins:[workbenchServicePlugin(root,{inspectCodex:async()=>({model:'fixture-vision',modalities:['image']}),generate:async(...args)=>{calls++;await fakeModel(...args);}})],
     optimizeDeps:{include:['react','react-dom/client','tldraw','@tiptap/pm/state'],exclude:['@tldraw/assets']},server:{host:'127.0.0.1',port:0,fs:{allow:[root,project]}}});await server.listen();
   browser=await chromium.launch({channel:'chrome',headless:true});const page=await browser.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
   const base=`http://127.0.0.1:${server.httpServer.address().port}`;

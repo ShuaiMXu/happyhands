@@ -61,7 +61,7 @@ test('OpenAI-compatible provider: image parts, read_file tool loop and summed us
       ? {choices: [{finish_reason: 'tool_calls', message: {role: 'assistant', content: null, tool_calls: [{id: 'c1', type: 'function', function: {name: 'read_file', arguments: '{"path":"review-context.json","limit":1}'}}]}}], usage: {prompt_tokens: 100, completion_tokens: 5, prompt_tokens_details: {cached_tokens: 0}}}
       : {choices: [{finish_reason: 'stop', message: {role: 'assistant', content: '{"verdict":"pass"}'}}], usage: {prompt_tokens: 120, completion_tokens: 9, prompt_tokens_details: {cached_tokens: 100}}}));
   });
-  const result = await runApiModel({config: {provider: 'openai-compatible', baseUrl: server.url + '/v1', apiKey: 'test-key', model: 'some-vision-model'}, prompt: 'Review it.', images: [join(cwd, 'before/desktop.png')], cwd});
+  const result = await runApiModel({config: {provider: 'openai-compatible', baseUrl: server.url + '/v1', apiKey: 'test-key', model: 'some-vision-model', visionModels:['some-vision-model']}, prompt: 'Review it.', images: [join(cwd, 'before/desktop.png')], cwd});
   assert.equal(result.text, '{"verdict":"pass"}');
   assert.deepEqual(result.usage, {input_tokens: 220, cached_input_tokens: 100, output_tokens: 14});
   const [first, second] = server.requests;
@@ -92,7 +92,7 @@ test('Anthropic provider uses the official SDK: image blocks, caching, fallbacks
     {type: 'message_delta', delta: {stop_reason: 'end_turn', stop_sequence: null}, usage: {output_tokens: 4}},
     {type: 'message_stop'}
   ]));
-  const result = await runApiModel({config: {provider: 'anthropic', baseUrl: server.url, apiKey: 'test-key', model: 'claude-opus-5-5'}, prompt: 'Review it.', images: [join(cwd, 'before/desktop.png')], cwd});
+  const result = await runApiModel({config: {provider: 'anthropic', baseUrl: server.url, apiKey: 'test-key', model: 'claude-opus-5-5', visionModels:['claude-opus-5-5']}, prompt: 'Review it.', images: [join(cwd, 'before/desktop.png')], cwd});
   assert.match(result.text, /"verdict":"fail"/);
   assert.deepEqual(result.usage, {input_tokens: 200, cached_input_tokens: 180, output_tokens: 11});
   const [first, second] = server.requests;
@@ -115,8 +115,8 @@ test('the canonical review request runs over an API end to end and writes the re
     response.end(JSON.stringify({choices: [{finish_reason: 'stop', message: {role: 'assistant', content: 'Done: {"verdict":"pass"}'}}], usage: {prompt_tokens: 50, completion_tokens: 3}}));
   });
   const saved = {...process.env};
-  t.after(() => { for (const key of ['HAPPYHANDS_API_PROVIDER', 'HAPPYHANDS_API_BASE_URL', 'HAPPYHANDS_API_KEY', 'HAPPYHANDS_API_MODEL']) { if (saved[key] === undefined) delete process.env[key]; else process.env[key] = saved[key]; } });
-  Object.assign(process.env, {HAPPYHANDS_API_PROVIDER: 'openai-compatible', HAPPYHANDS_API_BASE_URL: server.url, HAPPYHANDS_API_KEY: 'k', HAPPYHANDS_API_MODEL: 'vision-1'});
+  t.after(() => { for (const key of ['HAPPYHANDS_API_PROVIDER', 'HAPPYHANDS_API_BASE_URL', 'HAPPYHANDS_API_KEY', 'HAPPYHANDS_API_MODEL', 'HAPPYHANDS_API_VISION_MODELS']) { if (saved[key] === undefined) delete process.env[key]; else process.env[key] = saved[key]; } });
+  Object.assign(process.env, {HAPPYHANDS_API_PROVIDER: 'openai-compatible', HAPPYHANDS_API_BASE_URL: server.url, HAPPYHANDS_API_KEY: 'k', HAPPYHANDS_API_MODEL: 'vision-1', HAPPYHANDS_API_VISION_MODELS:'vision-1'});
   const forwarded = [];
   const neverLaunched = async () => { throw Error('no CLI should be launched'); };
   const launch = adaptModelLauncher(neverLaunched);
@@ -124,5 +124,10 @@ test('the canonical review request runs over an API end to end and writes the re
   assert.deepEqual(JSON.parse(await readFile(join(cwd, 'review-result.json'), 'utf8')), {verdict: 'pass'});
   assert.deepEqual(JSON.parse(forwarded.join('')), {type: 'turn.completed', usage: {input_tokens: 50, cached_input_tokens: 0, output_tokens: 3}});
   assert.equal(server.requests[0].body.model, 'vision-1');
+  await assert.rejects(
+    launch('codex', ['exec', '-m', 'vision-1-other', '-i', join(cwd,'unread.png'), '--', '-']),
+    {code:'MODEL_VISION_NOT_READY'}
+  );
+  assert.equal(server.requests.length,1);
   await assert.rejects(launch('codex', ['exec', '-C', cwd, '-s', 'workspace-write', '-'], {input: ''}), /read-only model steps only/);
 });

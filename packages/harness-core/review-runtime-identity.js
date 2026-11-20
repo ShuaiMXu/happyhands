@@ -18,7 +18,7 @@ const AGENT_CONFIG = {
 // secrets buys nothing the run ledger then has to protect.
 const ENVIRONMENT_KEYS=['PATH','SHELL','TERM','CI','NODE_ENV','NODE_OPTIONS','LANG','LC_ALL','TZ',
  'CODEX_HOME','HAPPYHANDS_CLAUDE','HAPPYHANDS_CLAUDE_HOME','HAPPYHANDS_MODEL_AGENT',
- 'HAPPYHANDS_API_PROVIDER','HAPPYHANDS_API_BASE_URL','HAPPYHANDS_API_MODEL'];
+ 'HAPPYHANDS_API_PROVIDER','HAPPYHANDS_API_BASE_URL','HAPPYHANDS_API_MODEL','HAPPYHANDS_CLI_VISION_MODELS','HAPPYHANDS_CLAUDE_VISION_MODEL','HAPPYHANDS_AGENTS_FILE'];
 
 // Conservative: any environment/config/version change invalidates same-run reuse.
 // Only hashes are persisted; config and credential bytes are never copied.
@@ -27,7 +27,7 @@ export async function reviewRuntimeIdentity(model,directory,agent='codex'){
  // An API adapter has no binary or local config; its identity is provider, endpoint and model. The key is never hashed.
  const {builtInApiConfig,declaredApiConfig}=await import('./api-models.js');
  const api=builtInApiConfig(agent)||(['codex','claude-code'].includes(agent)?null:declaredApiConfig(await import('./agents.js').then(m=>m.customAgent(agent))));
- if(api)return {model,agent,provider:api.provider,baseUrl:api.baseUrl||null};
+ if(api)return {model,agent,provider:api.provider,baseUrl:api.baseUrl||null,visionModels:api.visionModels||[]};
  const command=agent==='codex'?(process.env.WORKBENCH_CODEX||'codex'):agent==='claude-code'?(process.env.HAPPYHANDS_CLAUDE||'claude'):(await import('./agents.js').then(m=>m.customAgent(agent))).command;
  const version=(await exec(command,['--version'],{timeout:5000,maxBuffer:32768})).stdout.trim();if(!version)throw Error('Cannot verify the review CLI version.');
  // A declared CLI we know nothing about still binds the repository's own

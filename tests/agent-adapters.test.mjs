@@ -14,6 +14,7 @@ async function temporary(t) {
 }
 
 const canonical = cwd => ['exec', '-C', cwd, '--skip-git-repo-check', '--ephemeral', '-s', 'read-only', '--json', '-o', join(cwd, 'result.json'), '-i', join(cwd, 'before/a.png'), '-m', 'some-model', '--', '-'];
+const defaultModel = cwd => canonical(cwd).filter((_,index,args)=>index!==args.indexOf('-m')&&index!==args.indexOf('-m')+1);
 
 test('canonical model requests are parsed into an agent-neutral shape', () => {
   const request = parseCanonical(canonical('/s'));
@@ -32,9 +33,16 @@ test('final JSON is extracted from plain, fenced or wrapped replies and anything
   assert.throws(() => extractJsonObject('no json'), /JSON object/);
 });
 
-test('the Codex path is untouched', () => {
-  const generate = () => {};
-  assert.equal(adaptModelLauncher(generate, 'codex'), generate);
+test('Codex pins the inspected default and rejects a model with text-only metadata', async () => {
+  const calls=[];
+  const launch=adaptModelLauncher((...args)=>calls.push(args),'codex',{inspectCodex:async(_command,_cwd,model)=>({
+    model:model||'fixture-default',modalities:model?['text']:['text','image']
+  })});
+  const args=defaultModel('/s');
+  await launch('codex',args,{input:'review'});
+  assert.deepEqual(calls,[['codex',[...args.slice(0,-2),'-m','fixture-default','--','-'],{input:'review'}]]);
+  await assert.rejects(launch('codex',canonical('/s')), {code:'MODEL_VISION_NOT_READY'});
+  assert.equal(calls.length,1);
 });
 
 test('Claude Code read-only review: dontAsk, images in the prompt, result file and Codex-shaped usage', async t => {
@@ -46,6 +54,9 @@ test('Claude Code read-only review: dontAsk, images in the prompt, result file a
     options.onOutput(JSON.stringify({type: 'result', subtype: 'success', is_error: false, result: '```json\n{"verdict":"pass"}\n```', usage: {input_tokens: 10, cache_read_input_tokens: 90, cache_creation_input_tokens: 0, output_tokens: 5}}) + '\n');
   };
   const launch = adaptModelLauncher(generate, 'claude-code');
+  const declared=process.env.HAPPYHANDS_CLI_VISION_MODELS;
+  process.env.HAPPYHANDS_CLI_VISION_MODELS='some-model';
+  t.after(()=>{if(declared===undefined)delete process.env.HAPPYHANDS_CLI_VISION_MODELS;else process.env.HAPPYHANDS_CLI_VISION_MODELS=declared;});
   await launch('codex', canonical(cwd), {input: 'PROMPT', onOutput: chunk => forwarded.push(chunk)});
   const [call] = calls;
   assert.equal(call.command, 'claude');
@@ -67,13 +78,17 @@ test('Claude Code adds --bare only with an API key, because bare mode refuses OA
   const seen = [];
   const generate = async (_c, argv, options) => { seen.push(argv); options.onOutput(JSON.stringify({type: 'result', subtype: 'success', result: '{}', usage: {}}) + '\n'); };
   const saved = process.env.ANTHROPIC_API_KEY;
+  const savedDefault=process.env.HAPPYHANDS_CLAUDE_VISION_MODEL;
+  process.env.HAPPYHANDS_CLAUDE_VISION_MODEL='fixture-claude';
+  t.after(()=>{if(savedDefault===undefined)delete process.env.HAPPYHANDS_CLAUDE_VISION_MODEL;else process.env.HAPPYHANDS_CLAUDE_VISION_MODEL=savedDefault;});
   t.after(() => { if (saved === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved; });
   delete process.env.ANTHROPIC_API_KEY;
-  await adaptModelLauncher(generate, 'claude-code')('codex', canonical(cwd), {input: ''});
+  await adaptModelLauncher(generate, 'claude-code')('codex', defaultModel(cwd), {input: ''});
   process.env.ANTHROPIC_API_KEY = 'test-key';
-  await adaptModelLauncher(generate, 'claude-code')('codex', canonical(cwd), {input: ''});
+  await adaptModelLauncher(generate, 'claude-code')('codex', defaultModel(cwd), {input: ''});
   assert.ok(!seen[0].includes('--bare'));
   assert.ok(seen[1].includes('--bare'));
+  assert.equal(seen[1][seen[1].indexOf('--model')+1],'fixture-claude');
   const execution = resolveAgent('claude-code').argv({model: 'm', readDirs: ['/guidance']});
   assert.ok(execution.includes('--bare'));
 });
@@ -92,7 +107,7 @@ test('a CLI declared in agents.json executes, reviews and must state every bound
   const agentsFile = join(directory, 'agents.json');
   const satisfies = {nonInteractive: 'a', worktreeOnly: 'b', noRepoInstructions: 'c', noPublish: 'd', bounded: 'e'};
   await writeFile(agentsFile, JSON.stringify({agents: {
-    mycli: {command: 'mycli', execute: {argv: ['run', '--cwd', '{worktree}', '--prompt-file', '{promptFile}'], promptVia: 'file', modelFlag: ['--model', '{model}']}, model: {argv: ['ask', '--cwd', '{cwd}'], imageFlag: '--image'}, satisfies},
+    mycli: {command: 'mycli', execute: {argv: ['run', '--cwd', '{worktree}', '--prompt-file', '{promptFile}'], promptVia: 'file', modelFlag: ['--model', '{model}']}, model: {argv: ['ask', '--cwd', '{cwd}'], imageFlag: '--image', defaultModel:'some-model', visionModels:['some-model'], modelFlag:['--model','{model}']}, satisfies},
     partial: {command: 'partial', execute: {argv: []}, satisfies: {nonInteractive: 'a'}}
   }}));
   assert.ok(listAgents({agentsFile}).some(agent => agent.id === 'mycli' && agent.verified === 'declared'));
@@ -105,9 +120,9 @@ test('a CLI declared in agents.json executes, reviews and must state every bound
   const cwd = await temporary(t);
   const calls = [];
   const generate = async (command, argv, options) => { calls.push({command, argv}); options.onOutput('thinking...\n{"verdict":"fail"}\n'); };
-  await adaptModelLauncher(generate, 'mycli', {agentsFile})('codex', canonical(cwd), {input: 'P'});
+  await adaptModelLauncher(generate, 'mycli', {agentsFile})('codex', defaultModel(cwd), {input: 'P'});
   assert.equal(calls[0].command, 'mycli');
-  assert.deepEqual(calls[0].argv, ['ask', '--cwd', cwd, '--image', join(cwd, 'before/a.png')]);
+  assert.deepEqual(calls[0].argv, ['ask', '--cwd', cwd, '--image', join(cwd, 'before/a.png'), '--model','some-model']);
   assert.deepEqual(JSON.parse(await readFile(join(cwd, 'result.json'), 'utf8')), {verdict: 'fail'});
 });
 

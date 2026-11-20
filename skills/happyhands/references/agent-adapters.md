@@ -7,6 +7,8 @@ HappyHands needs two kinds of help:
 
 The two can differ. Executing with one tool and reviewing with another gives a more independent review.
 
+Use `HH model-review --run RUN --preflight-only true` with the same agent and model options as the planned review. The output reports the adapter's image-input capability alongside the eligible originals and call estimate. Unknown capability keeps the review at `visual: not-reviewed` and blocks image delivery before any call reservation. Keep the captured originals for a supported reviewer and use the relevant deterministic checks for current technical evidence.
+
 ## No adapter at all: the operating agent edits
 
 `--agent self` works with any agent that can edit files. `execute` creates the worktree and writes the brief, then stops; the agent edits; `execute-finish` records the diff and fails the run if anything outside the worktree changed. `next` shows the right command at each point.
@@ -21,12 +23,12 @@ The read-only steps can call a model API directly, so no CLI needs to be install
 | `openai` | OpenAI `chat/completions` | `OPENAI_API_KEY`; model from `HAPPYHANDS_API_MODEL` or `--model`. |
 | `api` | Any OpenAI-compatible service (DeepSeek, Kimi, Qwen, OpenRouter, Ollama, ...) or Anthropic | `HAPPYHANDS_API_PROVIDER` (`openai-compatible` or `anthropic`), `HAPPYHANDS_API_BASE_URL`, `HAPPYHANDS_API_KEY`, `HAPPYHANDS_API_MODEL`. |
 
-API first: if any `HAPPYHANDS_API_*` setting is present and no adapter is named, `model-diagnose` and `model-review` use `api`. Naming `--agent` or `HAPPYHANDS_MODEL_AGENT` always wins. The model must accept image input.
+API first: if an API provider, model or endpoint is configured and no adapter is named, `model-diagnose` and `model-review` use `api`. Naming `--agent` or `HAPPYHANDS_MODEL_AGENT` always wins. Set `HAPPYHANDS_API_VISION_MODELS` to the comma-separated exact model IDs you verified can accept images at the configured endpoint. A different `--model` needs its own entry.
 
 A named API can also live in `agents.json`:
 
 ```json
-{ "agents": { "deepseek": { "command": "none", "api": { "provider": "openai-compatible", "baseUrl": "https://api.example.com/v1", "apiKeyEnv": "EXAMPLE_API_KEY", "model": "vision-model-id" } } } }
+{ "agents": { "api-vision": { "api": { "provider": "openai-compatible", "baseUrl": "https://api.example.com/v1", "apiKeyEnv": "EXAMPLE_API_KEY", "model": "vision-model-id", "visionModels": ["vision-model-id"] } } }
 ```
 
 API adapters run read-only steps only. Code changes go through `--agent self` or a CLI adapter.
@@ -37,6 +39,8 @@ API adapters run read-only steps only. Code changes go through `--agent self` or
 | --- | --- | --- | --- |
 | `codex` | yes | yes | Default. Images go in with `-i`. |
 | `claude-code` | yes | yes | Uses your normal login. With `ANTHROPIC_API_KEY` set it adds `--bare`, which skips repository `CLAUDE.md`, hooks and plugins; set `HAPPYHANDS_CLAUDE_BARE=0` to turn that off. The reviewer opens screenshots with its Read tool and returns JSON as its final message. |
+
+Codex checks the selected model against local app-server model metadata before attaching screenshots and passes that exact model to the review. If the selected provider cannot expose usable model metadata, list the verified model ID in `HAPPYHANDS_CLI_VISION_MODELS`. Claude Code can use a verified default ID in `HAPPYHANDS_CLAUDE_VISION_MODEL`; use `HAPPYHANDS_CLI_VISION_MODELS` to declare other explicit IDs. These declarations describe expected input support. An independent review still has to show that it inspected the originals.
 
 Claude Code runs in print mode, where any tool outside the allow-list is denied without a prompt. The default list covers file edits plus common check commands (`npm test`, `npm run`, `pnpm run`, `npx tsc`, `node`, read-only `git`). Add your project's own commands with:
 
@@ -63,6 +67,8 @@ Put declarations in `~/.happyhands/agents.json`, or point `HAPPYHANDS_AGENTS_FIL
       "model": {
         "argv": ["run", "--cwd", "{cwd}", "--read-only", "--non-interactive"],
         "imageFlag": "--image",
+        "defaultModel": "vision-model-id",
+        "visionModels": ["vision-model-id"],
         "modelFlag": ["--model", "{model}"]
       },
       "satisfies": {
@@ -81,7 +87,7 @@ Placeholders:
 
 - `execute.argv`: `{worktree}` (the isolated checkout) and `{promptFile}` (the prompt on disk). With `"promptVia": "stdin"` the prompt is piped in instead.
 - `model.argv`: `{cwd}` (the read-only session folder), `{resultFile}` and `{schemaFile}`.
-- `modelFlag` is added only when `--model` is given. `readDirFlag` is repeated once for each guidance folder the agent must be able to read.
+- A model invocation uses `modelFlag` to send the selected exact model ID. The selection is the explicit `--model` or `model.defaultModel` and must be present in `model.visionModels` for screenshot inputs. `readDirFlag` is repeated once for each guidance folder the agent must be able to read.
 - Without `imageFlag`, the screenshot paths are listed in the prompt and the CLI must open them with its own file tools.
 
 The model session's final output must contain one JSON object. HappyHands extracts it (a code fence is fine) and writes it to the result file.

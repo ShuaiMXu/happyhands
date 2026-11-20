@@ -1,8 +1,7 @@
 // Read-only model calls (baseline diagnosis, visual review, pattern review) are
 // authored once against one canonical request: the `codex exec` argument shape
 // the Harness has always used. This module translates that request for the CLI
-// the operator selected, so every call site stays agent-neutral and the Codex
-// path stays byte-for-byte what it was.
+// the operator selected. The Codex invocation keeps its native argument shape.
 //
 // Select the model CLI with `--agent ID` on model-diagnose/model-review, or with
 // HAPPYHANDS_MODEL_AGENT for the workbench. Further CLIs are declared in a JSON
@@ -10,7 +9,8 @@
 
 import {readFile, writeFile} from 'node:fs/promises';
 import {customAgent, claudeCanRunBare} from './agents.js';
-import {runApiModel, builtInApiConfig, declaredApiConfig, defaultModelAgent} from './api-models.js';
+import {runApiModel, apiVisionCapability, assertVisualInput, builtInApiConfig, declaredApiConfig, declaredModelIds, defaultModelAgent} from './api-models.js';
+import {inspectCodexVision} from './codex-vision.js';
 
 export const DEFAULT_MODEL_AGENT = 'codex';
 export {defaultModelAgent};
@@ -114,6 +114,9 @@ function customModelAdapter(agent) {
     id: agent.id,
     label: agent.label || agent.id,
     command: agent.command,
+    defaultModel: spec.defaultModel,
+    visionModels: spec.visionModels,
+    canSelectModel: Array.isArray(spec.modelFlag) && spec.modelFlag.some(token => typeof token==='string'&&token.includes('{model}')),
     argv(request) {
       const fill = token => token
         .replaceAll('{cwd}', request.cwd || '')
@@ -148,36 +151,77 @@ async function adapterFor(id, options) {
   return customModelAdapter(spec);
 }
 
+async function visualCapability(adapter, requestedModel, cwd, inspect) {
+  if (adapter.api) return apiVisionCapability({...adapter.api, model:requestedModel || adapter.api.model});
+  const builtIn = ['codex','claude-code'].includes(adapter.id);
+  let model = requestedModel || adapter.defaultModel || (adapter.id==='claude-code' ? process.env.HAPPYHANDS_CLAUDE_VISION_MODEL : null) || null;
+  const declared = builtIn ? declaredModelIds(process.env.HAPPYHANDS_CLI_VISION_MODELS) : adapter.visionModels;
+  if (adapter.id==='codex') {
+    const native = await inspect(adapter.command,cwd,model);
+    model = native.model || model;
+    if (Array.isArray(native.modalities)) {
+      const supported=native.modalities.includes('image');
+      return {status:supported?'supported':'unsupported',model,source:'codex-model-metadata',
+        ...(!supported?{reason:'The model metadata does not list image input.'}:{})};
+    }
+  }
+  const isClaudeDefault = adapter.id==='claude-code' && model && model===process.env.HAPPYHANDS_CLAUDE_VISION_MODEL;
+  const supported = Boolean(isClaudeDefault || (model && Array.isArray(declared) && declared.includes(model) && (builtIn || adapter.canSelectModel)));
+  return {status:supported?'supported':'unknown', model, source:'cli-model-declaration',
+    ...(!supported ? {reason:builtIn
+      ? 'Select an image-capable CLI model and verify its metadata or declare its exact ID in HAPPYHANDS_CLI_VISION_MODELS.'
+      : 'Set a vision-capable model in model.visionModels and configure model.modelFlag to pass its exact ID. Set model.defaultModel when no explicit model is supplied.'} : {})};
+}
+
 // Wrap a process launcher (`runLocal` or a test double) so that canonical
 // requests run through the selected adapter. The wrapped function keeps the
 // launcher's signature, so call sites do not change.
 export function adaptModelLauncher(generate, id = defaultModelAgent(), options = {}) {
-  if (id === 'codex') return generate;
-  return async (_command, args, launchOptions = {}) => {
+  const inspect = options.inspectCodex || inspectCodexVision;
+  const prepare = async (command, args) => {
     const adapter = await adapterFor(id, options);
-    if (adapter.passthrough) return generate(adapter.command, args, launchOptions);
     const request = parseCanonical(args);
-    if (adapter.api) return runApiRequest(adapter, request, launchOptions);
+    if (request.images.length) {
+      const capability=await visualCapability(adapter,request.model,request.cwd,inspect);
+      assertVisualInput(capability);
+      if (!request.model && adapter.passthrough) {
+        const end=args.indexOf('--')<0?args.indexOf('-'):args.indexOf('--');
+        const index=end<0?args.length:end;
+        const pinned=[...args.slice(0,index),'-m',capability.model,...args.slice(index)];
+        return launchOptions=>generate(command,pinned,launchOptions);
+      }
+      request.model ||= capability.model;
+    }
+    if (adapter.passthrough) return launchOptions => generate(command,args,launchOptions);
+    if (adapter.api) return launchOptions => runApiRequest(adapter, request, launchOptions);
     if (request.enable.length) throw Error(`${adapter.label} cannot run Codex feature "${request.enable.join(', ')}"; use --agent codex for this step.`);
-    const input = String(launchOptions.input ?? '') + (adapter.imagesInPrompt === false ? await outputContract({...request, images: []}) : await outputContract(request));
-    let tail = '';
-    const lines = [];
-    const onOutput = chunk => {
-      tail += String(chunk);
-      const parts = tail.split('\n');
-      tail = parts.pop();
-      lines.push(...parts);
-    };
-    await generate(adapter.command, adapter.argv(request), {...launchOptions, cwd: request.cwd || launchOptions.cwd, input, onOutput});
-    if (tail) lines.push(tail);
-    const {text, usage} = adapter.finish(lines);
-    // Cost accounting reads Codex `turn.completed` usage events; emit the
-    // translated usage in that shape so budgets keep working.
-    if (usage) launchOptions.onOutput?.(JSON.stringify({type: 'turn.completed', usage}) + '\n');
-    else launchOptions.onOutput?.(lines.join('\n') + '\n');
-    if (request.resultFile) await writeFile(request.resultFile, JSON.stringify(extractJsonObject(text), null, 2));
-    return text;
+    request.model ||= adapter.defaultModel || null;
+    return launchOptions => runCliRequest(adapter,request,launchOptions,generate);
   };
+  const launch = async (command,args,options={}) => (await prepare(command,args))(options);
+  launch.prepare = prepare;
+  launch.visualCapability = async (model,cwd) => visualCapability(await adapterFor(id,options),model,cwd,inspect);
+  return launch;
+}
+
+async function runCliRequest(adapter, request, launchOptions, generate) {
+  const input = String(launchOptions.input ?? '') + (adapter.imagesInPrompt === false ? await outputContract({...request, images: []}) : await outputContract(request));
+  let tail = '';
+  const lines = [];
+  const onOutput = chunk => {
+    tail += String(chunk);
+    const parts = tail.split('\n');
+    tail = parts.pop();
+    lines.push(...parts);
+  };
+  await generate(adapter.command, adapter.argv(request), {...launchOptions, cwd: request.cwd || launchOptions.cwd, input, onOutput});
+  if (tail) lines.push(tail);
+  const {text, usage} = adapter.finish(lines);
+  // Translate usage to the event shape consumed by the review cost ledger.
+  if (usage) launchOptions.onOutput?.(JSON.stringify({type: 'turn.completed', usage}) + '\n');
+  else launchOptions.onOutput?.(lines.join('\n') + '\n');
+  if (request.resultFile) await writeFile(request.resultFile, JSON.stringify(extractJsonObject(text), null, 2));
+  return text;
 }
 
 async function runApiRequest(adapter, request, launchOptions) {
