@@ -133,6 +133,16 @@ test('next returns runnable CLI commands that exist, with the ledger values fill
     }
   }
   assert.deepEqual(nextCliCommand({stage: 'needs-execution'}, manifest, '/run').steps[0].argv.slice(3, 5), ['--repo', '/repo']);
+  const auditStage = {stage: 'needs-experience-audit'};
+  assert.equal(nextCliCommand(auditStage, manifest, '/run').steps[0].argv.at(-1), 'SURFACE');
+  const publicSite = {...manifest, onboarding: {...manifest.onboarding, config: {designGuidance: {taste: 'public-page'}}}};
+  assert.deepEqual(nextCliCommand(auditStage, publicSite, '/run').steps[0], {
+    argv: ['experience', '--run', '/run', '--phase', 'context', '--surface', 'public-page'], needs: {}
+  });
+  assert.deepEqual(nextCliCommand({stage: 'needs-design-decision'}, manifest, '/run').steps.map(step=>step.argv), [
+    ['experience', '--run', '/run', '--phase', 'context'],
+    ['experience', '--run', '/run', '--phase', 'decision', '--input', 'DECISION_JSON']
+  ]);
   assert.deepEqual(nextCliCommand({stage: 'needs-plan'}, manifest, '/run').steps[0].argv.slice(3), ['--finding', 'F2']);
   assert.equal(nextCliCommand({stage: 'awaiting-judgment'}, manifest, '/run').actor, 'user');
   assert.equal(nextCliCommand({stage: 'needs-specialist-verification'}, manifest, '/run').steps[0].argv[0], 'verify');

@@ -38,6 +38,12 @@ async function fixture(t){
 test('strict start cannot diagnose or plan without an audit; source adaptation and method provenance cannot be forged',async t=>{
  const f=await fixture(t),run=await loadRun(f.directory);
  assert.equal(workflowState(run.manifest).stage,'needs-experience-audit');
+ run.manifest.onboarding={config:{designGuidance:{taste:'public-page'}}};
+ await writeFile(join(f.directory,'run.json'),JSON.stringify(run.manifest));
+ const configuredContext=await experienceContext(f.directory);
+ assert.equal(configuredContext.surface,'public-page');
+ assert.ok(configuredContext.readingPlan.groups.find(group=>group.id==='web-taste').mustRead.some(file=>file.path.endsWith('/sections.md')));
+ assert.equal((await experienceContext(f.directory,'app-screen')).surface,'app-screen');
  await assert.rejects(saveDiagnosis(f.directory,diagnoseRun({run})),/experience audit/);
  await assert.rejects(savePlan(f.directory,'F1'),/experience audit/);
  for(const mutate of [a=>a.designBasis.sources[0].sha256='0'.repeat(64),a=>a.designBasis.sources[0].authority='project-rule',a=>a.designBasis.sources[0].section='Nonexistent section',a=>a.methods[0].path='design-guidance/forged.md',a=>a.methods[0].quote='Invented quote',a=>a.checks.pop()]){
@@ -47,6 +53,8 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
  const decisionContext=await experienceContext(f.directory);
  assert.equal(decisionContext.surface,'public-page');
  assert.equal(decisionContext.readingPlan.stage,'decision');
+ assert.match(decisionContext.instructions,/Write the decision against decisionSchema/);
+ assert.doesNotMatch(decisionContext.instructions,/write the audit against auditSchema/);
  assert.ok(decisionContext.readingPlan.groups.find(group=>group.id==='local-experience').mustRead.some(file=>file.path.endsWith('/fix-planner/SKILL.md')));
  await assert.rejects(experienceContext(f.directory,'app-screen'),/surface is frozen/);
  assert.equal((await experienceFor(await loadRun(f.directory))).audit.issues[0].kind,'hypothesis');

@@ -6,6 +6,8 @@
 // be decided by the user. The agent loop becomes: call `next`, run `cli.steps`,
 // ask the user when `cli.actor` is "user", repeat.
 
+import {configuredExperienceSurface} from './experience-contract.js';
+
 const run = directory => ['--run', directory];
 
 function step(argv, needs = {}) {
@@ -17,14 +19,14 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false}
   const worktree = manifest.execution?.worktree || 'WORKTREE';
   const finding = manifest.confirmation?.findingId || 'FINDING_ID';
   const capturePlan = manifest.onboarding?.config?.capturePlan || 'CAPTURE_PLAN';
-  const surface = 'SURFACE';
-  const surfaceNeed = {SURFACE: 'public-page for websites and landing pages, app-screen for working interfaces'};
+  const surface = configuredExperienceSurface(manifest);
+  const surfaceNeed = surface ? {} : {SURFACE: 'public-page for websites and landing pages, app-screen for working interfaces'};
   switch (state.stage) {
     case 'needs-baseline':
       return {actor: 'agent', steps: [step(['capture', ...run(directory), '--phase', 'before', '--plan', capturePlan, '--repo', repo, '--bind-evidence', 'true'], {CAPTURE_PLAN: 'Capture Plan JSON covering the task states (schema: capture-state.schema.json)'})]};
     case 'needs-experience-audit':
       return {actor: 'agent', steps: [
-        step(['experience', ...run(directory), '--phase', 'context', '--surface', surface], surfaceNeed),
+        step(['experience', ...run(directory), '--phase', 'context', '--surface', surface || 'SURFACE'], surfaceNeed),
         step(['experience', ...run(directory), '--phase', 'audit', '--input', 'AUDIT_JSON'], {AUDIT_JSON: 'audit written against the schema the context step returns'})
       ]};
     case 'needs-diagnosis':
@@ -35,7 +37,10 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false}
         step(['confirm', ...run(directory), '--finding', 'FINDING_ID', '--verdict', 'supported', '--note', 'NOTE'], {FINDING_ID: 'reproduced finding', NOTE: 'what you observed in the current page'})
       ], chooseOne: true};
     case 'needs-design-decision':
-      return {actor: 'agent', steps: [step(['experience', ...run(directory), '--phase', 'decision', '--input', 'DECISION_JSON'], {DECISION_JSON: 'decision written against the schema from experience --phase context'})]};
+      return {actor: 'agent', steps: [
+        step(['experience', ...run(directory), '--phase', 'context']),
+        step(['experience', ...run(directory), '--phase', 'decision', '--input', 'DECISION_JSON'], {DECISION_JSON: 'decision written using the current reading plan and decision schema'})
+      ]};
     case 'needs-plan':
       return {actor: 'agent', steps: [step(['plan', ...run(directory), '--finding', finding])]};
     case 'needs-first-render-plan':

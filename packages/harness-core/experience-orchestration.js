@@ -1,7 +1,7 @@
 import {buildGuidanceReadingPlan} from '../skill-core/guidance-reading-plan.js';
 import {reviewGoalSchema} from './review-goal.js';
 import {auditReadingMethods, METHOD_POLICY} from '../skill-core/method-policy.js';
-import {EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY,supportedExperiencePolicy,REVIEW_DIMENSIONS,experienceRequired} from './experience-contract.js';
+import {EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY,supportedExperiencePolicy,REVIEW_DIMENSIONS,experienceRequired,configuredExperienceSurface} from './experience-contract.js';
 export {EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY,supportedExperiencePolicy,REVIEW_DIMENSIONS,experienceRequired,assertExperienceAssessments} from './experience-contract.js';
 import {createHash} from 'node:crypto';
 import {mkdir,writeFile,realpath,readFile,mkdtemp,rename,rm} from 'node:fs/promises';
@@ -118,7 +118,7 @@ const runObserved=ref=>ref.origin==='observed'||ref.status==='observed';
 export async function experienceContext(directory,surface){
  const run=await loadRun(directory),bound=await binding(run);
  const audit=run.manifest.experienceAudit ? await readExperienceRecord(run,'audit') : null;
- surface ??= audit?.data.surface || 'app-screen';
+ surface ??= audit?.data.surface ?? configuredExperienceSurface(run.manifest) ?? 'app-screen';
  if(!['app-screen','public-page'].includes(surface))throw Error('Choose public-page or app-screen.');
  if(audit && surface!==audit.data.surface)throw Error('The experience surface is frozen by the audit. Choose a new Run to change it.');
  const design=await stageDesignGuidance(directory,'review',{...run.manifest.onboarding?.config?.designGuidance,taste:surface,dials:undefined});
@@ -131,7 +131,10 @@ export async function experienceContext(directory,surface){
  const embeddedAdapters=readingPlan.groups.filter(group=>group.embedded.length).map(group=>({
   ...group.embedded[0], text:adapters.find(adapter=>adapter.id===group.id).text
  }));
- return {readingPlan,embeddedAdapters,localMethods:local,policy,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema:scopedAuditSchema,decisionSchema:scopedDecisionSchema,instructions:'Follow readingPlan for this stage. Read all mustRead documents in full and use the supplied complete adapter text without reopening it. Read onDemand references in full when relevant. The pack readFirst fields are the available routes; readingPlan determines what to read now. Inspect the actual project sources. Planning and learning share the existing decision/review/candidate records, not additional reports. Contract-only methods are guidance, not executed analyzers. Inspect originals; write the audit before formal diagnosis. Record user constraints separately from operator proposals. A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
+ const stageInstructions=audit
+  ? 'Read the frozen audit. Write the decision against decisionSchema for the current diagnosed and confirmed scope. Compare a lighter alternative or preservation.'
+  : 'Inspect originals and write the audit against auditSchema before formal diagnosis. Record user constraints separately from operator proposals.';
+ return {readingPlan,embeddedAdapters,localMethods:local,policy,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema:scopedAuditSchema,decisionSchema:scopedDecisionSchema,instructions:'Follow readingPlan for this stage. Read all mustRead documents in full and use the supplied complete adapter text without reopening it. Read onDemand references in full when relevant. The pack readFirst fields are the available routes; readingPlan determines what to read now. Inspect the actual project sources. Contract-only methods are guidance, not executed analyzers. '+stageInstructions+' A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
 }
 export async function saveExperienceRecord(directory,phase,input){
  if(!['audit','decision'].includes(phase))throw Error('Choose audit or decision.');
