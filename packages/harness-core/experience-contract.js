@@ -4,6 +4,10 @@ export const CURRENT_EXPERIENCE_POLICY='task-design-review@2';
 export const supportedExperiencePolicy=value=>[EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY].includes(value);
 export const REVIEW_DIMENSIONS=['task','hierarchy','interaction','design-system','regression'];
 export function experienceRequired(run){return supportedExperiencePolicy(run.manifest.experiencePolicy);}
+export function configuredExperienceSurface(manifest){
+ const taste=manifest.onboarding?.config?.designGuidance?.taste;
+ return ['public-page','app-screen'].includes(taste)?taste:null;
+}
 export function assertExperienceAssessments(rows,verdict,available){
  if(!Array.isArray(rows)||rows.length!==REVIEW_DIMENSIONS.length||new Set(rows.map(row=>row.dimension)).size!==rows.length)throw Error('Independent review requires all five experience dimensions.');
  for(const row of rows){

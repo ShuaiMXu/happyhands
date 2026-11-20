@@ -1,3 +1,5 @@
+import {stageOjoGuidance, ojoGuidancePrompt} from '../packages/skill-core/ojo-guidance.js';
+import {buildGuidanceReadingPlan} from '../packages/skill-core/guidance-reading-plan.js';
 import test from 'node:test';
 import {canSymlink} from './helpers/symlink.mjs';
 import assert from 'node:assert/strict';
@@ -26,7 +28,12 @@ test('project profile retains task/grid/state methods without imposing owned UI 
  assert.equal(project.rules.length,7);assert.equal(owned.rules.length,31);assert.ok(project.rules.some(r=>r.id==='UX-grid'));assert.ok(owned.rules.some(r=>r.id==='AS-19'));
 });
 test('execution receives the own Skill and specific complete OJO references',async t=>{
- const {run,method}=await fixture(t);const prompt=executionMethodPrompt(method,run.directory,'ojo/verified');
+ const {run,method}=await fixture(t);
+ const ojo=await stageOjoGuidance(run.directory,'implementation');
+ const readingPlan=buildGuidanceReadingPlan({ojo,implementationRefs:method.contract.rules.map(rule=>rule.reference)});
+ const prompt=ojoGuidancePrompt(ojo,run.directory,readingPlan)+executionMethodPrompt(method,run.directory);
+ const required=readingPlan.groups[0].mustRead.map(file=>file.path);
+ for(const rule of method.contract.rules)assert.ok(required.includes(ojo.metadata.reference+'/'+rule.reference));
  for(const text of ['remediation-SKILL.md','component-recipe.md','visual-tokens.md','motion-system.md','icon-guidelines.md',RESULT_FILE,'gutters'])assert.ok(prompt.includes(text));
 });
 test('missing, duplicate and unknown rules and issue IDs are rejected',async t=>{
