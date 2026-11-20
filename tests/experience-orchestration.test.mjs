@@ -12,6 +12,7 @@ import {publicExecutionBrief} from '../packages/harness-core/export.js';
 import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,savePlan,readVerifiedExecutionPlan,saveEvaluation,saveVisualReview} from '../packages/harness-core/store.js';
 import {captureWithDesignSystem} from '../packages/harness-core/design-system.js';
 import {buildRunReport} from '../packages/harness-core/report.js';
+import {assertVisualReview} from '../packages/harness-core/visual-review.js';
 import {diagnoseRun} from '../packages/harness-core/diagnosis.js';
 import {diagnoseBaseline} from '../packages/workbench/baseline-diagnosis.js';
 import {runAiVisualReview} from '../packages/workbench/ai-review.js';
@@ -198,6 +199,9 @@ test('a new goal-bound decision requires independently cited criteria and the re
  await assert.rejects(saveVisualReview(f.directory,review),/every design goal criterion/);
  const first={criterion:1,verdict:'pass',reason:'Price is grouped with its term',changedFiles:['renewal.html'],screenshotRefs:refs,verificationRefs:[]};
  const second={...first,criterion:2,reason:'The primary action remains visible',changedFiles:[]};
+ const mismatched=(await loadRun(f.directory)).manifest;
+ mismatched.captures.after.viewports.desktop.dom={language:'de'};
+ assert.throws(()=>assertVisualReview({...review,criterionAssessments:[first,second]},mismatched),/matched, reached/);
  await assert.rejects(saveVisualReview(f.directory,{...review,criterionAssessments:[first,first]}),/exactly once/);
  await assert.rejects(saveVisualReview(f.directory,{...review,criterionAssessments:[{...first,screenshotRefs:[original]},second]}),/matched, reached/);
  await assert.rejects(saveVisualReview(f.directory,{...review,criterionAssessments:[{...first,changedFiles:['unchanged.html']},second]}),/without a recorded change/);

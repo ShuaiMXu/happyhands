@@ -1,4 +1,5 @@
-import {captureEntries, captureKey} from './capture-state.js';
+import {isDeepStrictEqual} from 'node:util';
+import {captureEntries, captureKey, capturedTaskContext} from './capture-state.js';
 import {readRepositoryInputs, repositoryChanges} from './repository-inputs.js';
 import {captureRouteKey} from './whole-page.js';
 
@@ -14,9 +15,10 @@ export function matchedCriterionStates(manifest, refs) {
     if (!cited.has(after.screenshot)) return [];
     const state = key(after), baseline = before.get(state);
     const afterRoute = route(after);
-    if (!baseline || baseline.reached === false || after.reached === false || baseline.error || after.error || !afterRoute ||
+    if (!baseline || baseline.reached === false || after.reached === false || baseline.error || after.error || baseline.status >= 400 || after.status >= 400 || !afterRoute ||
         route(baseline) !== afterRoute || ![after.width, after.height].every(size => Number.isSafeInteger(size) && size > 0) ||
-        baseline.width !== after.width || baseline.height !== after.height) return [];
+        baseline.width !== after.width || baseline.height !== after.height ||
+        !isDeepStrictEqual(capturedTaskContext(baseline), capturedTaskContext(after))) return [];
     return [{state, stateId:after.stateId}];
   });
 }

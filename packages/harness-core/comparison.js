@@ -4,14 +4,13 @@ import {join,resolve,relative,sep,isAbsolute,dirname,basename} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {loadRun,withRunLock} from './store.js';
-import {captureEntries,captureKey} from './capture-state.js';
+import {captureEntries,captureKey,capturedTaskContext} from './capture-state.js';
 import {readVerificationFile,verificationHash as hash} from './verification.js';
 import {pngDimensions} from './whole-page.js';
 
 const LIMIT=24*1024*1024,MAX_PIXELS=6_000_000,GAP=24;
 const HEX=/^[a-f0-9]{64}$/;
 const same=isDeepStrictEqual;
-const route=url=>{const parsed=new URL(url);return parsed.pathname+parsed.search+parsed.hash;};
 
 async function plannedDirectory(path){
  const segments=[];
@@ -19,17 +18,6 @@ async function plannedDirectory(path){
   try{return join(await realpath(current),...segments.reverse());}
   catch(error){if(error.code!=='ENOENT'||dirname(current)===current)throw error;segments.push(basename(current));}
  }
-}
-
-function contract(entry){
- return {
-  route:route(entry.start.url),
-  actions:(entry.actions||[]).map(action=>action.type==='navigate'?{...action,url:route(action.url)}:action),
-  scroll:entry.dom.scroll,
-  language:entry.dom.language,
-  appearance:entry.dom.appearance,
-  scrollSurface:entry.plannedScrollSurface||null
- };
 }
 
 async function original(run,phase,state,configuration){
@@ -63,7 +51,7 @@ export async function exportComparison({directory,state,configuration,outputRoot
   if(run.manifest.mode==='bootstrap'||!run.manifest.captures.before||!run.manifest.captures.after)throw Error('A comparison needs both original before and after captures; bootstrap has no baseline.');
   const before=await original(run,'before',state,configuration),after=await original(run,'after',state,configuration);
   if(before.entry.width!==after.entry.width||before.entry.height!==after.entry.height)throw Error('Before and after viewport sizes differ.');
-  if(!same(contract(before.entry),contract(after.entry)))throw Error('Before and after route, actions, theme, language or scroll context differ.');
+  if(!before.entry.start?.url||!after.entry.start?.url||!same(capturedTaskContext(before.entry),capturedTaskContext(after.entry)))throw Error('Before and after route, actions, theme, language or scroll context differ.');
   const width=before.entry.width,height=before.entry.height;
   const image=new PNG({width:width*2+GAP,height});image.data.fill(255);
   PNG.bitblt(before.decoded,image,0,0,width,height,0,0);
@@ -72,7 +60,7 @@ export async function exportComparison({directory,state,configuration,outputRoot
   const record={
    version:1,kind:'pixel-preserving-comparison',runId:run.manifest.id,stateId:state,configurationId:configuration,
    viewport:{width,height},layout:{left:'before',right:'after',gap:GAP,scale:1,crop:null},
-   contractHash:hash(contract(before.entry)),captureRecordHash:hash(run.manifest.captures),
+   contractHash:hash(capturedTaskContext(before.entry)),captureRecordHash:hash(run.manifest.captures),
    originals:{before:before.reference,after:after.reference},image:{file:'comparison.png',sha256:hash(png),width:width*2+GAP,height},
    limitations:[
     'This image does not establish improvement, independent QA or human acceptance.',
