@@ -391,6 +391,18 @@ test('zero call budget blocks fresh review but permits a valid bound cached resu
  assert.equal(cached.verdict,'needs-evidence');assert.equal(calls,0);
 });
 
+test('cancelling while the adapter checks capability leaves no review call in the ledger',async t=>{
+ const {run,cwd}=await fixture(t);
+ const controller=new AbortController();
+ const generate=()=>assert.fail('Cancelled model must not run');
+ generate.prepare=async()=>{
+  controller.abort(new Error('Cancelled while checking capability'));
+  return generate;
+ };
+ await assert.rejects(runAiVisualReview(run.directory,{cwd,signal:controller.signal,generate}),/Cancelled while checking capability/);
+ assert.equal((await loadRun(run.directory)).manifest.reviewCosts,undefined);
+});
+
 test('comparative design preservation survives independent review without becoming improvement',async t=>{
  const {run,cwd}=await fixture(t);
  const review=await runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate:generator({...result,designComparison:{verdict:'preserved',reason:'Scoped repair preserves the layout.',screenshotRefs:result.screenshotRefs}})});
@@ -443,6 +455,20 @@ test('changed raw batch cache is rejected without another model call',async t=>{
  await assert.rejects(runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,resumeIdentity,generate:async(c,a,o)=>{await generator({...result,screenshotRefs:['after/desktop.png']})(c,a,o);}}),/matched/);
  const current=await loadRun(run.directory),ref=Object.values(current.manifest.reviewBatchResults)[0];await writeFile(join(run.directory,ref.path),'{}');let calls=0;
  await assert.rejects(runAiVisualReview(run.directory,{cwd:cwd+'-retry',signal:new AbortController().signal,resumeIdentity,generate:async()=>{calls++;}}),/Cached review batch changed/);assert.equal(calls,0);
+});
+
+test('an existing whole-page review does not replace the requested capability preflight',async t=>{
+ const {run,cwd}=await wholeFixture(t);
+ const signal=new AbortController().signal;
+ await runAiVisualReview(run.directory,{cwd,signal,generate:wholeGenerator()});
+ const previous=(await loadRun(run.directory)).manifest.visualReviews;
+ const generate=()=>assert.fail('Preflight must not run the model');
+ generate.visualCapability=async()=>({status:'unknown',model:'fixture-model',source:'fixture'});
+ const result=await runAiVisualReview(run.directory,{cwd:cwd+'-preflight',preflightOnly:true,maxModelCalls:0,signal,generate});
+ assert.equal(result.status,'preflight-only');
+ assert.equal(result.plan.visualInput.status,'unknown');
+ assert.equal(result.plan.visual,'not-reviewed');
+ assert.deepEqual((await loadRun(run.directory)).manifest.visualReviews,previous);
 });
 
 test('native preflight prepares the complete bound image plan without invoking or reserving a model',async t=>{

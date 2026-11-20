@@ -17,7 +17,7 @@ const AGENT_CONFIG = {
 // deliberately excluded: rotating a key is not a different reviewer, and hashing
 // secrets buys nothing the run ledger then has to protect.
 const ENVIRONMENT_KEYS=['PATH','SHELL','TERM','CI','NODE_ENV','NODE_OPTIONS','LANG','LC_ALL','TZ',
- 'CODEX_HOME','HAPPYHANDS_CLAUDE','HAPPYHANDS_CLAUDE_HOME','HAPPYHANDS_MODEL_AGENT',
+ 'CODEX_HOME','OPENAI_BASE_URL','HAPPYHANDS_CLAUDE','HAPPYHANDS_CLAUDE_HOME','HAPPYHANDS_MODEL_AGENT',
  'HAPPYHANDS_API_PROVIDER','HAPPYHANDS_API_BASE_URL','HAPPYHANDS_API_MODEL','HAPPYHANDS_CLI_VISION_MODELS','HAPPYHANDS_CLAUDE_VISION_MODEL','HAPPYHANDS_AGENTS_FILE'];
 
 // Conservative: any environment/config/version change invalidates same-run reuse.

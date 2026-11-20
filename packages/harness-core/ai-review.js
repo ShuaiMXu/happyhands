@@ -145,6 +145,7 @@ async function reviewBatch(directory, run, {cwd,signal,generate,language='zh',pu
     signal.throwIfAborted();
     const command=process.env.WORKBENCH_CODEX || 'codex',argv=[...args,'--','-'];
     const invoke=generate.prepare ? await generate.prepare(command,argv) : options=>generate(command,argv,options);
+    signal.throwIfAborted();
     if(invocationBudget){assertReviewCallBudget(invocationBudget.limit,invocationBudget.started+1);invocationBudget.started++;}
     callId=await reserveReviewCall(directory,{key:cacheKey,stage:purpose+':'+reviewStage,policy:costPolicy,modelIdentity:{...modelIdentity,...(resumeIdentity?{runtimeHash:hash(JSON.stringify(resumeIdentity))}: {})},deduplicate:!!resumeIdentity,retryReason});
     const usage=reviewUsageCollector();let failure=null;
@@ -255,8 +256,6 @@ export async function runAiVisualReview(directory, options) {
     const preflight=await saveNativeReviewPlan(directory,options,{regionalCalls:1,crossCalls:0});assertGoalBoundCallCeiling(run,options,preflight);if(options.preflightOnly)return {status:'preflight-only',plan:preflight};
     return reviewBatch(directory,{...run,manifest:{...run.manifest,captures}},{...options,reviewStage,plannedManifest:run.manifest});
   }
-  const existing=visualReviewFor(run.manifest,'visual-qa-evaluator');
-  if(existing&&!run.retryAttempt)return (await readVisualReviewBinding(await loadRun(directory),existing)).review;
   if(!run.manifest.captures.after || !run.manifest.evaluation)throw new Error('Capture and evaluate the changed interface before AI review.');
   const reviews=[],hashes={},taskScope=[...scopeReviewCaptures(run),...(run.counterCaptures||[])];
   const assignedBatches=batches.map(batch=>regionalTaskCaptures(batch,taskScope));
@@ -271,7 +270,7 @@ export async function runAiVisualReview(directory, options) {
     const actual=pngDimensions(await readFile(runFilePath(directory,entry.screenshot)));
     if(actual.width!==entry.screenshotSize.width||actual.height!==entry.screenshotSize.height)throw Error('Whole-page screenshot dimensions do not match capture metadata: '+entry.screenshot);
   }
-  assertReviewCallBudget(options.maxModelCalls,options.resumeIdentity?0:batches.length+(whole.ready?1:0));
+  if(!active||run.retryAttempt)assertReviewCallBudget(options.maxModelCalls,options.resumeIdentity?0:batches.length+(whole.ready?1:0));
   const preflight=await saveNativeReviewPlan(directory,options,{regionalCalls:batches.length,crossCalls:whole.ready?1:0});assertGoalBoundCallCeiling(run,options,preflight);if(options.preflightOnly)return {status:'preflight-only',plan:preflight};
   for(const [index,batch] of batches.entries()){
     options.signal.throwIfAborted();

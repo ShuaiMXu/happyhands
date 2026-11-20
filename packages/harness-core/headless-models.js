@@ -8,12 +8,12 @@ import {runLocal} from './jobs.js';
 import {adaptModelLauncher,defaultModelAgent} from './model-adapters.js';
 
 // Reuse the workbench's actual read-only model protocols, without its HTTP/UI service.
-export async function headlessModel({directory,phase,model,language='zh',generate=runLocal,agent=defaultModelAgent(),maxModelCalls,resumeReview=false,costPolicy,retryReason,preflightOnly=false}){
+export async function headlessModel({directory,phase,model,language='zh',generate=runLocal,agent=defaultModelAgent(),inspectCodex,maxModelCalls,resumeReview=false,costPolicy,retryReason,preflightOnly=false}){
  if(!['diagnosis','review'].includes(phase)||!['zh','en'].includes(language)||model!==undefined&&!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}$/.test(model))throw Error('Invalid headless model options.');
  if(maxModelCalls!==undefined&&(phase!=='review'||!Number.isSafeInteger(maxModelCalls)||maxModelCalls<0))throw Error('Invalid review call budget.');
  if(phase!=='review'&&(resumeReview||costPolicy||preflightOnly))throw Error('Review recovery and cost policy cannot be applied to diagnosis implicitly.');
  const run=await loadRun(directory),cwd=join(run.directory,'model-attempts',phase+'-'+randomUUID());
- const launch=adaptModelLauncher(generate,agent);
+ const launch=adaptModelLauncher(generate,agent,{inspectCodex});
  const modelArgs=args=>model?[...args.slice(0,args.indexOf('--')<0?args.length:args.indexOf('--')),'-m',model,...(args.includes('--')?args.slice(args.indexOf('--')):[])]:args;
  const invoke=(command,args,options)=>launch(command,modelArgs(args),{...options,timeoutMs:20*60*1000});
  invoke.prepare=async(command,args)=>{
