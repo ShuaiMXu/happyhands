@@ -2,7 +2,7 @@
 import {saveExperienceCase} from '../packages/harness-core/store.js';
 import {listExperienceCases} from '../packages/harness-core/experience-cases.js';
 import {evidenceLevel} from '../packages/harness-core/evidence-policy.js';
-import {runVerificationChecks} from '../packages/harness-core/run-verification.js';
+import {runManagedVerification,runVerificationChecks} from '../packages/harness-core/run-verification.js';
 import {withdrawJudgment} from '../packages/harness-core/store.js';
 import {saveRunMemoryException} from '../packages/harness-core/store.js';
 import { request as httpRequest } from 'node:http';
@@ -51,7 +51,7 @@ const commandOptions = new Map([
   ['skill', 'run skill repo'],
   ['diagnose', 'run rubric'],
   ['prioritize', 'run finding priority reason'],
-  ['verify', 'run config repo phase'],
+  ['verify', 'run config repo phase managed'],
   ['attest', 'run input'],
   ['confirm', 'run finding verdict note'],
   ['plan', 'run finding'],
@@ -164,6 +164,7 @@ pnpm harness skill --run DIRECTORY --skill ID [--repo DIRECTORY]
 pnpm harness diagnose --run DIRECTORY [--rubric FILE]
 pnpm harness prioritize --run DIRECTORY --finding ID --priority NUMBER --reason TEXT
 pnpm harness verify --run DIRECTORY --config FILE [--repo DIRECTORY]
+pnpm harness verify --run DIRECTORY --managed true [--repo DIRECTORY]
 pnpm harness verify --run DIRECTORY --phase before|after [--repo DIRECTORY]
 pnpm harness attest --run DIRECTORY --input FILE
 pnpm harness confirm --run DIRECTORY --finding ID --verdict supported|stale --note TEXT
@@ -452,6 +453,21 @@ finding, and evaluate reports deterministic render checks without claiming an im
     await saveDiagnosis(directory, diagnosis);
     process.stdout.write(JSON.stringify(diagnosis.findings, null, 2) + '\n');
   } else if (command === 'verify') {
+    if(options.managed!==undefined){
+      if(options.managed!=='true'||options.phase!==undefined||options.config!==undefined)throw Error('--managed true uses the recorded specialist config, without --config or --phase.');
+      const controller=new AbortController();
+      const cancel=()=>controller.abort(new Error('Managed verification was interrupted.'));
+      process.once('SIGINT',cancel);
+      process.once('SIGTERM',cancel);
+      try {
+        const result=await runManagedVerification({directory,repo:options.repo,signal:controller.signal});
+        process.stdout.write(JSON.stringify(result,null,2)+'\n');
+      } finally {
+        process.off('SIGINT',cancel);
+        process.off('SIGTERM',cancel);
+      }
+      return;
+    }
     if (options.phase !== undefined) {
       if (options.config !== undefined) throw Error('Technical verify uses the policy frozen by start.');
       const {verifyTechnicalRepair} = await import('../packages/harness-core/technical-verification.js');

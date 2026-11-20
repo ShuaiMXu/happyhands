@@ -2,20 +2,35 @@ import {verificationPreviewFingerprint} from './preview-fingerprint.js';
 export {verificationPreviewFingerprint};
 import {repositoryFingerprint} from './repository-fingerprint.js';
 import {fileURLToPath} from 'node:url';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,realpath,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
+import {once} from 'node:events';
+import {isDeepStrictEqual} from 'node:util';
 import {loadRun} from './store.js';
 import {captureEntries} from './capture-state.js';
-import {inspectRepository} from './onboard.js';
+import {assertManagedPreview,inspectRepository,loadProjectConfig,publicProjectConfig,spawnPreview,stopPreview,waitForPreview} from './onboard.js';
 import {sourceFiles} from '../skill-core/scan.js';
 import {snapshotHash} from '../skill-core/design-system.js';
 import {verificationBinding,verificationHash,validateVerificationChecks,readVerificationFile,saveVerificationEvidence} from './verification.js';
 import {runLocal} from './jobs.js';
 
-// Runs inside the existing managed preview lifetime. No shell and no automatic
-// tool installation: commands come only from the connected project config.
-export async function runVerificationChecks({directory,repo,url,checks,signal,execute=runLocal,inspect=inspectRepository,scan=sourceFiles,fingerprint=verificationPreviewFingerprint,fingerprintSource=repositoryFingerprint}) {
+export async function runManagedVerification({directory,repo,signal}) {
+  const {manifest}=await loadRun(directory),frozen=manifest.onboarding?.config;
+  if(!frozen?.configPath||!frozen.start||!frozen.verificationChecks?.length)throw Error('Managed verification requires a connected project with a recorded preview command and specialist checks.');
+  if(manifest.judgment)throw Error('A judged Run cannot accept new specialist evidence.');
+  const config=await loadProjectConfig(frozen.configPath);
+  const current=publicProjectConfig(config);
+  if(current.repo!==frozen.repo||current.url!==frozen.url||!isDeepStrictEqual(current.start,frozen.start)||!isDeepStrictEqual(current.verificationChecks,frozen.verificationChecks)){
+    throw Error('Managed verification configuration changed after onboarding.');
+  }
+  const checkout=await realpath(repo||manifest.execution?.worktree||config.repo);
+  return runVerificationChecks({directory,repo:checkout,url:config.url,checks:config.verificationChecks,managedConfig:config,signal});
+}
+
+// Commands come from the connected project. An explicit CLI replay may own
+// the preview while workbench and manual callers retain their existing server.
+export async function runVerificationChecks({directory,repo,url,checks,signal,execute=runLocal,inspect=inspectRepository,scan=sourceFiles,fingerprint=verificationPreviewFingerprint,fingerprintSource=repositoryFingerprint,managedConfig}) {
   validateVerificationChecks(checks);if(!checks?.length)return null;
   const run=await loadRun(directory),binding=await verificationBinding(directory,run.manifest);
   const assertSource=async()=>{
@@ -25,6 +40,33 @@ export async function runVerificationChecks({directory,repo,url,checks,signal,ex
     if(binding.source.status!=='not-extracted'&&snapshotHash(await scan(repo,{includeDesignDocs:true}))!==binding.source.snapshotHash)throw Error('Specialist verification source does not match after capture.');
   };
   await assertSource();
+  const verify=signal=>collectVerification({directory,repo,url,checks,signal,execute,fingerprint,assertSource,run,binding});
+  if(!managedConfig)return verify(signal);
+  const sub=await assertManagedPreview(managedConfig,{signal});
+  const start={...managedConfig.start,cwd:join(repo,sub)};
+  await assertManagedPreview({repo,url,start},{signal});
+  const child=spawnPreview(start);
+  child.ref();
+  const closed=new AbortController();
+  const stopped=()=>closed.abort(new Error('The managed preview stopped during specialist verification.'));
+  child.once('exit',stopped);
+  child.once('error',stopped);
+  const active=signal?AbortSignal.any([signal,closed.signal]):closed.signal;
+  try {
+    const preview=await waitForPreview(url,{timeoutMs:managedConfig.timeoutMs,signal:active});
+    if(new URL(preview.finalUrl).origin!==new URL(url).origin)throw Error('The managed preview redirected to another origin.');
+    await assertSource();
+    return await verify(active);
+  } finally {
+    if(child.pid&&child.exitCode===null&&child.signalCode===null){
+      const done=once(child,'close',{signal:AbortSignal.timeout(5000)});
+      stopPreview(child);
+      await done;
+    }
+  }
+}
+
+async function collectVerification({directory,repo,url,checks,signal,execute,fingerprint,assertSource,run,binding}) {
   const preview=await fingerprint(url),captured=run.manifest.captures.after.verificationPreviewFingerprint;
   if(captured&&captured!==preview)throw Error('Specialist verification preview no longer matches after capture.');
   const records=[];let remaining=248*1024;

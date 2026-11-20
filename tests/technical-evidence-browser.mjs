@@ -5,6 +5,7 @@ import {createServer} from 'node:http';
 import {join} from 'node:path';
 import {technicalProject} from './helpers/technical-project.mjs';
 import {createRun,loadRun} from '../packages/harness-core/store.js';
+import {readVerificationEvidence} from '../packages/harness-core/verification.js';
 import {projectMemoryRegistry} from '../packages/harness-core/project-memory.js';
 
 async function serve(t, checkout, port=0) {
@@ -122,6 +123,48 @@ for (const scenario of cases) {
     }
   });
 }
+
+test('next reruns bound specialist checks after the captured preview has stopped', async t => {
+  const checkScript = `
+    import {writeFile} from 'node:fs/promises';
+    import {join} from 'node:path';
+    const [url,out]=process.argv.slice(2);
+    const response=await fetch(url);
+    const body=await response.text();
+    const status=response.ok&&body.includes('<h1>Fixture menu</h1>')?'pass':'fail';
+    await writeFile(join(out,'result.json'),JSON.stringify({status}));
+  `;
+  const p=await technicalProject(t,{'index.html':'<!doctype html><h1>Fixture menu</h1>','serve.mjs':managedServer,'check.mjs':checkScript});
+  const reservation=await serve(t,p.repo);
+  const {url,port}=reservation;
+  await reservation.close();
+  const planPath=join(p.root,'capture.json'),configPath=join(p.root,'project.json');
+  await writeFile(planPath,JSON.stringify({schemaVersion:'0.1',adapter:'web',configurations:[{id:'phone',viewport:{width:390,height:844}}],states:[{id:'menu',start:{url},actions:[]}]}));
+  const config={version:'0.1',mode:'review',spec:'experience.json',repo:p.repo,url,capturePlan:planPath,
+    start:{command:'node',args:['serve.mjs',String(port)]},verificationChecks:[{id:'menu',command:'node',args:['check.mjs','{url}','{out}'],stage:'normal-layout',method:'Fetch the bound preview and check its heading',limitations:['HTTP probe only'],stateIds:['menu'],screenshots:[]}]};
+  await writeFile(configPath,JSON.stringify(config));
+  const directory=await p.invoke('onboard','--config',configPath,'--out',join(p.root,'runs'));
+  await p.invoke('confirm','--run',directory,'--finding',p.spec.findings[0].id,'--verdict','supported','--note','Replay the original fixture preview');
+  const preview=await serve(t,p.repo,port);
+  await p.invoke('capture','--run',directory,'--phase','after','--plan',planPath,'--repo',p.repo);
+  await p.invoke('evaluate','--run',directory);
+  const next=JSON.parse(await p.invoke('next','--run',directory));
+  assert.equal(next.stage,'needs-specialist-verification');
+  assert.deepEqual(next.cli.steps[0].argv,['verify','--run',directory,'--managed','true']);
+  await assert.rejects(p.invoke(...next.cli.steps[0].argv),/port is already in use/);
+  await preview.close();
+  await assert.rejects(p.invoke('verify','--run',directory,'--config',configPath),/fetch failed|preview is unavailable/);
+  await writeFile(configPath,JSON.stringify({...config,start:{...config.start,args:['other.mjs',String(port)]}}));
+  await assert.rejects(p.invoke(...next.cli.steps[0].argv),/configuration changed/);
+  await writeFile(configPath,JSON.stringify(config));
+  await p.invoke(...next.cli.steps[0].argv);
+  const {manifest}=await loadRun(directory);
+  const evidence=await readVerificationEvidence(directory,manifest);
+  assert.deepEqual(evidence.records.map(row=>[row.id,row.status,row.preview.binding]),[['menu','pass','capture-response-match']]);
+  assert.equal(JSON.parse(await p.invoke('next','--run',directory)).stage,'needs-visual-qa');
+  const released=await serve(t,p.repo,port);
+  await released.close();
+});
 
 test('a Hero layout change stays at the visual gate after real matched captures and structural evaluation', async t => {
   const page = size => '<!doctype html><meta name="viewport" content="width=device-width"><title>Hero</title>' +
