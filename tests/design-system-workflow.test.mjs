@@ -15,6 +15,7 @@ import {inventoryComponents} from '../packages/skill-core/components.js';
 import {buildDesignSystemExtraction} from '../packages/skill-core/design-system.js';
 import {readVisualReviewBinding} from '../packages/harness-core/visual-review-binding.js';
 import {runHandler} from '../packages/skill-core/handlers.js';
+import {readRepositoryInputs} from '../packages/harness-core/repository-inputs.js';
 
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
 
@@ -59,8 +60,10 @@ test('narrow capture keeps complete source and original hashes without scanning 
   return {viewports:{desktop:{screenshot:'before/desktop.png',dom:{h1:['Fixture']}}}};
  }});
  assert.ok(result.verificationSource.fileCount>=4);assert.match(result.verificationOriginalHashes['before/desktop.png'],/^[a-f0-9]{64}$/);
- assert.equal(result.designSystemSource.status,'not-extracted');assert.equal(result.incrementalSource.status,'unavailable');
- assert.equal(Boolean((await loadRun(f.run.directory)).manifest.designSystemExtractions?.before),false);
+ assert.equal(result.designSystemSource.status,'not-extracted');assert.equal(result.incrementalSource.status,'bound');
+ const run=await loadRun(f.run.directory);
+ assert.ok((await readRepositoryInputs(run,'before')).files.some(file=>file.path==='src/tokens.css'));
+ assert.equal(Boolean(run.manifest.designSystemExtractions?.before),false);
 });
 
 test('narrow capture cannot bind a repository that changed during the browser operation',async t=>{

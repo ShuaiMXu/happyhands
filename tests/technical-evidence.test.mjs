@@ -21,6 +21,7 @@ test('source repair verifies a failed syntax check and its isolated fix with no 
   await p.fix({'feature.mjs': 'export const label = "Save";'});
   const result = JSON.parse(await p.invoke('verify', '--run', run, '--phase', 'after', '--repo', p.candidate));
   assert.equal(result.status, 'pass');
+  assert.deepEqual(result.changedFiles, ['feature.mjs']);
   assert.notEqual(result.source.contentHash, baseline.source.contentHash);
   const status = JSON.parse(await p.invoke('status', '--run', run));
   assert.deepEqual(status.captures, {before: null, after: null});
@@ -29,7 +30,10 @@ test('source repair verifies a failed syntax check and its isolated fix with no 
   assert.equal(status.judgment, null);
   await assert.rejects(p.invoke('verify', '--run', run, '--phase', 'after', '--repo', p.candidate), /already recorded/);
   const report = JSON.parse(await p.invoke('report', '--run', run));
-  assert.match(await readFile(report.path, 'utf8'), /not-reviewed/);
+  const html=await readFile(report.path, 'utf8');
+  assert.match(html, /not-reviewed/);
+  assert.match(html, /feature\.mjs parses successfully/);
+  assert.match(html, /feature\.mjs: fail → pass/);
 });
 
 test('a visual Hero Run cannot switch to technical verification or accept a structural pass', async t => {

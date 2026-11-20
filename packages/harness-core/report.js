@@ -11,6 +11,10 @@ import {createHash} from 'node:crypto';
 import {extname, join, resolve} from 'node:path';
 import {loadRun} from './store.js';
 import {captureEntries} from './capture-state.js';
+import {criterionSourceChanges, matchedCriterionStates} from './criterion-evidence.js';
+import {experienceFor} from './experience-orchestration.js';
+import {readVisualReviewBinding} from './visual-review-binding.js';
+import {visualReviewFor} from './workflow.js';
 
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const MIME = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif'};
@@ -85,9 +89,68 @@ function gateList(run) {
     ['After capture', m.captures?.after ? 'recorded' : 'missing'],
     ['Evaluation', m.evaluation ? 'recorded (structural checks only)' : 'missing'],
     ['Independent visual QA', m.visualReviews?.length ? `${m.visualReviews.length} review(s)` : 'missing'],
-    ['Human judgment', m.judgment ? `${m.judgment.decision} · ${m.judgment.reason}` : 'pending']
+    ['Human judgment', m.judgmentWithdrawal ? `withdrawn · ${m.judgmentWithdrawal.reason}` : m.judgment ? `${m.judgment.decision} · ${m.judgment.reason}` : 'pending']
   ];
   return `<table class="gates"><tbody>${rows.map(([name, value]) => `<tr><th>${escapeHtml(name)}</th><td>${escapeHtml(value)}</td></tr>`).join('')}</tbody></table>`;
+}
+
+const items = values => values.map(escapeHtml).join('<br>');
+
+function technicalTrace(manifest) {
+  const policy = manifest.evidencePolicy;
+  const {before, after} = manifest.technicalEvidence || {};
+  const target = {
+    'node-syntax': () => `${policy.file} parses successfully`,
+    'button-name': () => `${policy.selector} has the accessible name “${policy.name}”`,
+    'horizontal-overflow': () => 'The document fits the viewport without horizontal overflow'
+  }[policy.kind]();
+  const key = check => check.key ?? check.file;
+  const old = new Map((before?.checks || []).map(check => [key(check), check]));
+  const current = new Map((after?.checks || []).map(check => [key(check), check]));
+  const both = [...new Set([...old.keys(), ...current.keys()])];
+  const results = both.map(state => {
+    const a = old.get(state), b = current.get(state);
+    const details = b || a;
+    const dimensions = details.viewport ? ` · ${details.viewport.width}×${details.viewport.height}` : '';
+    const route = details.route ? ` · ${details.route}` : '';
+    if (a && b && (a.route !== b.route || a.viewport?.width !== b.viewport?.width || a.viewport?.height !== b.viewport?.height)) return `${state}: before and after did not match`;
+    return `${state}${dimensions}${route}: ${a?.status ?? 'missing'} → ${b?.status ?? 'missing'}`;
+  });
+  return `<h2>Requirement evidence</h2><dl>
+  <dt>Declared requirement</dt><dd>${escapeHtml(target)}</dd>
+  <dt>Changed files in the candidate</dt><dd>${after?.changedFiles ? items(after.changedFiles) : 'No source delta recorded.'}</dd>
+  <dt>Before and after checks</dt><dd>${results.length ? items(results) : 'No checks recorded.'}</dd>
+  <dt>Technical result</dt><dd>${escapeHtml(technicalWorkflow(manifest, {}).stage)}${after?.diagnostic ? ` · ${escapeHtml(after.diagnostic)}` : ''}</dd>
+  </dl>`;
+}
+
+async function visualTrace(run) {
+  const {manifest} = run;
+  if (!manifest.experienceAudit?.goal) return '';
+  let criteria;
+  try { criteria = (await experienceFor(run, manifest.designDecision ? 'decision' : 'audit')).audit.task.goal.criteria; }
+  catch { return '<h2>Requirement evidence</h2><p>Bound task evidence is missing or changed.</p>'; }
+  let assessments = [], sourceChanges, qaStatus = 'not-reviewed';
+  try {
+    sourceChanges = await criterionSourceChanges(run);
+    const reference = visualReviewFor(manifest, 'visual-qa-evaluator');
+    if (reference) {
+      const {review} = await readVisualReviewBinding(run, reference, {requireBound:true});
+      assessments = review.criterionAssessments || [];
+      if (!assessments.length) qaStatus = 'no criterion-level assessment recorded';
+    } else if (manifest.visualReviews?.some(row => row.skillId === 'visual-qa-evaluator')) qaStatus = 'review is stale';
+  } catch { qaStatus = 'review or source evidence is missing or changed'; }
+  const rows = criteria.map((requirement, index) => {
+    const result = assessments.find(row => row.criterion === index + 1);
+    const states = result ? matchedCriterionStates(manifest, result.screenshotRefs).map(row => row.state) : [];
+    return `<article><h3>${escapeHtml(requirement)}</h3><dl>
+      <dt>Changed files</dt><dd>${result?.changedFiles.length ? items(result.changedFiles) : sourceChanges ? 'No changed files associated with this criterion.' : 'No captured source delta available.'}</dd>
+      <dt>Matched states</dt><dd>${states.length ? items(states) : 'No matching before and after state cited.'}</dd>
+      <dt>Originals and checks</dt><dd>${items([...(result?.screenshotRefs || []), ...(result?.verificationRefs || [])]) || 'No evidence cited.'}</dd>
+      <dt>Independent result</dt><dd>${escapeHtml(result ? `${result.verdict} · ${result.reason}` : qaStatus)}</dd>
+    </dl></article>`;
+  });
+  return `<h2>Requirement evidence</h2>${rows.join('\n')}`;
 }
 
 async function imageRows(run) {
@@ -121,6 +184,7 @@ export async function buildRunReport({directory, outputPath} = {}) {
   const project = run.spec.project || {};
   const title = project.name || manifest.id;
   const images = await imageRows(run);
+  const trace = technicalWorkflow(manifest, {}) ? technicalTrace(manifest) : await visualTrace(run);
   const execution = manifest.execution;
   const ledger = [
     ['Run', manifest.id],
@@ -131,6 +195,8 @@ export async function buildRunReport({directory, outputPath} = {}) {
     ['Brief', manifest.plan?.path || '—'],
     ['Brief hash', manifest.plan?.briefHash ? `${manifest.plan.briefHash.slice(0, 16)}…` : '—'],
     ['Diff', execution?.diffStat || '—'],
+    ['Independent review', visualReviewFor(manifest, 'visual-qa-evaluator')?.path || '—'],
+    ['Specialist check index', manifest.verificationEvidence?.path || '—'],
     ['Changed files', execution?.changedFiles?.join(', ') || '—']
   ];
   const html = `<!doctype html>
@@ -148,6 +214,7 @@ export async function buildRunReport({directory, outputPath} = {}) {
   table { width:100%; border-collapse:collapse; font-size:14px; }
   th,td { text-align:left; vertical-align:top; padding:7px 10px; border-bottom:1px solid var(--line); }
   table.gates th { width:190px; font-weight:600; }
+  dt { font-weight:600; } dd { margin:0 0 8px; overflow-wrap:anywhere; }
   .pair { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
   @media (max-width:760px) { .pair { grid-template-columns:1fr; } }
   figure { margin:0; } img { width:100%; height:auto; border:1px solid var(--line); border-radius:6px; background:#fff; }
@@ -166,6 +233,7 @@ export async function buildRunReport({directory, outputPath} = {}) {
 <h2>Gates</h2>
 ${gateList(run)}
 
+${trace}
 ${manifest.technicalEvidence ? `<h2>Technical verification</h2><pre>${escapeHtml(JSON.stringify(manifest.technicalEvidence, null, 2))}</pre>` : ''}
 <h2>Findings</h2>
 ${findingsTable(diagnosis)}

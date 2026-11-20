@@ -12,6 +12,7 @@ import {stageProjectMemory,projectMemoryBrief,projectMemoryForReview,readRunMemo
 import {readVerificationEvidence,verificationHash} from './verification.js';
 import { captureEntries } from './capture-state.js';
 import { assertVisualReview } from './visual-review.js';
+import {assertCriterionFiles} from './criterion-evidence.js';
 import { randomUUID, createHash } from 'node:crypto';
 import { lstat, mkdir, readdir, readFile, rename, rm, rmdir, unlink, writeFile, realpath } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -521,6 +522,7 @@ export async function saveVisualReview(directory, review, { screenshotHashes = {
     if(review.skillId==='visual-qa-evaluator')await experienceFor(run,'decision');
     const verification=await readVerificationEvidence(directory,run.manifest);
     assertVisualReview(review, {...run.manifest,verificationRecords:verification.records});
+    await assertCriterionFiles(run,review);
     const expectedHashes={...screenshotHashes};
     for (const id of review.attachmentRefs || []) {
       const attachment = run.manifest.reviewAttachments.find(item => item.id === id);

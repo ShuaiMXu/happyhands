@@ -18,7 +18,7 @@ export async function captureWithDesignSystem({directory,repo,phase,capture,sign
     // Retain the digest, not a second full copy of a large source scan, while
     // the browser is running.
     const previewBefore=bindVerificationSource?await fingerprintPreview(verificationUrl):null;
-    const repositoryBefore=await fingerprint(repo,{includeFiles:extract}).catch(error=>{if(bindVerificationSource){if(error.code==='REPOSITORY_INDEX_LIMIT')return fingerprint(repo);throw error;}return null;});
+    const repositoryBefore=await fingerprint(repo,{includeFiles:true}).catch(error=>{if(bindVerificationSource){if(error.code==='REPOSITORY_INDEX_LIMIT')return fingerprint(repo);throw error;}return null;});
     const beforeHash=extract?snapshotHash(await scan(repo,{includeDesignDocs:true})):null;
     const identity=await inspect(repo).catch(()=>null);
     const result=await capture();
@@ -29,7 +29,7 @@ export async function captureWithDesignSystem({directory,repo,phase,capture,sign
     if(repositoryBefore){
       const repositoryAfter=await fingerprint(repo,{includeFiles:Array.isArray(repositoryBefore.files)});
       if(!sameRepositoryFingerprint(repositoryBefore,repositoryAfter))throw Error('Repository inputs changed during capture.');
-      result.incrementalSource=Array.isArray(repositoryAfter.files)?await writeRepositoryInputs(directory,phase,repositoryAfter):{status:'unavailable',reason:extract?'The complete input inventory exceeds incremental storage limits; use full review.':'Explicit narrow capture omits module/design-system extraction; use full review, not incremental inference.'};
+      result.incrementalSource=Array.isArray(repositoryAfter.files)?await writeRepositoryInputs(directory,phase,repositoryAfter):{status:'unavailable',reason:'The complete input inventory exceeds storage limits; no file-level source delta is available.'};
       if(bindVerificationSource){
         if(await fingerprintPreview(verificationUrl)!==previewBefore)throw Error('Verification preview changed during capture.');
         result.verificationPreviewFingerprint=previewBefore;

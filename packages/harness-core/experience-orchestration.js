@@ -181,10 +181,11 @@ export async function saveExperienceRecord(directory,phase,input){
    if(input.referenceApplications.length!==sources.length||new Set(input.referenceApplications.map(row=>row.source)).size!==sources.length||input.referenceApplications.some(row=>!sources.includes(row.source)))throw Error('Decision must explain application or rejection and verification of each design basis.');
    methodBindings=await verifyMethods(run,input.methods,audit.data.surface);
   }
-  const record={version:input.version,phase,runId:run.manifest.id,methodBindings,baseline:bound.hash,...(audit?{auditHash:run.manifest.experienceAudit.sha256,scopeHash:digest(run.manifest.confirmation),diagnosisHash:hash(await readVerificationFile(directory,run.manifest.diagnosis.path,2*1024*1024))}:{}),data:input};
+  const traceCriteria=!!audit&&input.version===CURRENT_EXPERIENCE_POLICY;
+  const record={version:input.version,phase,runId:run.manifest.id,methodBindings,baseline:bound.hash,...(audit?{auditHash:run.manifest.experienceAudit.sha256,scopeHash:digest(run.manifest.confirmation),diagnosisHash:hash(await readVerificationFile(directory,run.manifest.diagnosis.path,2*1024*1024))}:{}),...(traceCriteria?{traceCriteria:true}:{}),data:input};
   const bytes=JSON.stringify(record,null,2)+'\n',sha256=hash(bytes),path=`experience/${phase}-${sha256}.json`;
   await mkdir(join(directory,'experience'),{recursive:true});if(await realpath(join(directory,'experience'))!==join(await realpath(directory),'experience'))throw Error('Experience storage cannot use symlinks.');await writeFile(join(directory,path),bytes,{flag:'wx'});
-  run.manifest.experiencePolicy=input.version;run.manifest[key]={path,sha256,...(phase==='audit'?{surface:input.surface,...(input.task.goal?{goal:input.task.goal}:{})}:{})};
+  run.manifest.experiencePolicy=input.version;run.manifest[key]={path,sha256,...(phase==='audit'?{surface:input.surface,...(input.task.goal?{goal:input.task.goal}:{})}:{}),...(traceCriteria?{traceCriteria:true}:{})};
   await writeJson(join(directory,'run.json'),run.manifest);return run.manifest[key];
  });
 }
@@ -201,6 +202,7 @@ export async function readExperienceRecord(run,phase){
   if(ref.surface!==record.data.surface)throw Error('Experience surface changed.');
   assertReferences(record.data,await designSourceContext(run));
  }else{
+  if(record.traceCriteria!==ref.traceCriteria)throw Error('Design decision evidence requirements changed.');
   await readExperienceRecord(run,'audit');
   if(record.auditHash!==run.manifest.experienceAudit.sha256||record.scopeHash!==digest(run.manifest.confirmation)||record.diagnosisHash!==hash(await readVerificationFile(run.directory,run.manifest.diagnosis.path,2*1024*1024)))throw Error('Design decision scope changed.');
  }

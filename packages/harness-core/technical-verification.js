@@ -147,6 +147,7 @@ export async function verifyTechnicalRepair({directory, phase, repo}) {
     const checkout = await realpath(repo || original);
     if (phase === 'before' && checkout !== original) throw Error('Baseline verification must use the checkout from start.');
     const source = await repositoryFingerprint(checkout);
+    let changedFiles;
     if (source.dirty) throw Error('Commit the intended version before technical verification.');
     if (phase === 'before' && source.commit !== manifest.onboarding.repository.commit) throw Error('Baseline commit changed after start.');
     if (phase === 'after') {
@@ -155,6 +156,8 @@ export async function verifyTechnicalRepair({directory, phase, repo}) {
         throw Error('Use a changed, committed candidate in an isolated worktree of the same Git repository.');
       }
       await exec('git', ['merge-base', '--is-ancestor', before.source.commit, source.commit], {cwd: checkout});
+      const {stdout} = await exec('git', ['diff', '--no-renames', '--name-only', '-z', before.source.commit, source.commit, '--'], {cwd: checkout, maxBuffer: 2 * 1024 * 1024});
+      changedFiles = stdout.split('\0').filter(Boolean).sort();
     }
     const {checks, preview} = level === 'source'
       ? {checks: await checkSyntax(checkout, manifest.evidencePolicy.file), preview: null}
@@ -164,6 +167,7 @@ export async function verifyTechnicalRepair({directory, phase, repo}) {
     const record = {
       status: scopeChanged ? 'needs-evidence' : resultStatus(checks),
       level, phase, source, preview, checks, visual: 'not-reviewed',
+      ...(phase === 'after' ? {changedFiles} : {}),
       ...(scopeChanged ? {diagnostic:'The final routes or viewport states differ from the baseline.'} : {})
     };
     manifest.technicalEvidence = {...manifest.technicalEvidence, [phase]: record};
