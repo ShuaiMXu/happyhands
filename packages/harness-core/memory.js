@@ -6,7 +6,10 @@ import {validateMemoryScope} from './memory-scope.js';
 const hash = value => createHash('sha256').update(value).digest('hex');
 function required(value,name) { if(typeof value!=='string'||!value.trim()||value.length>10000)throw new Error(`${name} is required, up to 10000 characters`);return value.trim(); }
 const validId = value => /^[a-f0-9-]{36}$/.test(value || '');
-const sourceEvidence = manifest => hash(JSON.stringify({captures:manifest.captures,evaluation:manifest.evaluation,judgment:manifest.judgment,execution:manifest.execution}));
+function sourceEvidence(manifest,scoped) {
+  const {captures,evaluation,judgment,execution,technicalEvidence,verificationEvidence,visualReviews}=manifest;
+  return hash(JSON.stringify({captures,evaluation,judgment,execution,...(scoped?{technicalEvidence,verificationEvidence,visualReviews}:{})}));
+}
 function proposalHash(value) {
   const fields = {principle:value.principle,context:value.context,reason:value.reason};
   if (Object.hasOwn(value,'exceptions')) fields.exceptions = value.exceptions;
@@ -31,7 +34,7 @@ export function projectMemory(root, repository, {storage=join(root,'.harness','p
   }
   async function currentSource(source){
     const manifest=await optional(join(runs,source.runId,'run.json'));
-    return manifest?.id===source.runId&&sourceEvidence(manifest)===source.evidenceHash;
+    return manifest?.id===source.runId&&sourceEvidence(manifest,true)===source.evidenceHash;
   }
   async function sourceWithdrawal(source){
     if(!/^[a-zA-Z0-9_-]{4,100}$/.test(source?.runId||''))throw Error('Invalid project memory source run ID');
@@ -52,12 +55,12 @@ export function projectMemory(root, repository, {storage=join(root,'.harness','p
     const checkedExceptions=exceptions.map(value=>required(value,'Exception'));
     validateMemoryScope(input.scope);
     const id=randomUUID();
-    const value={id,version:'1',status:'candidate',principle,context,reason,exceptions:checkedExceptions,createdAt:new Date().toISOString(),source:{runId:run.manifest.id,judgment:run.manifest.judgment,evidenceHash:sourceEvidence(run.manifest)}};
+    const value={id,version:'1',status:'candidate',principle,context,reason,exceptions:checkedExceptions,createdAt:new Date().toISOString(),source:{runId:run.manifest.id,judgment:run.manifest.judgment,evidenceHash:sourceEvidence(run.manifest,!!input.scope)}};
     if(input.scope){
       if(!await currentSource(value.source))throw Error('Scoped memory requires a current local source run.');
       value.scope=structuredClone(input.scope);
       value.source.commit=run.manifest.onboarding?.repository?.commit||null;
-      value.source.candidateCommit=run.manifest.captures?.after?.verificationSource?.commit||run.manifest.execution?.head||null;
+      value.source.candidateCommit=run.manifest.technicalEvidence?.after?.source?.commit||run.manifest.captures?.after?.verificationSource?.commit||run.manifest.execution?.head||null;
     }
     value.contentHash=proposalHash(value);
     await mkdir(directory,{recursive:true});await writeFile(join(directory,`${id}.json`),JSON.stringify(value,null,2),{flag:'wx'});return value;

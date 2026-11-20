@@ -63,6 +63,11 @@ test('approved scoped memory follows a verified source check across linked check
   const html=await readFile(report.path,'utf8');
   assert.match(html,/parse-error<\/dt><dd>executed · pass/);
   assert.match(html,/Independent visual QA<\/th><td>not-reviewed/);
+  const sourcePath=join(prior.directory,'run.json');
+  await writeFile(sourcePath,JSON.stringify({...source.manifest,technicalEvidence:baseline.technicalEvidence}));
+  assert.equal((await invoke(run,'list')).find(row=>row.id===approved.id).status,'source-unavailable');
+  assert.deepEqual(await invoke(run,'checks'),[]);
+  await writeFile(sourcePath,JSON.stringify(source.manifest));
   await invoke(run,'retire',{id:approved.id,reason:'The fixture changed its design scope'});
   assert.equal((await invoke(run,'checks')).some(row=>row.id===approved.id),false);
   assert.equal((await invoke(run,'list')).find(row=>row.id===approved.id).retirement.status,'deprecated');

@@ -54,8 +54,10 @@ const cases = [
 
 for (const scenario of cases) {
   test(`runtime ${scenario.policy.kind} compares real browser evidence with no screenshots`, async t => {
+    const checksButtonName = scenario.policy.kind === 'button-name';
+    const alternateName = checksButtonName ? '<script>if(location.search)document.querySelector("#save").setAttribute("aria-label","Save changes")</script>' : '';
     const html = body => '<!doctype html><meta name="viewport" content="width=device-width"><title>Fixture</title><main style="margin:0">' + body + '</main>';
-    const p = await technicalProject(t, {'index.html':html(scenario.before),'serve.mjs':managedServer});
+    const p = await technicalProject(t, {'index.html':html(scenario.before)+alternateName,'serve.mjs':managedServer});
     const reservation = await serve(t, p.repo);
     const {url,port}=reservation;
     await reservation.close();
@@ -63,28 +65,31 @@ for (const scenario of cases) {
     await writeFile(planPath, JSON.stringify({
       schemaVersion:'0.1', adapter:'web',
       configurations:[{id:'phone', viewport:{width:390,height:844}}],
-      states:[{id:'default',start:{url},actions:[],sourceEntries:['index.html']}]
+      states:[{id:'default',start:{url},actions:[],sourceEntries:['index.html']},
+        ...(checksButtonName ? [{id:'alternate',start:{url:`${url}?view=alternate`},actions:[],sourceEntries:['index.html']}] : [])]
     }));
     await assert.rejects(p.start({url,capturePlan:planPath,evidencePolicy:scenario.policy}),/managed start command/);
     const run = await p.start({url,capturePlan:planPath,start:{command:'node',args:['serve.mjs',String(port)]},evidencePolicy:scenario.policy});
-    let safetyRule;
-    if(scenario.policy.kind==='button-name'){
+    let safetyRule,alternateRule;
+    if(checksButtonName){
       const source=await createRun({spec:p.spec,url,outputRoot:join(p.root,'runs'),id:'prior-button'});
       source.manifest.onboarding=(await loadRun(run)).manifest.onboarding;
       source.manifest.judgment={decision:'accept',reason:'Synthetic approval for the browser regression fixture'};
       await writeFile(join(source.directory,'run.json'),JSON.stringify(source.manifest));
       const {store}=await projectMemoryRegistry(source);
-      safetyRule=await store.propose(source,{principle:'The named save button remains discoverable',context:'Default state of the save view',reason:'A missing accessible name hid this action from button-name navigation',
-        scope:{failureClass:'missing-button-name',trigger:{files:['index.html'],states:['default']},check:{type:'technical',policy:scenario.policy}}});
-      await store.decide({id:safetyRule.id,decision:'approve',reason:'Synthetic approval of exact browser scope'});
+      const propose = state => store.propose(source,{principle:'The named save button remains discoverable',context:`${state} state of the save view`,reason:'A missing accessible name hid this action from button-name navigation',
+        scope:{failureClass:'missing-button-name',trigger:{files:['index.html'],states:[state]},check:{type:'technical',policy:scenario.policy}}});
+      safetyRule=await propose('default');
+      alternateRule=await propose('alternate');
+      for(const {id} of [safetyRule,alternateRule])await store.decide({id,decision:'approve',reason:'Synthetic approval of exact browser scope'});
     }
     const before = JSON.parse(await p.invoke('verify','--run',run,'--phase','before'));
     assert.equal(before.status, 'fail');
     if(safetyRule){
-      const checks=JSON.parse(await p.invoke('memory','--run',run,'--action','checks'));
-      assert.deepEqual([checks[0].id,checks[0].status,checks[0].matchedStates],[safetyRule.id,'selected',['default']]);
+      const check=JSON.parse(await p.invoke('memory','--run',run,'--action','checks')).find(row=>row.id===safetyRule.id);
+      assert.deepEqual([check.status,check.matchedStates],['selected',['default']]);
     }
-    await p.fix({'index.html':html(scenario.after)});
+    await p.fix({'index.html':html(scenario.after)+alternateName});
     const unrelated = await serve(t,p.candidate,port);
     await assert.rejects(p.invoke('verify','--run',run,'--phase','after','--repo',p.candidate), /port is already in use/);
     await unrelated.close();
@@ -107,7 +112,12 @@ for (const scenario of cases) {
     assert.match(reportHtml,/default--phone · 390×844 · \/: fail → pass/);
     if(safetyRule){
       const checks=JSON.parse(await p.invoke('memory','--run',run,'--action','checks'));
-      assert.deepEqual([checks[0].status,checks[0].result,checks[0].evidence.states],['executed','pass',['default--phone']]);
+      const fixed=checks.find(row=>row.id===safetyRule.id);
+      assert.deepEqual([fixed.status,fixed.result,fixed.evidence.states],['executed','pass',['default--phone']]);
+      assert.equal(before.checks.find(row=>row.stateId==='alternate').status,'pass');
+      const alternate=checks.find(row=>row.id===alternateRule.id);
+      assert.equal(alternate.status,'needs-evidence');
+      assert.match(alternate.reason,/matched scope/);
       assert.match(reportHtml,/missing-button-name<\/dt><dd>executed · pass/);
     }
   });

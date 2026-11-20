@@ -15,9 +15,13 @@ async function checkResult(run,entry,states) {
     if(!sameTechnicalPolicy(manifest,check))return missing('skipped','The run has a different technical criterion.');
     const before=manifest.technicalEvidence?.before,after=manifest.technicalEvidence?.after;
     if(!after)return missing('selected','The candidate technical check has not run.');
-    if(!covers(states,after.checks.map(row=>row.stateId)))return missing('needs-evidence','The recorded check did not replay every matched state.');
-    if(before?.status!=='fail')return missing('needs-evidence','The baseline did not reproduce the technical failure.');
-    return outcome(after.status,{kind:'technical',source:after.source.commit,states:after.checks.map(row=>row.key??row.file)});
+    const inScope=row=>!states.length||states.includes(row.stateId);
+    const checks=after.checks.filter(inScope);
+    if(!checks.length||!covers(states,checks.map(row=>row.stateId)))return missing('needs-evidence','The recorded check did not replay every matched state.');
+    if(!before?.checks.some(row=>inScope(row)&&row.status==='fail'))return missing('needs-evidence','The baseline did not reproduce the technical failure in the matched scope.');
+    if(after.status==='needs-evidence')return missing('needs-evidence','The candidate technical verification lacks comparable evidence.');
+    const result=checks.some(row=>row.status==='fail')?'fail':'pass';
+    return outcome(result,{kind:'technical',source:after.source.commit,states:checks.map(row=>row.key??row.file)});
   }
   if(check.type==='specialist'){
     const configured=manifest.onboarding?.config?.verificationChecks?.find(row=>row.id===check.id);
