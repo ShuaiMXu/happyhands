@@ -4,6 +4,8 @@ import {readFile, readdir, writeFile} from 'node:fs/promises';
 import {createServer} from 'node:http';
 import {join} from 'node:path';
 import {technicalProject} from './helpers/technical-project.mjs';
+import {createRun,loadRun} from '../packages/harness-core/store.js';
+import {projectMemoryRegistry} from '../packages/harness-core/project-memory.js';
 
 async function serve(t, checkout, port=0) {
   const server = createServer(async (request, response) => {
@@ -61,12 +63,27 @@ for (const scenario of cases) {
     await writeFile(planPath, JSON.stringify({
       schemaVersion:'0.1', adapter:'web',
       configurations:[{id:'phone', viewport:{width:390,height:844}}],
-      states:[{id:'default',start:{url},actions:[]}]
+      states:[{id:'default',start:{url},actions:[],sourceEntries:['index.html']}]
     }));
     await assert.rejects(p.start({url,capturePlan:planPath,evidencePolicy:scenario.policy}),/managed start command/);
     const run = await p.start({url,capturePlan:planPath,start:{command:'node',args:['serve.mjs',String(port)]},evidencePolicy:scenario.policy});
+    let safetyRule;
+    if(scenario.policy.kind==='button-name'){
+      const source=await createRun({spec:p.spec,url,outputRoot:join(p.root,'runs'),id:'prior-button'});
+      source.manifest.onboarding=(await loadRun(run)).manifest.onboarding;
+      source.manifest.judgment={decision:'accept',reason:'Synthetic approval for the browser regression fixture'};
+      await writeFile(join(source.directory,'run.json'),JSON.stringify(source.manifest));
+      const {store}=await projectMemoryRegistry(source);
+      safetyRule=await store.propose(source,{principle:'The named save button remains discoverable',context:'Default state of the save view',reason:'A missing accessible name hid this action from button-name navigation',
+        scope:{failureClass:'missing-button-name',trigger:{files:['index.html'],states:['default']},check:{type:'technical',policy:scenario.policy}}});
+      await store.decide({id:safetyRule.id,decision:'approve',reason:'Synthetic approval of exact browser scope'});
+    }
     const before = JSON.parse(await p.invoke('verify','--run',run,'--phase','before'));
     assert.equal(before.status, 'fail');
+    if(safetyRule){
+      const checks=JSON.parse(await p.invoke('memory','--run',run,'--action','checks'));
+      assert.deepEqual([checks[0].id,checks[0].status,checks[0].matchedStates],[safetyRule.id,'selected',['default']]);
+    }
     await p.fix({'index.html':html(scenario.after)});
     const unrelated = await serve(t,p.candidate,port);
     await assert.rejects(p.invoke('verify','--run',run,'--phase','after','--repo',p.candidate), /port is already in use/);
@@ -88,6 +105,11 @@ for (const scenario of cases) {
     const reportHtml=await readFile(report.path,'utf8');
     assert.match(reportHtml,/Changed files in the candidate<\/dt><dd>index\.html/);
     assert.match(reportHtml,/default--phone · 390×844 · \/: fail → pass/);
+    if(safetyRule){
+      const checks=JSON.parse(await p.invoke('memory','--run',run,'--action','checks'));
+      assert.deepEqual([checks[0].status,checks[0].result,checks[0].evidence.states],['executed','pass',['default--phone']]);
+      assert.match(reportHtml,/missing-button-name<\/dt><dd>executed · pass/);
+    }
   });
 }
 

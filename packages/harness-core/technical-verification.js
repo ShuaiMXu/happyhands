@@ -103,6 +103,8 @@ async function checkRuntime({run, repo, original, url, phase}) {
       const reached = state.reached && new URL(state.finalUrl).origin === localUrl(url).origin;
       return {
         key: captureKey(state.stateId, state.configurationId),
+        stateId: state.stateId,
+        ...(state.plannedState?.sourceEntries?.length ? {sourceEntries:state.plannedState.sourceEntries} : {}),
         viewport: {width: state.width, height: state.height},
         route: reached ? route(state.finalUrl) : null,
         ...(reached ? state.measurement : {status: 'needs-evidence', diagnostic: state.error || 'Preview left the local origin.'})

@@ -64,6 +64,7 @@ const commandOptions = new Map([
   ['case-list', 'run query'],
   ['case-admit', 'run id kind reason tags'],
   ['memory-exception', 'run principle hash decision reason'],
+  ['memory', 'run action input'],
   ['status', 'run'],
   ['next', 'run authorized-finding'],
   ['report', 'run out'],
@@ -175,6 +176,7 @@ pnpm harness case-collect --run DIRECTORY
 pnpm harness case-list --run DIRECTORY [--query TEXT]
 pnpm harness case-admit --run DIRECTORY --id HASH --kind improved|preserved|regressed|withdrawn --reason TEXT [--tags comma,separated]
 pnpm harness memory-exception --run DIRECTORY --principle ID --hash CONTENT_HASH --decision exclude|apply --reason TEXT
+pnpm harness memory --run DIRECTORY --action list|propose|decide|retire|checks [--input FILE]
 pnpm harness status --run DIRECTORY
 pnpm harness next --run DIRECTORY [--authorized-finding FINDING_ID]
 pnpm harness report --run DIRECTORY [--out FILE]
@@ -547,6 +549,20 @@ finding, and evaluate reports deterministic render checks without claiming an im
     console.log(JSON.stringify(await listExperienceCases(await loadRun(required(options,'run')),{query:options.query||''}),null,2));
   } else if (command === 'case-admit') {
     console.log(JSON.stringify(await saveExperienceCase(required(options,'run'),{id:required(options,'id'),kind:required(options,'kind'),reason:required(options,'reason'),tags:options.tags?options.tags.split(','):[]}),null,2));
+  } else if (command === 'memory') {
+    const run=await loadRun(required(options,'run')),action=required(options,'action');
+    const {projectMemoryRegistry}=await import('../packages/harness-core/project-memory.js');
+    const registry=await projectMemoryRegistry(run);
+    if(!registry)throw Error('Connect the run to the project repository before managing memory.');
+    if(action==='checks'){
+      const {memoryChecks}=await import('../packages/harness-core/memory-checks.js');
+      console.log(JSON.stringify(await memoryChecks(run),null,2));
+    }else if(action==='list')console.log(JSON.stringify(await registry.store.list(),null,2));
+    else if(['propose','decide','retire'].includes(action)){
+      const input=JSON.parse(await readFile(required(options,'input'),'utf8'));
+      if(action==='propose'&&!input.scope)throw Error('A new CLI memory proposal requires an explicit scope.');
+      console.log(JSON.stringify(await (action==='propose'?registry.store.propose(run,input):registry.store[action](input)),null,2));
+    }else throw Error('Unknown project memory action.');
   } else if (command === 'memory-exception') {
     await saveRunMemoryException(required(options,'run'),{id:required(options,'principle'),principleHash:required(options,'hash'),decision:required(options,'decision'),reason:required(options,'reason')});
     console.log('Run exception recorded. Generate a new plan before execution.');

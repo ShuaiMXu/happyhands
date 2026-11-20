@@ -16,10 +16,9 @@ import { autoExecuteDirection } from './direction-execution.js';
 import { directionService } from './directions.js';
 import { extractFoundationInventory, FOUNDATION_SKILL_IDS } from '../skill-core/foundation-inventory.js';
 import { fileURLToPath } from 'node:url';
-import { projectMemory } from './memory.js';
 import {withdrawJudgment} from '../harness-core/store.js';
 import {saveRunMemoryException} from '../harness-core/store.js';
-import {readRunMemoryExceptions} from '../harness-core/project-memory.js';
+import {projectMemoryRegistry,readRunMemoryExceptions} from '../harness-core/project-memory.js';
 import { readFile, writeFile, mkdir, readdir, realpath } from 'node:fs/promises';
 import { join, resolve, relative, isAbsolute, basename } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
@@ -481,7 +480,7 @@ export function createWorkbench(root, dependencies = {}) {
   }
   async function memory(input, mutation=false) {
     const run=await localRun(input.runId),config=await configFor(run);
-    const store=projectMemory(root,await realpath(config.repo));
+    const {store}=await projectMemoryRegistry(run,config.repo);
     if(!mutation){const records=await readRunMemoryExceptions(run),latest=new Map((records?.events||[]).map(event=>[event.principleId,event]));return (await store.list()).map(entry=>({...entry,runException:latest.get(entry.id)||null}));}
     if(input.action==='exception'){const result=await saveRunMemoryException(run.directory,input);await publish(run.directory);return result;}
     if(input.action==='propose')return store.propose(run,input);

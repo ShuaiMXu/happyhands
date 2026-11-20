@@ -16,6 +16,7 @@ import {criterionSourceChanges} from './criterion-source-evidence.js';
 import {experienceFor} from './experience-orchestration.js';
 import {readVisualReviewBinding} from './visual-review-binding.js';
 import {visualReviewFor} from './workflow.js';
+import {memoryChecks} from './memory-checks.js';
 
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const MIME = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif'};
@@ -186,6 +187,7 @@ export async function buildRunReport({directory, outputPath} = {}) {
   const title = project.name || manifest.id;
   const images = await imageRows(run);
   const trace = technicalWorkflow(manifest, {}) ? technicalTrace(manifest) : await visualTrace(run);
+  const regressions = await memoryChecks(run);
   const execution = manifest.execution;
   const ledger = [
     ['Run', manifest.id],
@@ -235,6 +237,7 @@ export async function buildRunReport({directory, outputPath} = {}) {
 ${gateList(run)}
 
 ${trace}
+${regressions.length ? `<h2>Historical regression checks</h2><dl>${regressions.map(row=>`<dt>${escapeHtml(row.failureClass || row.id)}</dt><dd>${escapeHtml([row.status,row.result,row.reason].filter(Boolean).join(' · '))}${row.evidence?.path ? ` · ${escapeHtml(row.evidence.path)}` : ''}</dd>`).join('')}</dl>` : ''}
 ${manifest.technicalEvidence ? `<h2>Technical verification</h2><pre>${escapeHtml(JSON.stringify(manifest.technicalEvidence, null, 2))}</pre>` : ''}
 <h2>Findings</h2>
 ${findingsTable(diagnosis)}

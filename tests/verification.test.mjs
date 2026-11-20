@@ -172,6 +172,9 @@ test('complete repository fingerprint catches JSON, MJS and binary changes while
 test('missing normal specialist results expose managed retry without losing the old verdict',async t=>{
   const {workflowState}=await import('../packages/harness-core/workflow.js'),{reviewPrimaryAction}=await import('../packages/harness-core/primary-action.js');
   const {run,root,binding}=await fixture(t);await saveOnboarding(run.directory,{config:{verificationChecks:[check]}});
+  const first=(await loadRun(run.directory)).manifest;
+  first.diagnosis={findingCount:1};first.plan={};
+  assert.equal(workflowState(first).stage,'needs-specialist-verification');
   await saveVerificationEvidence(run.directory,{binding,records:[{...record(),status:'needs-evidence',result:{status:'needs-evidence'}}]});await review(run,root,model('needs-evidence'));
   const manifest=(await loadRun(run.directory)).manifest;
   // Earlier workflow stages are satisfied by a real diagnosis in production.
