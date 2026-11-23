@@ -31,8 +31,15 @@ export function runLocal(command, args, { cwd, input = '', signal, timeoutMs = 6
     const timer = setTimeout(() => { timedOut = true; kill(); }, timeoutMs);
     signal?.addEventListener('abort', kill, { once: true });
     const clean = () => { clearTimeout(timer); signal?.removeEventListener('abort', kill); };
-    const output = data => { tail = (tail + data).slice(-16000); onOutput(String(data)); };
-    child.stdout.on('data', data => { stdout=(stdout+data).slice(-16000);output(data); }); child.stderr.on('data', output);
+    const output = (data, stream) => {
+      tail = (tail + data).slice(-16000);
+      onOutput(String(data), stream);
+    };
+    child.stdout.on('data', data => {
+      stdout = (stdout + data).slice(-16000);
+      output(data, 'stdout');
+    });
+    child.stderr.on('data', data => output(data, 'stderr'));
     child.stdin.on('error', () => {});
     child.on('error', error => { clean(); reject(error); });
     child.on('close', code => { clean(); if (signal?.aborted) reject(new Error('Cancelled')); else if (timedOut) reject(new Error('Execution timed out')); else if (code !== 0) reject(new Error(`Process exited ${code}: ${tail.slice(-2000)}`)); else resolve(stdoutOnly ? stdout : tail); });

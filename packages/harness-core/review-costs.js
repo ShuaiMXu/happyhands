@@ -95,9 +95,55 @@ export const validUsage=value=>value&&['input_tokens','cached_input_tokens','out
 // Codex exec: one terminal turn.completed summary. Different terminal summaries
 // are ambiguous; do not sum potentially cumulative usage or treat truncation as zero.
 export function reviewUsageCollector(){
- let tail='',invalid=false;const summaries=new Map();
- const line=text=>{try{const event=JSON.parse(text);if(event.type==='turn.completed'){if(!validUsage(event.usage)){invalid=true;return;}const value=Object.fromEntries(['input_tokens','cached_input_tokens','output_tokens'].map(k=>[k,event.usage[k]]));summaries.set(JSON.stringify(value),value);}}catch{if(/"type"\s*:\s*"turn.completed"/.test(text))invalid=true;}};
- return {push(chunk){if(invalid)return;tail+=String(chunk);const lines=tail.split('\n');tail=lines.pop();for(const value of lines){if(value.length>256*1024){invalid=true;return;}line(value);}if(tail.length>256*1024){invalid=true;tail='';}},finish(){if(tail.trim())line(tail);return !invalid&&summaries.size===1?[...summaries.values()][0]:null;}};
+  const lineLimit = 256 * 1024;
+  const largeItemEvent = /^\s*\{\s*"type"\s*:\s*"item\.(?:started|updated|completed)"\s*,/;
+  const summaries = new Map();
+  let tail = '', invalid = false, discarding = false;
+
+  function readLine(text) {
+    try {
+      const event = JSON.parse(text);
+      if (event.type !== 'turn.completed') return;
+      if (!validUsage(event.usage)) {
+        invalid = true;
+        return;
+      }
+      const value = Object.fromEntries(['input_tokens', 'cached_input_tokens', 'output_tokens'].map(key => [key, event.usage[key]]));
+      summaries.set(JSON.stringify(value), value);
+    } catch {
+      if (/"type"\s*:\s*"turn.completed"/.test(text)) invalid = true;
+    }
+  }
+
+  return {
+    push(chunk) {
+      const parts = String(chunk).split('\n');
+      for (const [index, part] of parts.entries()) {
+        if (invalid) return;
+        if (!discarding) {
+          tail += part;
+          if (tail.length > lineLimit) {
+            // A tool can print a complete document in one item event.
+            // Discard its payload without discarding later terminal usage.
+            if (!largeItemEvent.test(tail.slice(0, 128))) {
+              invalid = true;
+              return;
+            }
+            tail = '';
+            discarding = true;
+          }
+        }
+        if (index === parts.length - 1) return;
+        if (!discarding) readLine(tail);
+        tail = '';
+        discarding = false;
+      }
+    },
+    finish() {
+      if (tail.trim()) readLine(tail);
+      return !invalid && summaries.size === 1 ? [...summaries.values()][0] : null;
+    }
+  };
 }
 export async function reviewCostReport(directory){
  const stored=await readReviewCosts(directory),record=stored||await initialCosts(await loadRun(directory));

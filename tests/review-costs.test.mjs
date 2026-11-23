@@ -14,6 +14,20 @@ test('usage parsing handles split JSON, identical duplicates, cache counts and a
  const oversized=reviewUsageCollector();oversized.push('x'.repeat(300000));oversized.push('\n'+line);assert.equal(oversized.finish(),null);
  assert.equal(reviewUsageCollector().finish(),null);
 });
+test('large item events do not hide usage or turn conflicting receipts into a measured call',()=>{
+  const item = JSON.stringify({type:'item.completed',item:{type:'command_execution',aggregated_output:'x'.repeat(400_000)}});
+  const receipt = JSON.stringify({type:'turn.completed',usage:measured});
+  const collector = reviewUsageCollector();
+  collector.push(item.slice(0, 200_000));
+  collector.push(item.slice(200_000));
+  collector.push('\n'+receipt);
+  assert.deepEqual(collector.finish(), measured);
+
+  const conflicting = reviewUsageCollector();
+  conflicting.push(receipt+'\n'+item+'\n');
+  conflicting.push(JSON.stringify({type:'turn.completed',usage:{...measured,output_tokens:11}}));
+  assert.equal(conflicting.finish(), null);
+});
 test('concurrent reservations cannot overspend a one-call policy; policy changes preserve all costs',async t=>{
  const {directory}=await fixture(t);await configureReviewCosts(directory,{maxCalls:1},'One measured call');
  const results=await Promise.allSettled([reserveReviewCall(directory,{key,stage:'regional'}),reserveReviewCall(directory,{key,stage:'regional'})]);assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
