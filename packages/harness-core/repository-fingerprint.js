@@ -5,6 +5,7 @@ import {lstat,realpath} from 'node:fs/promises';
 import {createReadStream} from 'node:fs';
 import {join,relative,isAbsolute} from 'node:path';
 const execute=promisify(execFile);
+const INVENTORY_FILE_LIMIT = 50000;
 // Include every tracked and non-ignored input, including binary assets, JSON and
 // verification scripts. Never mistake the bounded design-token scan for source identity.
 export async function repositoryFingerprint(repo,{includeFiles=false,maxBytes=1024*1024*1024}={}) {
@@ -14,7 +15,7 @@ export async function repositoryFingerprint(repo,{includeFiles=false,maxBytes=10
   if(await realpath((await git(['rev-parse','--show-toplevel'])).trim())!==root)throw Error('Complete repository input binding requires the Git root, not a subdirectory.');
   const commit=(await git(['rev-parse','HEAD'])).trim(),status=await git(['status','--porcelain']);
   const names=[...new Set((await git(['ls-files','-z','--cached','--others','--exclude-standard'])).split('\0').filter(Boolean))].sort();
-  if(includeFiles&&names.length>10000)throw Object.assign(Error('Repository input inventory exceeds 10000 files; no partial index is allowed.'),{code:'REPOSITORY_INDEX_LIMIT'});
+  if(includeFiles&&names.length>INVENTORY_FILE_LIMIT)throw Object.assign(Error(`Repository input inventory exceeds ${INVENTORY_FILE_LIMIT} files; no partial index is allowed.`),{code:'REPOSITORY_INDEX_LIMIT'});
   const digest=createHash('sha256'),files=[];let bytes=0;
   for(const name of names){
     const path=join(root,name),rel=relative(root,path);
@@ -35,7 +36,7 @@ export async function repositoryFingerprint(repo,{includeFiles=false,maxBytes=10
 }
 
 export function repositoryInputHash(files){
-  if(!Array.isArray(files)||files.length>10000)throw Error('Invalid repository input inventory.');
+  if(!Array.isArray(files)||files.length>INVENTORY_FILE_LIMIT)throw Error('Invalid repository input inventory.');
   const digest=createHash('sha256');let previous=null;
   for(const entry of files){
     if(typeof entry.path!=='string'||!entry.path||entry.path.includes('\\')||entry.path.includes('\0')||entry.path.startsWith('/')||/^[a-z]:/i.test(entry.path)||entry.path.split('/').some(part=>part==='..'||part==='.')||previous!==null&&entry.path<=previous)throw Error('Repository inputs must be unique ordered relative paths.');

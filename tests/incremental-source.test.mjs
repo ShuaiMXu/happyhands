@@ -12,6 +12,7 @@ import {captureWithDesignSystem} from '../packages/harness-core/design-system.js
 import {verifiedIncrementalDelta,incrementalReviewPlan} from '../packages/harness-core/incremental.js';
 import {repositoryFingerprint,repositoryInputHash} from '../packages/harness-core/repository-fingerprint.js';
 import {readRepositoryInputs} from '../packages/harness-core/repository-inputs.js';
+import {criterionSourceChanges} from '../packages/harness-core/criterion-source-evidence.js';
 import {exportRun} from '../packages/harness-core/export.js';
 import {createWorkbench} from '../packages/workbench/service.js';
 import {captureEntries,configurationsForState,captureKey} from '../packages/harness-core/capture-state.js';
@@ -165,6 +166,37 @@ test('optional inventory limits preserve complete strict verification metadata',
     if(options?.includeFiles){indexRequests++;throw Object.assign(Error('Fixture index limit'),{code:'REPOSITORY_INDEX_LIMIT'});}return metadata;
   },capture:async()=>({states:[]})});
   assert.equal(indexRequests,1);assert.equal(result.incrementalSource.status,'unavailable');assert.deepEqual(result.verificationSource,metadata);
+});
+
+test('large capture inventories retain a complete criterion source delta and keep the byte limit',async t=>{
+  const root=await mkdtemp(join(tmpdir(),'large-inputs-'));
+  t.after(()=>rm(root,{recursive:true,force:true}));
+  const makeRun=id=>createRun({spec:structuredClone(sample),url:'http://localhost',outputRoot:root,id});
+  const file='components/DesignHowLibrary.tsx',hash='a'.repeat(64);
+  const images=Array.from({length:33_455},(_,index)=>({path:`public/cover-${String(index).padStart(5,'0')}.webp`,mode:33188,hash}));
+  const capture=(run,phase,files)=>{
+    const fingerprint={version:1,commit:'a'.repeat(40),dirty:phase==='after',contentHash:repositoryInputHash(files),fileCount:files.length,files};
+    return captureWithDesignSystem({directory:run.directory,repo:root,phase,bindVerificationSource:true,extract:false,
+      verificationUrl:'http://localhost',fingerprintPreview:async()=> 'stable-preview',fingerprint:async()=>fingerprint,
+      inspect:async()=>({commit:fingerprint.commit,dirty:fingerprint.dirty}),capture:async()=>({states:[]})});
+  };
+  const run=await makeRun('complete-large-inventory');
+  const before=await capture(run,'before',[{path:file,mode:33188,hash},...images]);
+  await confirmFinding(run.directory,'F1','supported','Synthetic large input fixture.');
+  const after=await capture(run,'after',[{path:file,mode:33188,hash:'b'.repeat(64)},...images]);
+  const stored=await loadRun(run.directory);
+  assert.equal(before.incrementalSource.status,'bound');
+  assert.equal(after.incrementalSource.status,'bound');
+  assert.equal((await readRepositoryInputs(stored,'after')).files.length,33_456);
+  assert.deepEqual(await criterionSourceChanges(stored),[file]);
+
+  const oversized=await makeRun('oversized-large-inventory');
+  const tooLong=images.map(entry=>({...entry,path:`public/${'long-directory/'.repeat(15)}${entry.path}`}));
+  const limited=await capture(oversized,'before',tooLong);
+  assert.equal(limited.incrementalSource.status,'unavailable');
+  assert.equal(limited.verificationSource.fileCount,tooLong.length);
+  assert.equal(limited.verificationSource.contentHash,repositoryInputHash(tooLong));
+  assert.equal(await readRepositoryInputs(await loadRun(oversized.directory),'before'),null);
 });
 
 test('workbench onboarding records the current verified delta and binds it to the new capture',async t=>{
