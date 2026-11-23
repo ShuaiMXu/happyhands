@@ -276,7 +276,13 @@ OJO、Taste、Impeccable 完整上游包、适配层与引用仍保留；这里�
 
 最多8份专项 JSON，总计256 KiB，以及12张、每张不超过12 MiB的原始 PNG；超限会报错，不截断或挑选通过记录。索引、结果和原图复制到 Run 的 `verification/`，逐文件保存 hash，并绑定 before/after 原始截图字节；受管理采集在 before 和 after 生成截图时均固化原图 hash，防止事后替换。拒绝路径穿越和符号链接。脚本退出成功但报告缺失、JSON 损坏、PNG 缺失或超限，同样登记为新的缺证版本，使旧通过结论失效。完整仓库指纹不静默截断：单文件超过64 MiB、总输入超过1 GiB，或包含未显式支持的符号链接/子模块时拒绝绑定。独立区域审阅收到对应状态的专项记录，跨区域和小范围单会话收到完整记录；模型必须返回 `verificationRefs` 并引用每张专项原图。正常检查失败或缺证会阻止 pass；辅助记录仍会交给审阅者，但不会自动要求改坏正常布局。专项执行记录不替代视觉审阅或人工判断。
 
-已有符合上述绑定要求的 Run 可以对同一源码补跑配置（预览需已经可用）：
+已有符合上述绑定要求的 Run 可以从 `next` 获取补跑命令。已记录启动配置时，Harness 可以在同一源码上启动并收尾本次验证用的预览。此时端口须空闲。命令默认用执行记录中的隔离工作区，其次用连接的仓库。如取证时另行指定了源码目录，可以传入该目录。
+
+```bash
+pnpm harness verify --run .harness/runs/RUN_ID --managed true
+```
+
+已自行启动与原采集绑定的预览时，可以继续使用原命令：
 
 ```bash
 pnpm harness verify --run .harness/runs/RUN_ID --config project.json --repo /path/to/retained/worktree

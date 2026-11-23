@@ -161,4 +161,9 @@ test('next returns runnable CLI commands that exist, with the ledger values fill
   assert.deepEqual(nextCliCommand({stage: 'needs-plan'}, manifest, '/run').steps[0].argv.slice(3), ['--finding', 'F2']);
   assert.equal(nextCliCommand({stage: 'awaiting-judgment'}, manifest, '/run').actor, 'user');
   assert.equal(nextCliCommand({stage: 'needs-specialist-verification'}, manifest, '/run').steps[0].argv[0], 'verify');
+  const specialist = {stage:'needs-specialist-verification'};
+  assert.deepEqual(nextCliCommand(specialist,{onboarding:{config:{configPath:'/project.json'}}},'/run').steps[0].argv,
+    ['verify','--run','/run','--config','/project.json']);
+  assert.deepEqual(nextCliCommand(specialist,{onboarding:{config:{configPath:'/project.json',start:{command:'node'}}}},'/run').steps[0].argv,
+    ['verify','--run','/run','--managed','true']);
 });
