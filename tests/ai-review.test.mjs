@@ -443,7 +443,12 @@ test('headless visual preflight with an unknown API model keeps originals and re
 
 test('batch recovery reuses three bound regional results and spends only on the missing cross review',async t=>{
  const {run,cwd}=await wholeFixture(t);const resumeIdentity={model:'synthetic',version:'fixture@1'},costPolicy={maxCalls:5};let first=0,second=0;
- const usage=o=>o.onOutput(JSON.stringify({type:'turn.completed',usage:{input_tokens:100,cached_input_tokens:50,output_tokens:10}})+'\n');
+ const usage=o=>{
+  const receipt=JSON.stringify({type:'turn.completed',usage:{input_tokens:100,cached_input_tokens:50,output_tokens:10}});
+  o.onOutput(receipt.slice(0,20),'stdout');
+  o.onOutput('diagnostic from the review process\n','stderr');
+  o.onOutput(receipt.slice(20)+'\n','stdout');
+ };
  await assert.rejects(runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,resumeIdentity,costPolicy,generate:async(c,a,o)=>{first++;usage(o);if(o.cwd.endsWith('cross-region'))throw Error('synthetic metered transport failure');await wholeGenerator()(c,a,o);}}),/synthetic metered/);
  assert.equal(first,4);assert.equal((await loadRun(run.directory)).manifest.visualReviews.length,0);
  const review=await runAiVisualReview(run.directory,{cwd:cwd+'-retry',signal:new AbortController().signal,resumeIdentity,costPolicy,maxModelCalls:1,retryReason:'Retry the known metered cross-region failure',generate:async(c,a,o)=>{second++;usage(o);assert.ok(o.cwd.endsWith('cross-region'));await wholeGenerator()(c,a,o);}});

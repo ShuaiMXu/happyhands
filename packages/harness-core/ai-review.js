@@ -155,7 +155,10 @@ async function reviewBatch(directory, run, {cwd,signal,generate,language='zh',pu
     if(invocationBudget){assertReviewCallBudget(invocationBudget.limit,invocationBudget.started+1);invocationBudget.started++;}
     callId=await reserveReviewCall(directory,{key:cacheKey,stage:purpose+':'+reviewStage,policy:costPolicy,modelIdentity:{...modelIdentity,...(resumeIdentity?{runtimeHash:hash(JSON.stringify(resumeIdentity))}: {})},deduplicate:!!resumeIdentity,retryReason});
     const usage=reviewUsageCollector();let failure=null;
-    try{await invoke({cwd,input:effectivePrompt,signal,onOutput:chunk=>{usage.push(chunk);events=(events+chunk).slice(-4*1024*1024);}});
+    try{await invoke({cwd,input:effectivePrompt,signal,onOutput:(chunk,stream)=>{
+      if(stream!=='stderr')usage.push(chunk);
+      events=(events+chunk).slice(-4*1024*1024);
+    }});
       if(resumeIdentity){const resultPath=await realpath(join(cwd,'review-result.json'));if(relative(await realpath(cwd),resultPath)!=='review-result.json')throw Error('Invalid AI review output path');const raw=await readVerificationFile(cwd,'review-result.json',1024*1024);if(raw.length>1024*1024)throw Error('AI review output too large');batchRecord=await saveReviewBatch(directory,cacheKey,raw.toString('utf8'),callId);}
     }
     catch(error){failure=error;throw error;}

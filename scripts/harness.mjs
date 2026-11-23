@@ -107,6 +107,26 @@ function required(options, key) {
   return options[key];
 }
 
+async function cliWorkflowState(run) {
+  const state = workflowState(run.manifest);
+  if (state.stage !== 'needs-visual-qa' || !run.manifest.verificationEvidence) return state;
+  const {readVerificationEvidence} = await import('../packages/harness-core/verification.js');
+  try {
+    const {records} = await readVerificationEvidence(run.directory, run.manifest);
+    const failures = records.filter(record => record.stage !== 'auxiliary' && record.status === 'fail');
+    if (!failures.length) return state;
+    return {
+      ...state,
+      stage: 'specialist-verification-failed',
+      blocked: true,
+      reason: `Required specialist checks failed: ${failures.map(record => record.id).join(', ')}.`,
+      next: 'Inspect the failed checks before starting a visual review.'
+    };
+  } catch (error) {
+    return {...state, stage: 'verification-invalid', blocked: true, reason: error.message, next: 'Collect fresh specialist evidence.'};
+  }
+}
+
 // Optional workbench deep link. It is off by default and always goes to stderr:
 // it used to print on stdout ahead of the JSON, so `next` and `status` could not
 // be parsed by a caller that only reads stdout. Set HAPPYHANDS_WORKBENCH_LINK=1
@@ -398,16 +418,17 @@ finding, and evaluate reports deterministic render checks without claiming an im
   }
   const directory = resolve(required(options, 'run'));
   if (command === 'status') {
-    const manifest = (await loadRun(directory)).manifest;
-    await printWorkbenchLink(manifest.id, workflowState(manifest).stage);
-    process.stdout.write(JSON.stringify({ ...manifest, workflow: workflowState(manifest) }, null, 2) + '\n');
+    const run = await loadRun(directory);
+    const state = await cliWorkflowState(run);
+    await printWorkbenchLink(run.manifest.id, state.stage);
+    process.stdout.write(JSON.stringify({ ...run.manifest, workflow: state }, null, 2) + '\n');
   } else if (command === 'report') {
     const { buildRunReport } = await import('../packages/harness-core/report.js');
     process.stdout.write(JSON.stringify(await buildRunReport({ directory, outputPath: options.out }), null, 2) + '\n');
   } else if (command === 'next') {
     const run = await loadRun(directory);
     const {manifest} = run;
-    const state = workflowState(manifest);
+    const state = await cliWorkflowState(run);
     let authorizedFinding;
     if (options['authorized-finding'] !== undefined) {
       if (state.stage !== 'awaiting-confirmation') throw Error('--authorized-finding is only for the current unconfirmed diagnosis.');

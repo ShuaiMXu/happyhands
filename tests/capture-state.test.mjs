@@ -48,6 +48,15 @@ test('capture plan validates named configurations and replayable task states', (
   assert.throws(() => assertCapturePlan(unknown), /unknown configurations: tablet/i);
 });
 
+test('capture plan admits both horizontal tab navigation keys', () => {
+  const tabs = structuredClone(plan);
+  tabs.states[0].actions = [
+    { type: 'press-key', selector: '#preview-tab', key: 'ArrowRight' },
+    { type: 'press-key', selector: '#files-tab', key: 'ArrowLeft' },
+  ];
+  assert.deepEqual(assertCapturePlan(tabs).states[0].actions, tabs.states[0].actions);
+});
+
 test('HappyClaw full-page plan maps every reviewed region to source evidence', async () => {
   const example = assertCapturePlan(JSON.parse(await readFile(new URL('../examples/happyclaw-site/page-review-capture-plan.json', import.meta.url), 'utf8')));
   const project = JSON.parse(await readFile(new URL('../examples/happyclaw-site/project.json', import.meta.url), 'utf8'));
