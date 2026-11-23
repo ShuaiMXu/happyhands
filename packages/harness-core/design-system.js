@@ -29,7 +29,11 @@ export async function captureWithDesignSystem({directory,repo,phase,capture,sign
     if(repositoryBefore){
       const repositoryAfter=await fingerprint(repo,{includeFiles:Array.isArray(repositoryBefore.files)});
       if(!sameRepositoryFingerprint(repositoryBefore,repositoryAfter))throw Error('Repository inputs changed during capture.');
-      result.incrementalSource=Array.isArray(repositoryAfter.files)?await writeRepositoryInputs(directory,phase,repositoryAfter):{status:'unavailable',reason:'The complete input inventory exceeds storage limits; no file-level source delta is available.'};
+      const unavailable={status:'unavailable',reason:'The complete input inventory exceeds storage limits; no file-level source delta is available.'};
+      result.incrementalSource=Array.isArray(repositoryAfter.files)?await writeRepositoryInputs(directory,phase,repositoryAfter).catch(error=>{
+        if(error.code!=='REPOSITORY_INDEX_LIMIT')throw error;
+        return unavailable;
+      }):unavailable;
       if(bindVerificationSource){
         if(await fingerprintPreview(verificationUrl)!==previewBefore)throw Error('Verification preview changed during capture.');
         result.verificationPreviewFingerprint=previewBefore;
