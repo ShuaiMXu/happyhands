@@ -75,6 +75,9 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false,
       if(config?.start && config.configPath)return {actor:'agent',steps:[step(['verify',...run(directory),'--managed','true'])]};
       return {actor:'agent',steps:[step(['verify',...run(directory),'--config',config?.configPath||'PROJECT_CONFIG',...(checkout?['--repo',checkout]:[])],config?.configPath?{}:{PROJECT_CONFIG:'the project config used for start/onboard'})]};
     }
+    case 'specialist-verification-failed':
+    case 'verification-invalid':
+      return {actor: 'agent', steps: [], alternatives: [step(['report', ...run(directory)])]};
     case 'needs-visual-qa': {
       const review = ['model-review', ...run(directory)];
       const needsCeiling = manifest.experiencePolicy === CURRENT_EXPERIENCE_POLICY && reviewCallCeiling === undefined;

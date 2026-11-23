@@ -70,6 +70,34 @@ test('normal failures cannot pass and auxiliary observations stay supplemental',
   await saveVerificationEvidence(run.directory,{binding,records:[{...record(),status:'fail',result:{status:'fail'},stage:'auxiliary'}]});
   assert.equal((await review(run,root,model())).verdict,'pass');
 });
+test('the CLI withholds automatic model review when a required specialist check already failed',async t=>{
+  const {execFile}=await import('node:child_process'),{promisify}=await import('node:util');
+  const execute=promisify(execFile);
+  const {run,binding}=await fixture(t);
+  const failed={...record(),status:'fail',result:{status:'fail'}};
+  async function cli(command){
+    const {stdout}=await execute(process.execPath,['scripts/harness.mjs',command,'--run',run.directory]);
+    return JSON.parse(stdout);
+  }
+  await saveVerificationEvidence(run.directory,{binding,records:[failed]});
+  const next=await cli('next');
+  assert.equal(next.stage,'specialist-verification-failed');
+  assert.equal(next.blocked,true);
+  assert.match(next.reason,/menu/);
+  assert.deepEqual(next.cli.steps,[]);
+  assert.equal(next.cli.alternatives[0].argv[0],'report');
+  assert.equal((await cli('status')).workflow.stage,next.stage);
+
+  await saveVerificationEvidence(run.directory,{binding,records:[{...failed,stage:'auxiliary'}]});
+  assert.equal((await cli('next')).cli.steps[0].argv[0],'model-review');
+  const current=await saveVerificationEvidence(run.directory,{binding,records:[record()]});
+  assert.equal((await cli('next')).stage,'needs-visual-qa');
+  await writeFile(join(run.directory,current.path),'{}');
+  const invalid=await cli('next');
+  assert.equal(invalid.stage,'verification-invalid');
+  assert.equal(invalid.blocked,true);
+  assert.deepEqual(invalid.cli.steps,[]);
+});
 test('rejects missing acknowledgement, tampered records, symlinks, wrong capture, oversized evidence and excess images',async t=>{
   const {run,root,binding}=await fixture(t);await saveVerificationEvidence(run.directory,{binding,records:[record()]});
   await assert.rejects(saveVerificationEvidence(run.directory,{binding:{...binding,runId:'wrong'},records:[record()]}),/source changed/);
