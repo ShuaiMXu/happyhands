@@ -7,6 +7,10 @@ description: Execute evidence-backed UI and UX remediation using project layout 
 
 Use for a confirmed experience repair, including AI slop and inconsistent shared components. The task, adopted project rules and approved Foundation take precedence over generic examples. This Skill never authorizes unrelated redesign, publication or a human acceptance decision.
 
+## Component lineage
+
+When repairing or adding repeated UI, use the recorded shared component and its token or variant API across affected pages. Show the reused source and its consumers in the implementation evidence. Do not add page-local lookalikes or markup generated per Design.md entry. If reuse cannot express a required behavior, document the gap and the smallest shared extension. Original third-party previews retain their own source. Confirm affected default, selected, expanded, focus and disabled states as applicable before independent acceptance.
+
 ## Diagnose
 
 Read the complete assigned method documents. Start with the current page and its actual working viewport. First review the recurring AI slop and UI details: dropdown arrows/checkmarks, selected/focus states, gaps, boundaries, radii, redundant navigation and unnecessary copy. Then inspect shared components, task flow and current-page hierarchy/grid. Phone and other viewport checks come last as regression coverage; they never replace current-page remediation. For every contract rule and supplied state, return an explicit result with original screenshot references. Distinguish a visible violation from a preference, missing evidence and a genuine non-applicable rule. Never label an unchecked state not-applicable. Follow the existing finding-admission policy when proposing a repair.

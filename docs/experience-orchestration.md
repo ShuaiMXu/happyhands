@@ -91,3 +91,10 @@ Diagnosis identifies observable task harm or an adopted-rule violation. Implemen
 `experience --phase context` returns a `readingPlan`, complete embedded adapters, and each selected file's path and SHA-256. Diagnosis, execution and independent review format their prompts from the same planner. Vendor bundle inventories continue to describe the complete available snapshots. The runtime reading plan distinguishes the documents to read in full first from the complete references to open when applicable. Embedded adapters are already supplied. OJO's required entry, anti-patterns, review audit and execution-contract recipes remain required. Impeccable retains its selected playbooks. Explicit legacy routes remain available. `HAPPYHANDS_GUIDANCE_DEPTH=full` makes the full selected web-taste route mandatory.
 
 The plan uses the surface and intent and, when available, the frozen repair/improvement goal. A scoped review can move references to on-demand while keeping original images, evidence coverage and the independent review and human-decision requirements. Execution records its reading plan alongside its prompt. The plan and byte counts describe available or required inputs. Actual model usage is measured separately.
+
+
+## Component lineage
+
+For cross-page or resource-rendering changes, use the existing `components-states` audit, component reuse plan, and `design-system` independent assessment. Record the shared implementation path, consumers, token or variant, and applicable states. An extension needs a distinct user-facing purpose and an explanation of why existing APIs are insufficient. Design.md theme values may vary through approved component inputs, and original third-party previews retain their implementation.
+
+Technical checks can confirm registered families and enforce composition boundaries. Reviewers still inspect source relationships and real default, selected, expanded, focus or disabled states where applicable. Record `fail` for verified, unjustified forks. Use `needs-evidence` when sources, variant rationale or real state evidence are unavailable. Keep the existing independent review and human acceptance flow.

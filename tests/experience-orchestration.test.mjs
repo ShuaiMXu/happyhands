@@ -18,7 +18,7 @@ import {diagnoseBaseline} from '../packages/workbench/baseline-diagnosis.js';
 import {runAiVisualReview} from '../packages/workbench/ai-review.js';
 import {selectResource} from '../packages/harness-core/reference-resources.js';
 import {workflowState} from '../packages/harness-core/workflow.js';
-import {EXPERIENCE_POLICY,AUDIT_DIMENSIONS,REVIEW_DIMENSIONS,confirmedRepairImpact,experienceContext,saveExperienceRecord,experienceFor,assertExperienceAssessments} from '../packages/harness-core/experience-orchestration.js';
+import {EXPERIENCE_INSTRUCTIONS,EXPERIENCE_POLICY,AUDIT_DIMENSIONS,REVIEW_DIMENSIONS,confirmedRepairImpact,experienceContext,saveExperienceRecord,experienceFor,assertExperienceAssessments} from '../packages/harness-core/experience-orchestration.js';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
 const original='before/desktop.png';
 // Synthetic protocol fixtures. These images do not establish real visual quality.
@@ -224,4 +224,21 @@ test('a new goal-bound decision requires independently cited criteria and the re
  await writeFile(inventory,(await readFile(inventory,'utf8'))+'\n');
  await buildRunReport({directory:f.directory});
  assert.match(await readFile(report.path,'utf8'),/review or source evidence is missing or changed/);
+});
+
+
+test('the independent design-system assessment gates parallel component implementations',()=>{
+ assert.match(EXPERIENCE_INSTRUCTIONS,/same-purpose instances across affected surfaces/);
+ assert.match(EXPERIENCE_INSTRUCTIONS,/fail proven parallel implementations/);
+ const available=new Set(['after/desktop.png']);
+ const assessments=REVIEW_DIMENSIONS.map(dimension=>({
+  dimension,verdict:'pass',reason:'Verified with the scoped before and after evidence',screenshotRefs:['after/desktop.png']
+ }));
+ const designSystem=assessments.find(row=>row.dimension==='design-system');
+ designSystem.verdict='fail';
+ designSystem.reason='The Design.md preview introduced a different button implementation for the same purpose.';
+ assert.throws(()=>assertExperienceAssessments(assessments,'pass',available),/unresolved experience assessment/);
+ designSystem.verdict='needs-evidence';
+ designSystem.reason='The actual source relationship is unavailable.';
+ assert.throws(()=>assertExperienceAssessments(assessments,'pass',available),/unresolved experience assessment/);
 });

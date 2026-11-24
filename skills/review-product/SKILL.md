@@ -14,6 +14,10 @@ For a shareable viewport comparison, use `pnpm harness compare --run DIRECTORY -
 Stop before an external deployment unless it has been authorized. A live site may differ from the supplied repository; verify their relationship before claiming that a repository change is live.
 
 
+## Component lineage
+
+Under the existing design-system assessment, check one same-purpose instance against other affected consumers. Cite the implementation and token or variant plus matched screenshot and replay evidence for applicable states. A proven unapproved parallel implementation fails this assessment. Missing lineage or state evidence requires `needs-evidence`. Source-defined themes and original third-party previews are valid exceptions when the evidence identifies them.
+
 ## Complete design guidance packages
 
 HappyHands stages pinned, complete OJO, web-taste and Impeccable snapshots into new review/execution runs. Before model design work, read the listed original Skill files and each Harness adapter, then the relevant complete references. web-taste replaces the older default Taste route. Its public-website recipes must be adapted to the actual task; working interfaces do not inherit compulsory full-screen sections, hero motion or photo quotas. Explicit legacy-v2 and dials-v1 retain historical methods for compatibility. Impeccable Audit/Critique are review methods; The selected implementation playbook (such as Harden, Typeset or Layout) and final Polish guide only the confirmed implementation. Keep the current stack, approved Foundation, original content and all relevant states. These packages share the existing scope→plan→isolated change→capture→independent QA→human judgment flow. Do not add a parallel CLI/browser session or acceptance store. Presence in a snapshot proves availability, not model use, completed browser checks or human approval.

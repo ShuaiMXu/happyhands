@@ -36,7 +36,10 @@ test('confirmed planning creates fresh reuse evidence without retrying an old di
  const old=join(run.directory,'skills','component-reuse-planner.json');
  const original=await readFile(old,'utf8');
  await confirmFinding(run.directory,findingId,'supported','Verified scope');
- await savePlan(run.directory,findingId);
+ const planned=await savePlan(run.directory,findingId);
+ const brief=await readFile(join(run.directory,planned.plan.path),'utf8');
+ assert.match(brief,/Component lineage: trace each changed user-facing UI instance/);
+ assert.match(brief,/fail proven parallel implementations/);
  assert.equal(JSON.parse(await readFile(join(run.directory,'component-reuse-plan.json'))).findingId,findingId);
  assert.equal(await readFile(old,'utf8'),original);
  const output=join(root,'published');await exportRun({directory:run.directory,outputRoot:output});
