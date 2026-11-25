@@ -1,0 +1,40 @@
+docs/experience-orchestration.md
+  h_a2d68672f84791 28-29,55,66,85,91-97
+packages/harness-core/api-models.js
+  h_a2d68672f84791 23,29-30,44,58-70,129,175
+packages/harness-core/baseline-diagnosis.js
+  h_a2d68672f84791 1-2,4,6,16,40-93,99-112,129-140,146-153,155,168-169,183,211,213,218
+packages/harness-core/design-sources.js
+  h_a2d68672f84791 1-2,5,46-122
+packages/harness-core/experience-orchestration.js
+  h_a2d68672f84791 36-39,84,151
+packages/harness-core/finding-admission.js
+  h_a2d68672f84791 36-40
+packages/skill-core/guidance-reading-plan.js
+  h_a2d68672f84791 24-30,67,113-114,132-174
+skills/happyhands/references/workflow.md
+  h_a2d68672f84791 13
+skills/review-product/SKILL.md
+  h_a2d68672f84791 21,25,30
+tests/api-models.test.mjs
+  h_a2d68672f84791 56-73,96-97,128-132
+tests/baseline-model.test.mjs
+  h_a2d68672f84791 20-27,29-30,136-171,190-191
+tests/experience-orchestration.test.mjs
+  h_a2d68672f84791 26,34-41,87-89,97-99,144,147,151-159,163-167,205-229
+tests/guidance-reading-plan.test.mjs
+  h_a2d68672f84791 7,70,79-85,123-167
+tests/reference-resources.test.mjs
+  h_a2d68672f84791 9-10,81-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "d2feb08881bfaf567c34ea98064ba8ad90e21c53",
+  "prompts": {},
+  "humans": {
+    "h_a2d68672f84791": {
+      "author": "xushuai.133"
+    }
+  }
+}
