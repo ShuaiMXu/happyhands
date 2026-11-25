@@ -358,7 +358,10 @@ test('the operating agent can execute itself: prepare, edit the worktree, finish
   const prepared = await executeWithAgent({ directory: run.directory, repo: root, agent: 'self' });
   assert.equal(prepared.status, 'awaiting-operator-edit');
   assert.equal(prepared.worktree, join(run.directory, 'worktree'));
-  assert.match(await readFile(prepared.brief, 'utf8'), /Confirmed Harness brief/);
+  const brief = await readFile(prepared.brief, 'utf8');
+  assert.match(brief, /Confirmed Harness brief/);
+  assert.match(brief, /Finish the edits in the confirmed scope before final verification/);
+  assert.match(brief, /wait on the existing job/);
   assert.equal((await import('../packages/harness-core/store.js').then(m => m.loadRun(run.directory))).manifest.execution ?? null, null, 'nothing is recorded until finish');
   await writeFile(join(prepared.worktree, 'operator-change.txt'), 'edited by the operating agent\n');
   const execution = await finishSelfExecution({ directory: run.directory });
