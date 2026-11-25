@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {mkdtemp, readFile, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {AUDIT_READING_TOPICS, buildAuditStepReadingPlan, buildGuidanceReadingPlan, formatGuidanceReadingGroup} from '../packages/skill-core/guidance-reading-plan.js';
+import {AUDIT_READING_TOPICS, buildAuditStepReadingPlan, buildDiagnosisReadingPlan, buildGuidanceReadingPlan, formatGuidanceReadingGroup} from '../packages/skill-core/guidance-reading-plan.js';
 import {designGuidancePrompt, stageDesignGuidance} from '../packages/skill-core/design-guidance.js';
 
 test('public-page reading is complete for design improvements and bounded for a frozen narrow repair', async t => {
@@ -67,9 +67,7 @@ test('inspect and record require no method pack, including at full depth', () =>
   assert.throws(() => buildAuditStepReadingPlan(plan, 'method'), /missing from the staged reading plan/);
 });
 
-test('method assigns the primary method and at most one verified topic reference per request', async t => {
-  const directory = await mkdtemp(join(tmpdir(), 'hh-audit-method-'));
-  t.after(() => rm(directory, {recursive: true, force: true}));
+async function localMethods() {
   const paths = ['review-product/SKILL.md', ...[
     'interaction-reviewer', 'content-design-reviewer', 'visual-hierarchy-reviewer', 'component-state-auditor',
     'error-recovery-reviewer', 'accessibility-reviewer', 'responsive-reviewer'
@@ -78,7 +76,13 @@ test('method assigns the primary method and at most one verified topic reference
     const bytes = await readFile(new URL('../skills/' + path, import.meta.url));
     return {path, sha256: createHash('sha256').update(bytes).digest('hex')};
   }));
-  const local = {files, reference: 'local', readFirst: ['local/review-product/SKILL.md']};
+  return {files, reference: 'local', readFirst: ['local/review-product/SKILL.md']};
+}
+
+test('method assigns the primary method and at most one verified topic reference per request', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'hh-audit-method-'));
+  t.after(() => rm(directory, {recursive: true, force: true}));
+  const local = await localMethods();
   for (const surface of ['app-screen', 'public-page']) {
     const design = await stageDesignGuidance(directory, 'review', {taste: surface});
     const plans = ['focused', 'full'].map(depth => buildGuidanceReadingPlan({design, local, stage: 'audit', depth}));
@@ -114,5 +118,50 @@ test('method assigns the primary method and at most one verified topic reference
         }
       }
     }
+  }
+});
+
+test('diagnosis selects the two highest-priority distinct specialist documents for the assigned originals', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'hh-diagnosis-method-'));
+  t.after(() => rm(directory, {recursive: true, force: true}));
+  const local = await localMethods();
+  const issue = (topic, priority, ref) => ({topic, priority, screenshotRefs: [ref]});
+  const audit = {issues: [
+    issue('accessibility', 'high', 'before/other.png'),
+    issue('grid-layout', 'low', 'before/page.png'),
+    issue('components-states', 'medium', 'before/page.png'),
+    issue('task-flow', 'high', 'before/page.png'),
+    // On app screens motion and task flow share the same specialist.
+    issue('motion', 'high', 'before/page.png')
+  ]};
+  const originalRefs = ['before/page.png'];
+  for (const surface of ['app-screen', 'public-page']) {
+    const design = await stageDesignGuidance(directory, 'review', {taste: surface});
+    const plan = buildDiagnosisReadingPlan({design, local, audit, originalRefs, depth: 'focused'});
+    const required = plan.groups.flatMap(g => g.mustRead.map(file => file.path.slice(g.reference.length + 1)));
+    const deferred = plan.groups.flatMap(g => g.onDemand.map(file => file.path.slice(g.reference.length + 1)));
+    assert.equal(plan.stage, 'diagnosis');
+    assert.equal(required.length, 3);
+    assert.ok(required.includes('product-design/interaction-reviewer/SKILL.md'));
+    assert.ok(deferred.includes('product-design/accessibility-reviewer/SKILL.md'));
+    assert.ok(!plan.groups.some(g => g.id === 'happyhands-ui'));
+    if (surface === 'public-page') {
+      assert.deepEqual(plan.selectedTopics, ['task-flow', 'motion']);
+      assert.ok(required.includes('upstream/SKILL.md'));
+      assert.ok(required.includes('upstream/references/motion.md'));
+      assert.ok(deferred.includes('upstream/references/sections.md'));
+    } else {
+      assert.deepEqual(plan.selectedTopics, ['task-flow', 'components-states']);
+      assert.ok(required.includes('review-product/SKILL.md'));
+      assert.ok(required.includes('product-design/component-state-auditor/SKILL.md'));
+    }
+    const noTopics = buildDiagnosisReadingPlan({design, local, depth: 'focused', originalRefs,
+      audit: {issues: [{priority: 'high', screenshotRefs: originalRefs}], checks: [{dimension: 'motion', status: 'observed'}]}});
+    assert.deepEqual(noTopics.selectedTopics, []);
+    assert.equal(noTopics.groups.flatMap(g => g.mustRead).length, 1);
+    const owned = buildDiagnosisReadingPlan({design, local, depth: 'focused', ownedUi: true});
+    assert.equal(owned.groups.find(g => g.id === 'happyhands-ui').onDemand.length, 1);
+    const full = buildDiagnosisReadingPlan({design, local, audit, originalRefs, depth: 'full'});
+    assert.ok(full.groups.find(g => g.id === 'impeccable').mustRead.some(file => file.path.endsWith('/critique.md')));
   }
 });

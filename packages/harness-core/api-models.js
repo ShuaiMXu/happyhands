@@ -20,13 +20,14 @@ const MAX_READ_CHARS = 60000;
 
 const READ_FILE = {
   name: 'read_file',
-  description: 'Read a UTF-8 text file from the review session folder. Paths are relative to that folder or absolute inside it. Use offset/limit (1-based line numbers) to read only the section you need. Images are already attached to the conversation and cannot be read here.',
+  description: 'Read UTF-8 text inside the review session folder. Select lines with offset/limit. Long reads return JSON with content and next. Call read_file with the next arguments to continue the same selection until next is null. Images are attached separately.',
   schema: {
     type: 'object',
     properties: {
       path: {type: 'string', description: 'File path inside the session folder.'},
       offset: {type: 'integer', description: 'First line to return, 1-based. Optional.'},
-      limit: {type: 'integer', description: 'Number of lines to return. Optional.'}
+      limit: {type: 'integer', description: 'Number of lines to return. Optional.'},
+      cursor: {type: 'integer', minimum: 0, description: 'Continuation position within the selected lines (UTF-16 units). Reuse the next arguments from the previous page.'}
     },
     required: ['path'],
     additionalProperties: false
@@ -40,6 +41,7 @@ export async function readSessionFile(root, input) {
   for (const key of ['offset', 'limit']) {
     if (input[key] !== undefined && (!Number.isInteger(input[key]) || input[key] < 1)) return {error: `${key} must be a positive integer.`};
   }
+  if (input.cursor !== undefined && (!Number.isSafeInteger(input.cursor) || input.cursor < 0)) return {error: 'cursor must be a non-negative integer.'};
   if (IMAGE_TYPES[extname(input.path).toLowerCase()]) return {error: 'Images are already attached to this conversation; look at them there.'};
   let file;
   try {
@@ -53,11 +55,19 @@ export async function readSessionFile(root, input) {
   const lines = (await readFile(file, 'utf8')).split('\n');
   const start = (input.offset || 1) - 1;
   const slice = lines.slice(start, input.limit ? start + input.limit : undefined).join('\n');
-  const truncated = slice.length > MAX_READ_CHARS;
-  return {
-    content: (truncated ? slice.slice(0, MAX_READ_CHARS) : slice) +
-      (truncated ? `\n[truncated at ${MAX_READ_CHARS} characters; ${lines.length} lines in file. Read further with offset/limit.]` : '')
-  };
+  const cursor = input.cursor ?? 0;
+  // A UTF-8 decoded string cannot contain an unpaired low surrogate.
+  const splitsCharacter = index => /[\uDC00-\uDFFF]/.test(slice.charAt(index));
+  if (cursor > slice.length || splitsCharacter(cursor)) return {error: 'cursor must be a character boundary within the selected lines.'};
+  let end = Math.min(cursor + MAX_READ_CHARS, slice.length);
+  if (splitsCharacter(end)) end--;
+  const content = slice.slice(cursor, end);
+  if (end < slice.length) return {content, next: {...input, cursor: end}};
+  return input.cursor === undefined ? {content} : {content, next: null};
+}
+
+function readResultText(result) {
+  return 'next' in result ? JSON.stringify(result) : result.content;
 }
 
 async function imageParts(images) {
@@ -116,7 +126,7 @@ async function runAnthropic({config, prompt, images, cwd, signal}) {
     for (const call of calls) {
       // Streamed tool input is not validated by the API; readSessionFile checks every field.
       const result = call.name === READ_FILE.name ? await readSessionFile(cwd, call.input) : {error: `Unknown tool ${call.name}.`};
-      results.push({type: 'tool_result', tool_use_id: call.id, content: result.error ?? result.content, ...(result.error ? {is_error: true} : {})});
+      results.push({type: 'tool_result', tool_use_id: call.id, content: result.error ?? readResultText(result), ...(result.error ? {is_error: true} : {})});
     }
     messages.push({role: 'user', content: results});
   }
@@ -162,7 +172,7 @@ async function runOpenAiCompatible({config, prompt, images, cwd, signal}) {
       try { input = JSON.parse(call.function?.arguments || '{}'); } catch { /* reported below */ }
       const result = call.function?.name !== READ_FILE.name ? {error: `Unknown tool ${call.function?.name}.`}
         : input ? await readSessionFile(cwd, input) : {error: 'Tool arguments were not valid JSON.'};
-      messages.push({role: 'tool', tool_call_id: call.id, content: result.error ? `Error: ${result.error}` : result.content});
+      messages.push({role: 'tool', tool_call_id: call.id, content: result.error ? `Error: ${result.error}` : readResultText(result)});
     }
   }
   throw Error(`The model did not finish within ${MAX_TURNS} turns.`);

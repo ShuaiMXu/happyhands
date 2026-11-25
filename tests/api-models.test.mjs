@@ -53,6 +53,24 @@ test('API first: a configured HappyHands API is the default model adapter, an ex
   assert.equal(defaultModelAgent({HAPPYHANDS_API_MODEL: 'm', HAPPYHANDS_MODEL_AGENT: 'claude-code'}), 'claude-code');
 });
 
+test('read_file pages the selected lines without losing newlines or splitting Unicode characters', async t => {
+  const cwd = await session(t);
+  const selected = 'x'.repeat(59999) + '🌐' + '\r\n' + '模型'.repeat(31000) + '\r';
+  const path = 'context.txt';
+  await writeFile(join(cwd, path), 'ignored\n' + selected + '\nignore this too');
+  const query = {path, offset: 2, limit: 2};
+  const first = await readSessionFile(cwd, query);
+  assert.deepEqual(first.next, {...query, cursor: 59999});
+  const second = await readSessionFile(cwd, first.next);
+  assert.ok(second.content.startsWith('🌐\r\n'));
+  const last = await readSessionFile(cwd, second.next);
+  assert.equal(last.next, null);
+  assert.equal(first.content + second.content + last.content, selected);
+  for (const cursor of [-1, 0.5, '1', 60000, selected.length + 1]) {
+    assert.match((await readSessionFile(cwd, {...query, cursor})).error, /cursor/);
+  }
+});
+
 test('OpenAI-compatible provider: image parts, read_file tool loop and summed usage', async t => {
   const cwd = await session(t);
   const server = await mockServer(t, (count, _request, response) => {
@@ -75,6 +93,8 @@ test('OpenAI-compatible provider: image parts, read_file tool loop and summed us
 
 test('Anthropic provider uses the official SDK: image blocks, caching, fallbacks and the tool loop', async t => {
   const cwd = await session(t);
+  const firstPage = 'a'.repeat(60000);
+  await writeFile(join(cwd, 'review-context.json'), firstPage + 'tail');
   const usage = {input_tokens: 10, output_tokens: 1, cache_read_input_tokens: 90, cache_creation_input_tokens: 0};
   const start = {type: 'message_start', message: {id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-opus-5-5', content: [], stop_reason: null, stop_sequence: null, usage}};
   const server = await mockServer(t, (count, _request, response) => sse(response, count === 1 ? [
@@ -105,7 +125,11 @@ test('Anthropic provider uses the official SDK: image blocks, caching, fallbacks
   assert.equal(first.body.stream, true);
   assert.ok(first.body.messages[0].content.some(block => block.type === 'image' && block.source.type === 'base64' && block.source.media_type === 'image/png'));
   const toolResult = second.body.messages.at(-1).content[0];
-  assert.deepEqual(toolResult, {type: 'tool_result', tool_use_id: 'toolu_1', content: '{"task":"sign up"}'});
+  assert.equal(toolResult.tool_use_id, 'toolu_1');
+  const {content, next} = JSON.parse(toolResult.content);
+  assert.equal(content, firstPage);
+  assert.deepEqual(next, {path: 'review-context.json', limit: 1, cursor: 60000});
+  assert.deepEqual(await readSessionFile(cwd, next), {content: 'tail', next: null});
 });
 
 test('the canonical review request runs over an API end to end and writes the result file', async t => {

@@ -33,6 +33,10 @@ const auditSchema=object({
  issues:{type:'array',maxItems:100,items:object({id:text,kind:{enum:['defect','hypothesis','user-request']},problem:text,impact:text,rootCause:text,priority:{enum:['high','medium','low']},screenshotRefs:evidence})},
  checks:list(check),designBasis:object({sources:{type:'array',maxItems:128,items:source},missingSourcesReason:text}),methods:list(method)
 });
+auditSchema.properties.issues.items.properties.topic = {
+ type: 'string', enum: AUDIT_DIMENSIONS,
+ description: 'Optional primary audit topic for this issue. Choose the topic that helps investigate the recorded evidence.'
+};
 const decisionSchema=object({
  version:{enum:[EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY]},findingId:text,problemIds:strings,readingOrder:strings,grouping:text,primaryAction:text,
  content:object({show:strings,merge:{type:'array',maxItems:100,items:text},defer:{type:'array',maxItems:100,items:text},reason:text}),
@@ -77,7 +81,7 @@ async function binding(run){
 
 // Preserve full local method directories, including referenced rules. No handlers execute here.
 const localMethods=['review-product','experience-remediation',...['information-architecture-reviewer','interaction-reviewer','error-recovery-reviewer','visual-hierarchy-reviewer','content-design-reviewer','foundation-extractor','brand-foundation-extractor','component-inventory','fix-planner','component-reuse-planner','component-state-auditor','consistency-auditor','accessibility-reviewer','responsive-reviewer','visual-qa-evaluator','judgment-distiller','regression-case-author'].map(id=>'product-design/'+id)];
-async function stageLocalMethods(directory){
+export async function stageLocalMethods(directory){
  const root=fileURLToPath(new URL('../../skills/',import.meta.url)),documents=[];
  for(const method of localMethods)for(const path of await filesUnder(join(root,method))){const content=await readFile(join(root,method,path));documents.push({path:method+'/'+path,content,sha256:hash(content)});}
  const sharedWorkflow=await readFile(join(root,'happyhands/references/workflow.md'));
@@ -144,7 +148,7 @@ export async function experienceContext(directory, surface, {step, topic} = {}) 
     const scopedAuditSchema = structuredClone(auditSchema);
     scopedAuditSchema.properties.version = {const: policy};
     return {step: auditStep, surface, policy, readingPlan, auditSchema: scopedAuditSchema,
-     instructions: 'Write the audit using the observations, selected design sources and method you actually applied. Mark missing evidence explicitly. Submit with experience --phase audit --input FILE.'};
+     instructions: 'Write the audit using the observations, selected design sources and method you actually applied. For each issue with a clear primary topic, set issues[].topic to help route baseline diagnosis. Leave it out when the topic is uncertain. Mark missing evidence explicitly. Submit with experience --phase audit --input FILE.'};
    }
    const {originals, sources} = await binding(run);
    const designSources = sources.map(({id, path, sha256}) => ({

@@ -18,16 +18,16 @@ Stop before an external deployment unless it has been authorized. A live site ma
 
 Start from the user’s task, the project’s adopted design rules and the evidence for the current step. Follow the stage’s reading plan. Use the adapter listed or supplied for the current method. Reuse it across topics and open other references when they inform a specific decision.
 
-For public websites, use web-taste. Use Impeccable Audit/Critique during review and the selected implementation playbook during the confirmed repair. Keep the current stack, approved Foundation, original content and relevant states. Record what informed the decision in the existing review workflow.
+For baseline diagnosis on a working interface, use review-product and the specialist methods assigned to the observed issues. Inspect the original states and open another method when new evidence warrants it. Record the source of each finding. Later decision, implementation and independent review follow their own reading plans.
 
 ## HappyHands UI profile
 
-For HappyHands-owned interfaces or explicitly adopting projects, read the complete `happyhands-ui/SKILL.md` in the staged design-guidance bundle. It contains the current user-approved copy, color, hierarchy and interaction rules. The bundle hashes and preserves this profile alongside the complete vendor skills; do not infer adoption by an external target project.
+For HappyHands-owned interfaces or explicitly adopting projects, consult the staged `happyhands-ui/SKILL.md` when checking a finding against a house rule. It preserves the approved copy, color, hierarchy and interaction rules. Follow the reading plan for later stages. External projects need evidence of adoption.
 
 
 ## Required website and landing-page method
 
-For official/company websites and landing pages, web-taste is the required primary design and implementation method. Classify these tasks as public-page before formal diagnosis; follow the Run reading plan. During diagnosis, implementation and independent review, follow the stage reading plan for the complete references required on broad public-page work. For a confirmed narrow repair, read complete applicable references from the on-demand list. Use relevant asset and motion references when the task calls for them. Use the selected Impeccable playbook for its assigned stage. Preserve user-approved project rules and evidence boundaries. Do not silently route website/landing-page work through a legacy Taste profile.
+For official websites and landing pages, select `public-page` and use web-taste as the primary method. During baseline diagnosis, consult the topics raised by issues in the original captures. For a public-page design or implementation decision, read the references and Impeccable playbooks assigned by that stage. Preserve the target project's adopted rules and their scope.
 
 
 ## Required task and design handoff

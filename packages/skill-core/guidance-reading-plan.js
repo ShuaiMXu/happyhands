@@ -21,6 +21,13 @@ const websiteAuditReferences = {
 };
 export const AUDIT_READING_TOPICS = Object.freeze(Object.keys(auditMethods));
 
+function auditMethod(surface, topic) {
+  const website = surface === 'public-page';
+  if (!topic) return website ? ['web-taste', 'upstream/SKILL.md'] : ['local-experience', 'review-product/SKILL.md'];
+  if (website && websiteAuditReferences[topic]) return ['web-taste', websiteAuditReferences[topic]];
+  return ['local-experience', 'product-design/' + auditMethods[topic] + '/SKILL.md'];
+}
+
 function readingGroup({id, reference, inventory, candidates, required, adapter, bundleHash}) {
   const byPath = new Map(inventory.map(file => [file.path, file]));
   const sources = paths => [...new Set(paths)].map(path => {
@@ -57,7 +64,7 @@ export function buildGuidanceReadingPlan({
     // is deferred on working screens and narrowly scoped, confirmed repairs.
     const requireRoute = full || id !== 'web-taste' || (profile.taste === 'public-page' && !narrowRepair);
     const required = requireRoute ? candidates : candidates.filter(path => path.endsWith('/SKILL.md'));
-    const auditReferences = stage === 'audit' && profile.taste === 'public-page' && id === 'web-taste'
+    const auditReferences = ['audit', 'diagnosis'].includes(stage) && profile.taste === 'public-page' && id === 'web-taste'
       ? Object.values(websiteAuditReferences) : [];
     groups.push(readingGroup({id, reference: design.metadata.reference + '/' + id,
       inventory: pack.documents, candidates: [...candidates, ...auditReferences], required, adapter: pack.adapter, bundleHash}));
@@ -103,13 +110,8 @@ export function buildAuditStepReadingPlan(plan, step = 'inspect', topic) {
     step, topic: topic ?? null, groups: [], excluded: []};
   if (step !== 'method') return scoped;
 
-  const website = plan.surface === 'public-page';
-  const primary = website ? ['web-taste', 'upstream/SKILL.md'] : ['local-experience', 'review-product/SKILL.md'];
-  const selected = [primary];
-  if (topic) {
-    const webReference = website && websiteAuditReferences[topic];
-    selected.push(webReference ? ['web-taste', webReference] : ['local-experience', 'product-design/' + auditMethods[topic] + '/SKILL.md']);
-  }
+  const selected = [auditMethod(plan.surface)];
+  if (topic) selected.push(auditMethod(plan.surface, topic));
 
   for (const [id, path] of selected) {
     const original = plan.groups.find(group => group.id === id);
@@ -125,6 +127,49 @@ export function buildAuditStepReadingPlan(plan, step = 'inspect', topic) {
     group.mustRead.push(file);
   }
   return scoped;
+}
+
+export function buildDiagnosisReadingPlan({design, local, audit, originalRefs, ownedUi = false, depth} = {}) {
+  const plan = buildGuidanceReadingPlan({design, stage: 'diagnosis', goal: audit?.task?.goal, depth});
+  if (['dials-v1', 'legacy-v2'].includes(plan.surface)) return plan;
+
+  // Nine dimension checks are required even for a healthy page. Only an issue
+  // linked to an assigned original can nominate a specialist for this batch.
+  const originals = originalRefs == null ? null : new Set(originalRefs);
+  const priority = {high: 0, medium: 1, low: 2};
+  const issues = (audit?.issues || []).filter(issue => AUDIT_READING_TOPICS.includes(issue.topic)
+    && (!originals || issue.screenshotRefs.some(ref => originals.has(ref))));
+  const initial = [auditMethod(plan.surface)];
+  const selectedTopics = [];
+  for (const issue of issues.sort((a, b) => priority[a.priority] - priority[b.priority])) {
+    const method = auditMethod(plan.surface, issue.topic);
+    if (initial.some(([id, path]) => id === method[0] && path === method[1])) continue;
+    initial.push(method);
+    selectedTopics.push(issue.topic);
+    if (selectedTopics.length === 2) break;
+  }
+
+  // Keep all baseline specialists discoverable for issues missed in the
+  // pre-audit, including older audits that do not associate issues with topics.
+  const localCandidates = ['review-product/SKILL.md', ...AUDIT_READING_TOPICS.map(topic => auditMethod('app-screen', topic)[1])];
+  const localGroup = readingGroup({id: 'local-experience', reference: local.reference, inventory: local.files,
+    candidates: localCandidates, required: [], bundleHash: local.sha256});
+  const groups = [];
+  for (const group of [...plan.groups, localGroup]) {
+    if (group.id === 'happyhands-ui' && !ownedUi && plan.depth !== 'full') continue;
+    const all = [...group.mustRead, ...group.onDemand];
+    const files = new Map(all.map(file => [file.path, file]));
+    const required = new Set(plan.depth === 'full' ? group.mustRead.map(file => file.path) : []);
+    for (const [id, path] of initial) {
+      if (group.id !== id) continue;
+      const stagedPath = group.reference + '/' + path;
+      if (!files.has(stagedPath)) throw Error('Diagnosis method missing from the staged reading plan: ' + stagedPath);
+      required.add(stagedPath);
+    }
+    groups.push({...group, readOnce: group.embedded, embedded: [],
+      mustRead: [...required].map(path => files.get(path)), onDemand: all.filter(file => !required.has(file.path))});
+  }
+  return {...plan, groups, selectedTopics};
 }
 
 export function formatGuidanceReadingGroup(group, directory, adapter) {

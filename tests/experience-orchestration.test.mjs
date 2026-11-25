@@ -23,7 +23,7 @@ import {EXPERIENCE_POLICY,AUDIT_DIMENSIONS,REVIEW_DIMENSIONS,confirmedRepairImpa
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
 const original='before/desktop.png';
 // Synthetic protocol fixtures. These images do not establish real visual quality.
-async function fixture(t,{sourceBound=false}={}){
+async function fixture(t,{sourceBound=false,extraOriginals=[]}={}){
  const root=await mkdtemp(join(tmpdir(),'hh-experience-'));t.after(()=>rm(root,{recursive:true,force:true}));
  const spec=structuredClone(sample);spec.project={...spec.project,name:'Renewal protocol fixture',goal:'Help domain owners identify an upcoming renewal and decide what to do',audience:'Domain owners',task:'Find upcoming renewal, understand cost and choose next action'};
  spec.evidence.push({id:'E-request',state:'page',observation:'User request: Keep the calendar',origin:'authored-sample'});
@@ -31,7 +31,14 @@ async function fixture(t,{sourceBound=false}={}){
  const capture=async phase=>{
   const path=`${phase}/desktop.png`;
   await mkdir(join(directory,phase));await writeFile(join(directory,path),png);
-  return {viewports:{desktop:{screenshot:path,finalUrl:'http://localhost/renewals',reached:true,width:1280,height:800}}};
+  const desktop={screenshot:path,finalUrl:'http://localhost/renewals',reached:true,width:1280,height:800};
+  const viewports={desktop};
+  if(phase==='before')for(const name of extraOriginals){
+   const screenshot='before/'+name+'.png';
+   await writeFile(join(directory,screenshot),png);
+   viewports[name]={...desktop,screenshot};
+  }
+  return {viewports};
  };
  const repo=join(root,'product');
  const boundCapture=phase=>captureWithDesignSystem({directory,repo,phase,extract:false,bindVerificationSource:true,verificationUrl:'http://localhost/renewals',fingerprintPreview:async()=> 'f'.repeat(64),capture:()=>capture(phase)});
@@ -77,6 +84,9 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
  const recordContext=await experienceContext(f.directory,undefined,{step:'record'});
  assert.deepEqual(recordContext.auditSchema.properties.version,{const:EXPERIENCE_POLICY});
  assert.deepEqual(recordContext.readingPlan.groups,[]);
+ const issueSchema=recordContext.auditSchema.properties.issues.items;
+ assert.deepEqual(issueSchema.properties.topic.enum,AUDIT_DIMENSIONS);
+ assert.ok(!issueSchema.required.includes('topic'));
  assert.ok(!recordContext.decisionSchema && !recordContext.embeddedAdapters);
  await assert.rejects(experienceContext(f.directory,undefined,{step:'wrong'}),/step/);
  await assert.rejects(experienceContext(f.directory,undefined,{step:'record',topic:'hierarchy-content'}),/topic/);
@@ -84,6 +94,9 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
  assert.equal((await experienceContext(f.directory,'app-screen')).surface,'app-screen');
  await assert.rejects(saveDiagnosis(f.directory,diagnoseRun({run})),/experience audit/);
  await assert.rejects(savePlan(f.directory,'F1'),/experience audit/);
+ const unknownTopic=structuredClone(f.audit);
+ unknownTopic.issues[0].topic='unrecognized-topic';
+ await assert.rejects(saveExperienceRecord(f.directory,'audit',unknownTopic),/issues\/0\/topic/);
  for(const mutate of [a=>a.designBasis.sources[0].sha256='0'.repeat(64),a=>a.designBasis.sources[0].authority='project-rule',a=>a.designBasis.sources[0].section='Nonexistent section',a=>a.methods[0].path='design-guidance/forged.md',a=>a.methods[0].quote='Invented quote',a=>a.checks.pop()]){
   const bad=structuredClone(f.audit);mutate(bad);await assert.rejects(saveExperienceRecord(f.directory,'audit',bad));
  }
@@ -128,19 +141,30 @@ test('archived experience audits verify retired method citations from their own 
 test('the actual model context separates operator form from task, and the bound decision reaches execution and independent review',async t=>{
  const f=await fixture(t);
  f.audit.task.goal={version:'design-goal@1',kind:'repair',requestQuote:'Help visitors',criteria:['Keep renewal term and price legible'],preserve:['Calendar'],allowedChanges:['Grouping in the single renewal summary']};
+ f.audit.issues[0].topic='hierarchy-content';
  f.decision.repairImpact='local';
  f.decision.components[0].consumers=['Renewal summary'];
- await saveExperienceRecord(f.directory,'audit',f.audit);
+ const auditRef=await saveExperienceRecord(f.directory,'audit',f.audit);
  let run=await loadRun(f.directory);
  const diagnosis=await diagnoseBaseline(f.directory,diagnoseRun({run}),{cwd:join(f.root,'diagnose'),generate:async(_command,_args,{cwd,input})=>{
   const context=JSON.parse(await readFile(join(cwd,'context.json')));
-  assert.equal(context.experience.audit.task.operatorProposals.length,1);
+  assert.deepEqual(context.experience.audit,{task:f.audit.task,issues:f.audit.issues});
+  const fullAudit=context.experience.fullAudit;
+  assert.equal(fullAudit.readPath,auditRef.path);
+  const bytes=await readFile(join(cwd,fullAudit.readPath));
+  assert.equal(fullAudit.bytes,bytes.length);
+  assert.equal(fullAudit.sha256,auditRef.sha256);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),auditRef.sha256);
+  assert.deepEqual(JSON.parse(bytes).data,f.audit);
+  assert.match(input,/experience\.fullAudit\.readPath/);
   assert.equal(context.readingPlan.stage,'diagnosis');
   assert.equal(context.readingPlan.repairImpact,'unknown');
   const web=context.readingPlan.groups.find(group=>group.id==='web-taste');
-  assert.ok(web.mustRead.some(file=>file.path.endsWith('/sections.md')));
-  assert.ok(input.includes(join(cwd,web.mustRead.find(file=>file.path.endsWith('/sections.md')).path)));
-  assert.match(input,/Missing implementation of an operator proposal is not a defect/);
+  assert.deepEqual(web.mustRead.map(file=>file.path.slice(web.reference.length+1)),['upstream/SKILL.md','upstream/references/copy.md']);
+  assert.ok(web.onDemand.some(file=>file.path.endsWith('/sections.md')));
+  assert.equal(context.experience.audit.issues[0].kind,'hypothesis');
+  assert.match(input,/operator proposal/i);
+  assert.doesNotMatch(input,/then inspect the candidate/);
   await writeFile(join(cwd,'result.json'),JSON.stringify({status:'complete',summary:'Protocol fixture, not a visual pass',screenshotRefs:[original],limitations:['Synthetic image'],findings:[]}));
  }});
  await saveDiagnosis(f.directory,diagnosis);await confirmFinding(f.directory,'F1','supported','Fixture scope; not human acceptance');
@@ -177,6 +201,31 @@ test('the actual model context separates operator form from task, and the bound 
  assert.equal((await loadRun(f.directory)).manifest.judgment,null);
  await writeFile(join(f.directory,original),Buffer.concat([png,Buffer.from('changed')]));
  await assert.rejects(experienceFor(await loadRun(f.directory),'decision'),/evidence or task changed/);
+});
+test('each baseline sees only its own issues and checks both copies of the complete audit',async t=>{
+ const extraOriginals=Array.from({length:24},(_,i)=>'screen-'+(i+1));
+ const f=await fixture(t,{extraOriginals}),last='before/screen-24.png';
+ f.audit.issues.push({...f.audit.issues[0],id:'LAST-ONLY',topic:'hierarchy-content',screenshotRefs:[last]},
+  {...f.audit.issues[0],id:'SHARED',screenshotRefs:[original,last]});
+ const ref=await saveExperienceRecord(f.directory,'audit',f.audit);
+ const diagnosis=diagnoseRun({run:await loadRun(f.directory)});
+ const cwd=join(f.root,'diagnose');
+ const batches=[];
+ await diagnoseBaseline(f.directory,diagnosis,{cwd,generate:async(_command,_args,{cwd:session})=>{
+  const context=JSON.parse(await readFile(join(session,'context.json')));
+  const refs=context.originals.map(item=>item.reference);
+  const projectedIssues=context.experience.audit.issues;
+  batches.push(projectedIssues.map(issue=>issue.id));
+  assert.deepEqual(projectedIssues.find(issue=>issue.id==='SHARED').screenshotRefs,[refs.includes(last)?last:original]);
+  assert.equal(JSON.parse(await readFile(join(session,ref.path))).data.issues.length,3);
+  await writeFile(join(session,'result.json'),JSON.stringify({status:'complete',summary:'Fixture',screenshotRefs:refs,limitations:['Synthetic originals'],findings:[]}));
+ }});
+ assert.deepEqual(batches,[['READING-DISTANCE','SHARED'],['LAST-ONLY','SHARED']]);
+ for(const target of ['session','run']){
+  await assert.rejects(diagnoseBaseline(f.directory,diagnosis,{cwd,generate:async(_command,_args,{cwd:session})=>{
+   await writeFile(join(target==='session'?session:f.directory,ref.path),'{}');
+  }}),/Frozen experience audit changed/);
+ }
 });
 test('reported hierarchy regression blocks a pass despite functional success; valid comparison tables are not forbidden',()=>{
  const refs=new Set([original]);const rows=REVIEW_DIMENSIONS.map(dimension=>({dimension,verdict:'pass',reason:'Synthetic protocol only',screenshotRefs:[original]}));
