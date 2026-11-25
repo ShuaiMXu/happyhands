@@ -1,0 +1,20 @@
+AGENTS.md
+  h_a2d68672f84791 18-19
+packages/harness-core/runner.js
+  h_a2d68672f84791 179-180
+skills/happyhands/SKILL.md
+  h_a2d68672f84791 18
+tests/agents.test.mjs
+  h_a2d68672f84791 361-364
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "4a3df513c9c65cc81fe824b6a7db24385046462a",
+  "prompts": {},
+  "humans": {
+    "h_a2d68672f84791": {
+      "author": "xushuai.133"
+    }
+  }
+}
