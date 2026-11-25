@@ -1,0 +1,18 @@
+packages/harness-core/finding-admission.js
+  h_a2d68672f84791 19-23
+tests/baseline-model.test.mjs
+  h_a2d68672f84791 142
+tests/finding-admission.test.mjs
+  h_a2d68672f84791 3,9-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "6d746f8f06d50030885692e763bd762f008605f6",
+  "prompts": {},
+  "humans": {
+    "h_a2d68672f84791": {
+      "author": "xushuai.133"
+    }
+  }
+}
