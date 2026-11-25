@@ -64,4 +64,4 @@ foundation-extractor 0.4.0 对独立 .css 使用 PostCSS AST，记录祖先规�
 
 ### C 阶段进展：设计语言审查规则
 
-已将 Impeccable 与 OJO 的适用方法改写为本地共享 rubric，接入 visual-hierarchy-reviewer 0.2.0 与独立 AI QA；未引入上游执行器。OJO 完整 Skill 与九份 references、MIT 许可证已进一步收录到本地，通过适配层进入诊断、设计执行和独立 QA，详见 [OJO 接入](ojo-integration.md)。固定来源、未采纳规则与验证边界见 [设计语言审查](design-language-review.md)。这完成规则及证据链接入，不代表真实案例视觉效果已经验收。
+已将 Impeccable 与 OJO 的适用方法改写为本地共享 rubric，接入 visual-hierarchy-reviewer 0.2.0 与独立 AI QA；未引入上游执行器。当时使用的 OJO 方法及来源已归入[历史接入记录](ojo-integration.md)。固定来源、未采纳规则与验证边界见 [设计语言审查](design-language-review.md)。这完成规则及证据链接入，不代表真实案例视觉效果已经验收。

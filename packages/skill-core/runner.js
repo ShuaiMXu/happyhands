@@ -1,7 +1,6 @@
 import {stageDesignGuidance} from './design-guidance.js';
 import {engineLockfile} from './runtime-root.js';
 import {acceptedPatternHistory} from '../harness-core/pattern-history.js';
-import { stageOjoGuidance } from './ojo-guidance.js';
 import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
@@ -40,11 +39,9 @@ export async function executeSkill({ id, directory, repo, registryRoot, retry = 
   const value = missing.length
     ? { status: 'needs-evidence', evidence: [{ missing }], findings: [], proposedUpdates: [], limitations: [`Missing required inputs: ${missing.join(', ')}.`] }
     : await runHandler(skill.handler, { run, spec: run.spec, repo, skill, sourceSnapshot: snapshot, projectHistory, rubricSnapshot: rubricText ? JSON.parse(rubricText) : undefined });
-  const ojo = !missing.length && ['brand-foundation-extractor','visual-hierarchy-reviewer','visual-qa-evaluator'].includes(id)
-    ? await stageOjoGuidance(directory, 'review') : null;
-  const design = ojo ? await stageDesignGuidance(directory,'review',run.manifest.onboarding?.config?.designGuidance) : null;
+  const design = !missing.length && ['brand-foundation-extractor','visual-hierarchy-reviewer','visual-qa-evaluator'].includes(id)
+    ? await stageDesignGuidance(directory,'review',run.manifest.onboarding?.config?.designGuidance) : null;
   if(projectHistory&&missing.length){value.evidence.push({type:'accepted-pattern-history',...projectHistory,records:[]});value.limitations.push(...projectHistory.limitations);}
-  if (ojo) value.designGuidance = ojo.metadata;
   if (design) {value.designGuidancePacks=design.metadata;value.guidanceApplication='available-only: deterministic handler did not execute model critique or vendor scripts';}
   const hash = value => createHash('sha256').update(value).digest('hex');
   const source = new URL('./', import.meta.url);
@@ -55,7 +52,6 @@ export async function executeSkill({ id, directory, repo, registryRoot, retry = 
   const provenance = {
     schemaVersion: '0.1', skillVersion: skill.version,
     ...(projectHistory?{patternHistoryHash:hash(JSON.stringify(projectHistory))}:{}),
-    designGuidance: ojo?.metadata || null,
     designGuidancePacks: design?.metadata || null,
     contractHash: hash(JSON.stringify(contractFiles)),
     implementationHash: hash(implementation.join('\n')),

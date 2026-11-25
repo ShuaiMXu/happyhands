@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,rm,stat} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFile} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {configureReviewCosts,reviewCostReport} from '../packages/harness-core/review-costs.js';
@@ -25,6 +26,7 @@ const original='before/desktop.png';
 async function fixture(t,{sourceBound=false}={}){
  const root=await mkdtemp(join(tmpdir(),'hh-experience-'));t.after(()=>rm(root,{recursive:true,force:true}));
  const spec=structuredClone(sample);spec.project={...spec.project,name:'Renewal protocol fixture',goal:'Help domain owners identify an upcoming renewal and decide what to do',audience:'Domain owners',task:'Find upcoming renewal, understand cost and choose next action'};
+ spec.evidence.push({id:'E-request',state:'page',observation:'User request: Keep the calendar',origin:'authored-sample'});
  const {directory}=await createRun({spec,url:'http://localhost',outputRoot:root,experiencePolicy:EXPERIENCE_POLICY});
  const capture=async phase=>{
   const path=`${phase}/desktop.png`;
@@ -42,12 +44,22 @@ async function fixture(t,{sourceBound=false}={}){
  const file=join(root,'reference.md');await writeFile(file,'# Comparable terms\nAlign term, price and action when comparison is the actual task.');
  await selectResource({directory,file});
  const context=await experienceContext(directory,'public-page'),ref=context.designSources[0];
- const route=context.readingPlan.groups.find(group=>group.id==='web-taste');
- assert.equal(context.readingPlan.stage,'audit');
- assert.ok(route.mustRead.some(file=>file.path.endsWith('/sections.md')));
- assert.equal(context.embeddedAdapters.filter(adapter=>adapter.path===route.embedded[0].path).length,1);
- assert.match(context.instructions,/Follow readingPlan/);
- const path=context.designGuidance.reference+'/web-taste/upstream/SKILL.md',quote=(await readFile(join(directory,path),'utf8')).split('\n').find(line=>line.trim().length>10);
+ assert.equal(context.step, 'inspect');
+ assert.equal(context.requestedChange, 'User request: Keep the calendar');
+ assert.deepEqual(context.readingPlan.groups, []);
+ assert.equal(ref.relativeTo, 'run');
+ assert.equal(ref.content, undefined);
+ assert.equal(context.auditSchema, undefined);
+ assert.equal(context.decisionSchema, undefined);
+ assert.doesNotMatch(JSON.stringify(context), /Comparable terms|embeddedAdapters|design-guidance|\bojo\b/i);
+ for (const dir of ['design-guidance', 'experience-methods']) {
+  await assert.rejects(stat(join(directory, dir)), {code: 'ENOENT'});
+ }
+ const scoped = await experienceContext(directory, 'public-page', {step: 'method', topic: 'hierarchy-content'});
+ const documents = scoped.readingPlan.groups.flatMap(group => group.mustRead);
+ assert.ok(documents.length > 0 && documents.length <= 2);
+ const path = documents.find(file => file.path.includes('/web-taste/')).path;
+ const quote = (await readFile(join(directory,path),'utf8')).split('\n').find(line=>line.trim().length>10);
  const methods=[{path,quote,application:'Use hierarchy to answer the immediate decision before secondary proof; preserve real pricing terms.'}];
  const audit={version:EXPERIENCE_POLICY,surface:'public-page',task:{originalRequest:'Help visitors find a renewal, understand its cost and decide what to do.',user:'Domain owner',scenario:'A renewal is due soon',outcome:'Identify the renewal and a justified next action',constraints:['Preserve calendar and truthful sample scope'],operatorProposals:['Five labelled fields are only a candidate, not a user requirement'],assumptions:[],scope:'First-screen decision and its next action',outOfScope:'Uncaptured account and payment screens'},journey:[{step:'Understand the next renewal',userQuestion:'Which domain needs a decision and at what cost?',action:'Review renewal',observation:'Synthetic protocol context; no real visual judgment',screenshotRefs:[original],unknowns:['Real payment is not tested']}],issues:[{id:'READING-DISTANCE',kind:'hypothesis',problem:'Repeated labels may separate the price from the term and action',impact:'A visitor may need more scanning',rootCause:'Operator prescribed fields before deciding hierarchy',priority:'high',screenshotRefs:[original]}],checks:AUDIT_DIMENSIONS.map(dimension=>({dimension,status:'needs-evidence',observation:'Synthetic protocol coverage, not a real audit',screenshotRefs:[],reason:'Inspect real page and runtime before making a claim'})),designBasis:{sources:[{source:ref.id,sha256:ref.sha256,authority:'reference',section:'# Comparable terms',problem:'Compare price for an equal term',adopt:'Keep comparable cost and term adjacent',preserve:'Original calendar and controls',avoid:'Unrelated visual style or card quota'}],missingSourcesReason:'No project design-system document was supplied; external reference is not approval.'},methods};
  const decision={version:EXPERIENCE_POLICY,findingId:'F1',problemIds:['READING-DISTANCE'],readingOrder:['Urgency and domain','Comparable cost and term','Next action'],grouping:'Group cost with term instead of five equally weighted labels',primaryAction:'Review renewal',content:{show:['Domain, due date and cost for its actual term'],merge:['Price and term in the same reading unit'],defer:['Secondary explanation until details'],reason:'Reduce scanning while preserving decision facts'},layout:'Reuse existing calendar alignment; do not add a new card grid',components:[{source:'Inspect target existing implementation before editing',consumers:['Renewal summary','Comparison detail'],states:['Default','Selected','Keyboard focus'],decision:'Reuse existing control APIs after actual inspection; discovery remains incomplete'}],alternatives:[{kind:'preserve',description:'Keep the existing summary',benefit:'No added reading burden',cost:'Urgency may remain hard to identify'},{kind:'lighter',description:'Reorder existing text and group price with term',benefit:'Answers the immediate decision without more labels',cost:'Moves secondary explanation to details'}],chosen:'A comparison table only inside the details where users compare multiple options',whyBetterForTask:'Rows align equal terms and costs; the first screen keeps one clear decision',tradeoffs:'Details take one action; the calendar remains available',referenceApplications:[{source:ref.id,application:'Use aligned comparable terms in details, preserve summary hierarchy',verification:'Inspect task reading order and equal-term costs in real matched originals'}],verification:[{criterion:'The upcoming domain and equal-term cost are clear before action',method:'Independent inspection and real task replay',expectedEvidence:'Matched originals and actual action records, not field counts'}],methods};
@@ -60,7 +72,15 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
  await writeFile(join(f.directory,'run.json'),JSON.stringify(run.manifest));
  const configuredContext=await experienceContext(f.directory);
  assert.equal(configuredContext.surface,'public-page');
- assert.ok(configuredContext.readingPlan.groups.find(group=>group.id==='web-taste').mustRead.some(file=>file.path.endsWith('/sections.md')));
+ assert.equal(configuredContext.step,'inspect');
+ assert.deepEqual(configuredContext.topics,AUDIT_DIMENSIONS);
+ const recordContext=await experienceContext(f.directory,undefined,{step:'record'});
+ assert.deepEqual(recordContext.auditSchema.properties.version,{const:EXPERIENCE_POLICY});
+ assert.deepEqual(recordContext.readingPlan.groups,[]);
+ assert.ok(!recordContext.decisionSchema && !recordContext.embeddedAdapters);
+ await assert.rejects(experienceContext(f.directory,undefined,{step:'wrong'}),/step/);
+ await assert.rejects(experienceContext(f.directory,undefined,{step:'record',topic:'hierarchy-content'}),/topic/);
+ await assert.rejects(experienceContext(f.directory,undefined,{step:'method',topic:'imaginary'}),/topic/);
  assert.equal((await experienceContext(f.directory,'app-screen')).surface,'app-screen');
  await assert.rejects(saveDiagnosis(f.directory,diagnoseRun({run})),/experience audit/);
  await assert.rejects(savePlan(f.directory,'F1'),/experience audit/);
@@ -70,7 +90,10 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
  await saveExperienceRecord(f.directory,'audit',f.audit);
  const decisionContext=await experienceContext(f.directory);
  assert.equal(decisionContext.surface,'public-page');
+ await assert.rejects(experienceContext(f.directory,undefined,{step:'record'}),/before the audit/);
  assert.equal(decisionContext.readingPlan.stage,'decision');
+ assert.doesNotMatch(JSON.stringify(decisionContext),/\bojo\b/i);
+ await assert.rejects(stat(join(f.directory,'ojo-guidance')),{code:'ENOENT'});
  assert.match(decisionContext.instructions,/Write the decision against decisionSchema/);
  assert.doesNotMatch(decisionContext.instructions,/write the audit against auditSchema/);
  assert.ok(decisionContext.readingPlan.groups.find(group=>group.id==='local-experience').mustRead.some(file=>file.path.endsWith('/fix-planner/SKILL.md')));
@@ -78,6 +101,29 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
  assert.equal((await experienceFor(await loadRun(f.directory))).audit.issues[0].kind,'hypothesis');
  await assert.rejects(selectResource({directory:f.directory,file:join(f.root,'reference.md')}),/frozen/);
  await assert.rejects(saveExperienceRecord(f.directory,'audit',f.audit),/immutable/);
+});
+test('archived experience audits verify retired method citations from their own snapshots',async t=>{
+ const f=await fixture(t);
+ const current=await saveExperienceRecord(f.directory,'audit',f.audit);
+ const run=await loadRun(f.directory);
+ const record=JSON.parse(await readFile(join(f.directory,current.path),'utf8'));
+ const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+ const text='Archived review method.';
+ const folder='ojo-guidance/v2/'+digest('legacy fixture bundle')+'/upstream';
+ const path=folder+'/SKILL.md';
+ await mkdir(join(f.directory,folder),{recursive:true});
+ await writeFile(join(f.directory,path),text);
+ record.data.methods.push({path,quote:text,application:'Check the reading order.'});
+ record.methodBindings.push({path,sha256:digest(text)});
+ const bytes=JSON.stringify(record,null,2)+'\n',sha256=digest(bytes);
+ const archived={...current,path:'experience/audit-'+sha256+'.json',sha256};
+ await writeFile(join(f.directory,archived.path),bytes);
+ await writeFile(join(f.directory,'run.json'),JSON.stringify({...run.manifest,experienceAudit:archived}));
+
+ const historic=await loadRun(f.directory);
+ assert.equal((await experienceFor(historic)).audit.methods.at(-1).path,path);
+ await writeFile(join(f.directory,path),text+' Edited.');
+ await assert.rejects(experienceFor(historic),/Applied method snapshot changed/);
 });
 test('the actual model context separates operator form from task, and the bound decision reaches execution and independent review',async t=>{
  const f=await fixture(t);

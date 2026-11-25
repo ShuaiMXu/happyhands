@@ -151,9 +151,13 @@ test('next returns runnable CLI commands that exist, with the ledger values fill
   const auditStage = {stage: 'needs-experience-audit'};
   assert.equal(nextCliCommand(auditStage, manifest, '/run').steps[0].argv.at(-1), 'SURFACE');
   const publicSite = {...manifest, onboarding: {...manifest.onboarding, config: {designGuidance: {taste: 'public-page'}}}};
-  assert.deepEqual(nextCliCommand(auditStage, publicSite, '/run').steps[0], {
-    argv: ['experience', '--run', '/run', '--phase', 'context', '--surface', 'public-page'], needs: {}
-  });
+  const nextAudit = nextCliCommand(auditStage, publicSite, '/run');
+  assert.deepEqual(nextAudit.steps.map(item => item.argv), [
+    ...['inspect', 'method', 'record'].map(name => ['experience', '--run', '/run', '--phase', 'context', '--step', name, '--surface', 'public-page']),
+    ['experience', '--run', '/run', '--phase', 'audit', '--input', 'AUDIT_JSON']
+  ]);
+  assert.match(nextAudit.before, /--topic TOPIC/);
+  for (const item of nextAudit.steps.slice(0, 3)) assert.deepEqual(item.needs, {});
   assert.deepEqual(nextCliCommand({stage: 'needs-design-decision'}, manifest, '/run').steps.map(step=>step.argv), [
     ['experience', '--run', '/run', '--phase', 'context'],
     ['experience', '--run', '/run', '--phase', 'decision', '--input', 'DECISION_JSON']

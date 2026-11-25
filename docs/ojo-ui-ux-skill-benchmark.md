@@ -2,7 +2,7 @@
 
 Source reviewed: [OJO `app-ui-ux-best-practices`](https://github.com/touchine-ojo/OJO-Design-Skills/tree/main/skills/app-ui-ux-best-practices), 2026-09-27.
 
-This note records architectural lessons for Product Designer. The full pinned OJO Skill and references are now vendored under `skills/vendor/ojo/upstream/` with their MIT license; see [runtime integration](ojo-integration.md). A checklist or a bundled method still does not validate our Skills.
+This note records the September benchmark. The pinned Skill, its references and license are documented in the [historical integration record](ojo-integration.md).
 
 ## Product boundary
 
