@@ -30,7 +30,7 @@ import {saveRepairScope} from '../packages/harness-core/store.js';
 import {CURRENT_EXPERIENCE_POLICY,experienceContext,saveExperienceRecord} from '../packages/harness-core/experience-orchestration.js';
 
 const commandOptions = new Map([
-  ['experience', 'run phase input surface'],
+  ['experience', 'run phase input surface step topic'],
   ['init', 'spec url mode out'],
   ['start', 'config out'],
   ['quickstart', 'repo url task name request out browser'],
@@ -171,7 +171,7 @@ pnpm harness foundation-approve --run DIRECTORY --input FILE
 pnpm harness capture --run DIRECTORY --phase before|after [--url URL] [--plan FILE] [--repo DIRECTORY] [--bind-evidence true|false] [--extract-design-system true|false] [--browser chrome|msedge]
 pnpm harness skills
 pnpm harness agents
-pnpm harness experience --run DIRECTORY --phase context [--surface public-page|app-screen]
+pnpm harness experience --run DIRECTORY --phase context [--surface public-page|app-screen] [--step inspect|method|record] [--topic TOPIC]
 pnpm harness experience --run DIRECTORY --phase audit|decision --input FILE
 pnpm harness model-diagnose --run DIRECTORY [--model ID] [--language zh|en]
 pnpm harness model-review --run DIRECTORY [--model ID] [--language zh|en] [--max-model-calls N] [--resume-review true] [--max-total-calls N] [--max-input-tokens N] [--max-output-tokens N] [--retry-reason TEXT] [--preflight-only true]
@@ -210,6 +210,8 @@ pnpm harness video review --run DIRECTORY --report FILE
 Every --option takes the next value (--run DIR); --option=value also works, for values that
 themselves start with "--" such as a judgment reason.
 The video subcommands require separate --option VALUE pairs.
+Before an experience audit, context starts with inspect. Use method for the primary method, add --topic to focus on one of the listed topics, and use record for the audit form.
+After the audit, context returns the design-decision materials.
 
 export copies an allow-list of run files into a statically served folder; it never copies the Git worktree or the agent event log.
 init, capture and plan do not edit the target repository. execute explicitly starts the selected agent in a new Git worktree; it does not push or deploy, and a run whose agent touched the host repository is failed.
@@ -236,8 +238,18 @@ finding, and evaluate reports deterministic render checks without claiming an im
   }
   if(command==='experience'){
     const directory=required(options,'run'),phase=required(options,'phase');
-    if(phase==='context'){if(options.input)throw Error('Context does not take --input.');console.log(JSON.stringify(await experienceContext(directory,options.surface),null,2));}
-    else{if(options.surface)throw Error('Surface belongs in the audit, not a command override.');console.log(JSON.stringify(await saveExperienceRecord(directory,phase,JSON.parse(await readFile(required(options,'input'),'utf8'))),null,2));}
+    if(phase==='context'){
+      if(Object.hasOwn(options,'input'))throw Error('Context does not take --input.');
+      const context=await experienceContext(directory,options.surface,{step:options.step,topic:options.topic});
+      console.log(JSON.stringify(context,null,2));
+    }else{
+      if(!['audit','decision'].includes(phase))throw Error('Choose context, audit or decision.');
+      for(const key of ['step','topic','surface']){
+        if(Object.hasOwn(options,key))throw Error(`--${key} is only available with --phase context.`);
+      }
+      const record=JSON.parse(await readFile(required(options,'input'),'utf8'));
+      console.log(JSON.stringify(await saveExperienceRecord(directory,phase,record),null,2));
+    }
     return;
   }
   if(command==='quickstart'){

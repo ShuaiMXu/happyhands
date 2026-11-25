@@ -13,14 +13,10 @@ Treat generic composition, decorative competition, inconsistent type rhythm and 
 
 The bounded handler prepares the versioned rubric, task, foundation context and screenshot references. Its heading/action counts are structural review targets only. It returns `needs-evidence` until screenshot-aware review occurs; it never assigns an AI score. Submit baseline visual decisions through the existing `visual-hierarchy-reviewer` attestation. Findings still require the existing scope confirmation before planning or editing. Independent after-change QA uses the same rubric.
 
-## Bundled OJO methodology
-
-Use the [Harness OJO adapter](../../vendor/ojo/ADAPTER.md), then its linked original Skill and relevant references. The runtime records a verified guidance snapshot in this result; design execution and independent QA receive the same pinned source with mode-specific reading routes. Preserve the existing evidence and approval boundaries.
-
 
 ## Complete Taste and Impeccable methodology
 
-Use the full [Taste adapter](../../vendor/taste/ADAPTER.md) and [Impeccable adapter](../../vendor/impeccable/ADAPTER.md) with their complete upstream references. The runtime stages both beside OJO with immutable provenance. Audit/Critique inform read-only review; Polish/Layout/Animate are implementation methods behind existing scope approval. Rule-handler output proves only guidance availability until screenshot-aware model review occurs. Do not replace the project's approved Foundation, apply every stylistic variant together, or infer a script pass or human acceptance from installation.
+Follow the run’s reading plan for [web-taste](../../vendor/web-taste/ADAPTER.md) and [Impeccable](../../vendor/impeccable/ADAPTER.md). Audit/Critique inform read-only review; Polish/Layout/Animate are implementation methods behind existing scope approval. Rule-handler output proves only guidance availability until screenshot-aware model review occurs. Do not replace the project's approved Foundation, apply every stylistic variant together, or infer a script pass or human acceptance from installation.
 
 ## Spacing and contextual tips
 

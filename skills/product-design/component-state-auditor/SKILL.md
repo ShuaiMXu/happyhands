@@ -31,6 +31,12 @@ The required sets are the judgement of this Skill version, not a universal rule.
 
 A state the source shows but the foundation does not document is its own result: the implementation moved and the documentation did not.
 
+## Component lineage
+
+When repeated UI is part of an issue, trace same-purpose instances to their implementation, token or documented variant, and affected consumers. Compare Design.md examples, the component catalog, and product pages where they share the component. Source-defined variants and isolated third-party examples can legitimately differ.
+
+Use the current originals and recorded actions to check the relevant rendered states. If the source relationship or a necessary state is unavailable, record an evidence gap. Report a defect only when the evidence shows a broken state or a departure from a component contract the project has adopted.
+
 ## Decisions
 
 - Check only the states the component's class needs. A component that matches no class has nothing required of it, and that is reported rather than filled in with a default set.

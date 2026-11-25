@@ -342,12 +342,12 @@ test('design language review carries brand context and rubric without inventing 
   assert.deepEqual(result.reviewBrief.designFoundation,run.spec.designFoundation || null);
   assert.equal(result.reviewBrief.foundationApproval,null);
   assert.equal(result.reviewBrief.rubric.id,'design-language-review');
-  assert.equal(result.designGuidance.mode,'review');
-  assert.deepEqual(result.provenance.designGuidance,result.designGuidance);
+  assert.equal(result.designGuidance,undefined);
+  assert.equal(result.provenance.designGuidance,undefined);
   assert.equal(result.designGuidancePacks.mode,'review');
   assert.deepEqual(result.provenance.designGuidancePacks,result.designGuidancePacks);
   assert.match(result.guidanceApplication,/available-only/);
-  assert.ok((await readFile(join(directory,result.designGuidance.reference,'upstream/SKILL.md'),'utf8')).includes('Style Register Derivation'));
+  await assert.rejects(readFile(join(directory,'ojo-guidance')), {code:'ENOENT'});
   assert.ok(result.reviewBrief.rubric.checks.every(check=>check.counterexample));
   assert.ok(result.provenance.contractHash);
 });

@@ -31,3 +31,32 @@ test('status and next print parseable JSON, and only send the workbench link whe
     assert.match(linked.stderr, /画布 → /, `${command}: the link belongs on stderr when requested`);
   }
 });
+
+test('experience CLI forwards the pre-audit step and selected topic', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'cli-experience-'));
+  t.after(() => rm(root, {recursive: true, force: true}));
+  const run = await createRun({spec, url: 'http://127.0.0.1:4321', outputRoot: root});
+  const base = [entry, 'experience', '--run', run.directory, '--phase', 'context', '--surface', 'public-page'];
+  const context = async (...args) => JSON.parse((await exec(process.execPath, [...base, ...args])).stdout);
+
+  const initial = await context();
+  assert.deepEqual(await context('--step', 'inspect'), initial);
+  assert.ok(initial.topics.includes('hierarchy-content'));
+  assert.equal(initial.auditSchema, undefined);
+  const method = await context('--step', 'method', '--topic', 'hierarchy-content');
+  assert.equal(method.step, 'method');
+  assert.equal(method.readingPlan.topic, 'hierarchy-content');
+  assert.ok((await context('--step', 'record')).auditSchema);
+  const topicError = error => error.code === 1 && /--topic/.test(error.stderr);
+  await assert.rejects(context('--step', 'method', '--topic', 'unlisted-topic'), topicError);
+  await assert.rejects(context('--step', 'inspect', '--topic', 'hierarchy-content'), topicError);
+});
+
+test('experience record submission rejects context-only flags before accessing the input file', async () => {
+  for (const [phase, flag, value] of [['audit', 'step', 'inspect'], ['decision', 'topic', 'motion'], ['decision', 'surface', 'public-page']]) {
+    await assert.rejects(
+      exec(process.execPath, [entry, 'experience', '--run', 'unused', '--phase', phase, '--' + flag, value]),
+      error => error.code === 1 && error.stderr.includes('--' + flag + ' is only available with --phase context')
+    );
+  }
+});

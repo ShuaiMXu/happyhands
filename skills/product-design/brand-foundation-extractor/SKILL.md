@@ -41,7 +41,3 @@ unclassified sections do not acquire visual meaning through this alias list.
 Brand meaning and positioning require human approval. Asset roles (logo, mark, favicon, icon, og-image, font) come from filename conventions and stay observed; voice evidence records the rendered state each sample was seen in, so a promoted voice rule can cite where the wording actually appeared.
 
 Return structured evidence, findings, proposed updates and limitations. Use `needs-evidence` when required inputs or professional review are missing. Never invent an Experience Score or promote a project observation into a universal rule.
-
-## Bundled OJO methodology
-
-Use the [Harness OJO adapter](../../vendor/ojo/ADAPTER.md), then its linked original Skill and relevant references. The runtime records a verified guidance snapshot in this result; design execution and independent QA receive the same pinned source with mode-specific reading routes. Preserve the existing evidence and approval boundaries.

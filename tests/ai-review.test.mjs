@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,readFile,rm,rename,realpath} from 'node:fs/promises';
+import {access,mkdtemp,mkdir,writeFile,readFile,rm,rename,realpath} from 'node:fs/promises';
 import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createRun,confirmFinding,saveCapture,saveEvaluation,loadRun,saveOnboarding,saveDiagnosis,saveRunMemoryException,savePlan} from '../packages/harness-core/store.js';
@@ -104,7 +104,7 @@ test('independent QA receives the shared rubric, foundation and reproducible inp
     assert.deepEqual(context.reviewOrder.stages,['normal-layout','normal-interaction','auxiliary']);
     assert.equal(context.reviewStage,'normal-layout');
     assert.match(options.input,/Normal-first visual review/);
-    assert.equal(context.ojoGuidance.mode,'review');
+    assert.equal(context.ojoGuidance,undefined);
     assert.equal(context.designGuidancePacks.mode,'review');
     assert.deepEqual(context.designGuidancePacks.packs.map(pack=>pack.id),['impeccable','web-taste']);
     const taste=context.designGuidancePacks.packs.find(pack=>pack.id==='web-taste');
@@ -112,9 +112,8 @@ test('independent QA receives the shared rubric, foundation and reproducible inp
     assert.equal(await readFile(join(cwd,context.designGuidancePacks.reference,'web-taste/upstream/SKILL.md'),'utf8'),originalTaste);
     assert.ok(options.input.includes(taste.revision));
     assert.match(options.input,/not auto-executed/);
-    const originalOjo=(await readFile(new URL('../skills/vendor/ojo/upstream/SKILL.md',import.meta.url),'utf8')).replaceAll('\r\n','\n');
-    assert.equal(await readFile(join(cwd,context.ojoGuidance.reference,'upstream/SKILL.md'),'utf8'),originalOjo);
-    assert.ok(options.input.includes(context.ojoGuidance.bundleHash));
+    assert.doesNotMatch(options.input,/\bOJO\b/i);
+    await assert.rejects(access(join(cwd,'ojo-guidance')),{code:'ENOENT'});
     assert.equal(context.confirmedChange.id,before.manifest.confirmation.findingId);
     const rubric=JSON.parse(await readFile(new URL('../skills/product-design/visual-hierarchy-reviewer/rubric.json',import.meta.url)));
     assert.deepEqual(context.designLanguageRubric,rubric);
@@ -124,10 +123,10 @@ test('independent QA receives the shared rubric, foundation and reproducible inp
   const {createHash}=await import('node:crypto');
   const hash=value=>createHash('sha256').update(value).digest('hex');
   const provenance=JSON.parse(await readFile(join(cwd,'review-provenance.json')));
-  assert.deepEqual(provenance.ojoGuidance,context.ojoGuidance);
+  assert.equal(provenance.ojoGuidance,undefined);
   assert.deepEqual(provenance.designGuidancePacks,context.designGuidancePacks);
   assert.ok(review.reviewer.version.includes(context.designGuidancePacks.bundleHash));
-  assert.ok(review.reviewer.version.includes(context.ojoGuidance.bundleHash));
+  assert.doesNotMatch(review.reviewer.version,/ojo=/i);
   assert.equal(provenance.contextHash,hash(JSON.stringify(context)));
   assert.equal(provenance.promptHash,hash(await readFile(join(cwd,'review-prompt.txt'))));
   assert.ok(review.reviewer.version.includes(provenance.rubricHash));
@@ -199,7 +198,7 @@ async function wholeFixture(t,{missingAfter=false,badDimensions=false,regionCoun
 function wholeGenerator({cross='pass',regional='pass',mutate}={}){return async(command,args,options)=>{
   const context=JSON.parse(await readFile(join(options.cwd,'review-context.json'),'utf8'));
   const crossing=context.reviewPurpose==='cross-region',verdict=crossing?cross:regional,refs=context.evidence.map(item=>item.reference);
-  if(crossing){assert.match(options.input,/independent CROSS-REGION/);assert.match(options.input,/not collages/);assert.equal(context.regionalReviews.length,3);assert.equal(context.plannedCaptures.length,34);assert.deepEqual(refs,['before/whole--desktop.png','after/whole--desktop.png']);assert.equal(context.ojoGuidance.mode,'review');}
+  if(crossing){assert.match(options.input,/independent CROSS-REGION/);assert.match(options.input,/not collages/);assert.equal(context.regionalReviews.length,3);assert.equal(context.plannedCaptures.length,34);assert.deepEqual(refs,['before/whole--desktop.png','after/whole--desktop.png']);assert.equal(context.ojoGuidance,undefined);}
   await writeFile(args[args.indexOf('-o')+1],JSON.stringify(responseFor(context,{...result,verdict,screenshotRefs:refs,findings:verdict==='fail'?[{id:'REGRESSION',title:'Cross-region regression fixture',observation:'Test-only mismatch',impact:4,confidence:'high',screenshotRefs:refs}]:[]})));
   if(crossing&&mutate)await mutate();
 };}
@@ -236,7 +235,7 @@ test('regional sessions retain the task but have explicit local responsibility',
  const {run,cwd}=await wholeFixture(t);let regions=0;
  await runAiVisualReview(run.directory,{cwd,signal:new AbortController().signal,generate:async(command,args,options)=>{
   const context=JSON.parse(await readFile(join(options.cwd,'review-context.json'),'utf8'));
-  if(context.reviewPurpose==='regional-batch'){regions++;assert.match(options.input,/assigned ONLY the regional screenshots/);assert.match(options.input,/main task proof/);assert.ok(context.confirmedChange);assert.ok(context.designLanguageRubric);assert.ok(context.ojoGuidance.bundleHash);assert.equal(context.reviewResponsibility.decisionField,'regionalVerdict');assert.match(options.input,/Return keys: regionalVerdict/);assert.match(options.input,/FINAL RESPONSE CONTRACT: Return regionalVerdict/);assert.deepEqual(context.reviewResponsibility.assignedOriginals,context.evidence.map(item=>item.reference));}
+  if(context.reviewPurpose==='regional-batch'){regions++;assert.match(options.input,/assigned ONLY the regional screenshots/);assert.match(options.input,/main task proof/);assert.ok(context.confirmedChange);assert.ok(context.designLanguageRubric);assert.ok(context.designGuidancePacks.bundleHash);assert.equal(context.reviewResponsibility.decisionField,'regionalVerdict');assert.match(options.input,/Return keys: regionalVerdict/);assert.match(options.input,/FINAL RESPONSE CONTRACT: Return regionalVerdict/);assert.deepEqual(context.reviewResponsibility.assignedOriginals,context.evidence.map(item=>item.reference));}
   await wholeGenerator()(command,args,options);
  }});assert.equal(regions,3);
 });

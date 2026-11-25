@@ -1,5 +1,5 @@
 import { COMPONENT_LINEAGE_CRITERION } from '../experience-core/component-lineage.js';
-import {buildGuidanceReadingPlan} from '../skill-core/guidance-reading-plan.js';
+import {AUDIT_READING_TOPICS, buildAuditStepReadingPlan, buildGuidanceReadingPlan} from '../skill-core/guidance-reading-plan.js';
 import {reviewGoalSchema} from './review-goal.js';
 import {auditReadingMethods, METHOD_POLICY} from '../skill-core/method-policy.js';
 import {EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY,supportedExperiencePolicy,REVIEW_DIMENSIONS,experienceRequired,configuredExperienceSurface} from './experience-contract.js';
@@ -15,7 +15,6 @@ import {captureOriginals} from './capture-state.js';
 import {readVerificationFile} from './verification.js';
 import {designSourceContext} from './design-sources.js';
 import {stageDesignGuidance} from '../skill-core/design-guidance.js';
-import {stageOjoGuidance} from '../skill-core/ojo-guidance.js';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const digest=value=>hash(JSON.stringify(value));
@@ -24,7 +23,7 @@ const list=items=>({type:'array',minItems:1,maxItems:100,items});
 const object=properties=>({type:'object',additionalProperties:false,required:Object.keys(properties),properties});
 const strings=list(text);
 const evidence=list(text);
-export const AUDIT_DIMENSIONS=['task-flow','hierarchy-content','grid-layout','components-states','ai-slop','feedback-recovery','accessibility','motion','responsive'];
+export const AUDIT_DIMENSIONS = AUDIT_READING_TOPICS;
 const check=object({dimension:{enum:AUDIT_DIMENSIONS},status:{enum:['observed','inferred','needs-evidence','not-applicable']},observation:text,screenshotRefs:{type:'array',maxItems:100,items:text},reason:text});
 const source=object({source:text,sha256:{type:'string',pattern:'^[a-f0-9]{64}$'},authority:{enum:['project-rule','observed','reference']},section:text,problem:text,adopt:text,preserve:text,avoid:text});
 const method=object({path:text,quote:text,application:text});
@@ -35,6 +34,10 @@ const auditSchema=object({
  issues:{type:'array',maxItems:100,items:object({id:text,kind:{enum:['defect','hypothesis','user-request']},problem:text,impact:text,rootCause:text,priority:{enum:['high','medium','low']},screenshotRefs:evidence})},
  checks:list(check),designBasis:object({sources:{type:'array',maxItems:128,items:source},missingSourcesReason:text}),methods:list(method)
 });
+auditSchema.properties.issues.items.properties.topic = {
+ type: 'string', enum: AUDIT_DIMENSIONS,
+ description: 'Optional primary audit topic for this issue. Choose the topic that helps investigate the recorded evidence.'
+};
 const decisionSchema=object({
  version:{enum:[EXPERIENCE_POLICY,CURRENT_EXPERIENCE_POLICY]},findingId:text,problemIds:strings,readingOrder:strings,grouping:text,primaryAction:text,
  content:object({show:strings,merge:{type:'array',maxItems:100,items:text},defer:{type:'array',maxItems:100,items:text},reason:text}),
@@ -78,8 +81,8 @@ async function binding(run){
 }
 
 // Preserve full local method directories, including referenced rules. No handlers execute here.
-const localMethods=['review-product','experience-remediation',...['information-architecture-reviewer','interaction-reviewer','error-recovery-reviewer','visual-hierarchy-reviewer','content-design-reviewer','foundation-extractor','brand-foundation-extractor','component-inventory','fix-planner','component-reuse-planner','component-state-auditor','consistency-auditor','accessibility-reviewer','visual-qa-evaluator','judgment-distiller','regression-case-author'].map(id=>'product-design/'+id)];
-async function stageLocalMethods(directory){
+const localMethods=['review-product','experience-remediation',...['information-architecture-reviewer','interaction-reviewer','error-recovery-reviewer','visual-hierarchy-reviewer','content-design-reviewer','foundation-extractor','brand-foundation-extractor','component-inventory','fix-planner','component-reuse-planner','component-state-auditor','consistency-auditor','accessibility-reviewer','responsive-reviewer','visual-qa-evaluator','judgment-distiller','regression-case-author'].map(id=>'product-design/'+id)];
+export async function stageLocalMethods(directory){
  const root=fileURLToPath(new URL('../../skills/',import.meta.url)),documents=[];
  for(const method of localMethods)for(const path of await filesUnder(join(root,method))){const content=await readFile(join(root,method,path));documents.push({path:method+'/'+path,content,sha256:hash(content)});}
  const sharedWorkflow=await readFile(join(root,'happyhands/references/workflow.md'));
@@ -101,9 +104,8 @@ async function stageLocalMethods(directory){
 async function verifyMethods(run,methods,surface){
  const bindings=[];
  const design=await stageDesignGuidance(run.directory,'review',{...run.manifest.onboarding?.config?.designGuidance,taste:surface,dials:undefined});
- const ojo=await stageOjoGuidance(run.directory,'review');
  const local=await stageLocalMethods(run.directory);
- const prefixes=[design.metadata.reference+'/',ojo.metadata.reference+'/',local.reference+'/'];
+ const prefixes=[design.metadata.reference+'/',local.reference+'/'];
  for(const row of methods){
   if(!prefixes.some(prefix=>row.path.startsWith(prefix)))throw Error('Method application must cite a staged complete method, not an authored summary.');
   const content=(await readVerificationFile(run.directory,row.path,2*1024*1024)).toString('utf8');
@@ -129,26 +131,55 @@ function assertReferences(audit,sources){
  if(used.size!==refs.size)throw Error('Explain adaptation or rejection of every selected design source.');
 }
 const runObserved=ref=>ref.origin==='observed'||ref.status==='observed';
-export async function experienceContext(directory,surface){
- const run=await loadRun(directory),bound=await binding(run);
- const audit=run.manifest.experienceAudit ? await readExperienceRecord(run,'audit') : null;
+export async function experienceContext(directory, surface, {step, topic} = {}) {
+ const run = await loadRun(directory);
+ const audit = run.manifest.experienceAudit ? await readExperienceRecord(run, 'audit') : null;
  surface ??= audit?.data.surface ?? configuredExperienceSurface(run.manifest) ?? 'app-screen';
- if(!['app-screen','public-page'].includes(surface))throw Error('Choose public-page or app-screen.');
- if(audit && surface!==audit.data.surface)throw Error('The experience surface is frozen by the audit. Choose a new Run to change it.');
- const design=await stageDesignGuidance(directory,'review',{...run.manifest.onboarding?.config?.designGuidance,taste:surface,dials:undefined});
- const ojo=await stageOjoGuidance(directory,'review'),local=await stageLocalMethods(directory);
- const policy=run.manifest.experiencePolicy||CURRENT_EXPERIENCE_POLICY;
- const scopedAuditSchema=structuredClone(auditSchema);scopedAuditSchema.properties.version={const:policy};
- const scopedDecisionSchema=structuredClone(decisionSchema);scopedDecisionSchema.properties.version={const:policy};
- const readingPlan=buildGuidanceReadingPlan({design,ojo,local,stage:audit?'decision':'audit',goal:audit?.data.task.goal});
- const adapters=[{id:ojo.metadata.id,text:ojo.adapter},...design.packs.map(pack=>({id:pack.metadata.id,text:pack.adapter}))];
- const embeddedAdapters=readingPlan.groups.filter(group=>group.embedded.length).map(group=>({
-  ...group.embedded[0], text:adapters.find(adapter=>adapter.id===group.id).text
+ if (!['app-screen', 'public-page'].includes(surface)) throw Error('Choose public-page or app-screen.');
+ if (audit && surface !== audit.data.surface) throw Error('The experience surface is frozen by the audit. Choose a new Run to change it.');
+ if (audit && (step !== undefined || topic !== undefined)) throw Error('Pre-audit steps are available only before the audit is saved.');
+ const policy = run.manifest.experiencePolicy || CURRENT_EXPERIENCE_POLICY;
+ const auditStep = step ?? 'inspect';
+ if (!audit) {
+  if (!['inspect', 'method', 'record'].includes(auditStep)) throw Error('Choose an audit step: inspect, method or record.');
+  if (topic !== undefined && (auditStep !== 'method' || !AUDIT_DIMENSIONS.includes(topic))) throw Error('Choose one audit dimension as --topic with --step method.');
+  if (auditStep !== 'method') {
+   const readingPlan = buildAuditStepReadingPlan({stage: 'audit', surface, groups: []}, auditStep);
+   if (auditStep === 'record') {
+    const scopedAuditSchema = structuredClone(auditSchema);
+    scopedAuditSchema.properties.version = {const: policy};
+    return {step: auditStep, surface, policy, readingPlan, auditSchema: scopedAuditSchema,
+     instructions: 'Write the audit using the observations, selected design sources and method you actually applied. For each issue with a clear primary topic, set issues[].topic to help route baseline diagnosis. Leave it out when the topic is uncertain. Mark missing evidence explicitly. Submit with experience --phase audit --input FILE.'};
+   }
+   const {originals, sources} = await binding(run);
+   const designSources = sources.map(({id, path, sha256}) => ({
+    ...(id ? {id} : {}), path, sha256, relativeTo: id ? 'run' : 'project'
+   }));
+   const requestedChange = run.spec.evidence?.find(row => row.id === 'E-request')?.observation;
+   return {step: auditStep, surface, policy, project: run.spec.project, sourceSpec: 'experience.json',
+    ...(requestedChange ? {requestedChange} : {}), originals, designSources,
+    ...(designSources.some(source => source.relativeTo === 'project') ? {projectRoot: run.manifest.onboarding.config.repo} : {}),
+    readingPlan, topics: AUDIT_DIMENSIONS,
+    instructions: 'Start with the user’s task and the original captures. Identify where the user can proceed, gets stuck, or needs more evidence. Consult a relevant project rule by its path. Use --step method for the primary method, optionally with --topic for one observed question. Once ready, use --step record for the audit format.'};
+  }
+ }
+ const design = await stageDesignGuidance(directory, 'review', {...run.manifest.onboarding?.config?.designGuidance, taste: surface, dials: undefined});
+ const local = await stageLocalMethods(directory);
+ const plan = buildGuidanceReadingPlan({design, local, stage: audit ? 'decision' : 'audit', goal: audit?.data.task.goal});
+ const readingPlan = audit ? plan : buildAuditStepReadingPlan(plan, 'method', topic);
+ if (!audit) {
+  return {step: 'method', surface, policy, readingPlan,
+   instructions: 'Use the listed method to assess the observation. Paths are relative to the run. Read readOnce guidance on first use and reuse documents with the same path and hash. Keep project rules authoritative and ground observations in evidence. Open another topic only for another question. Use --step record when ready.'};
+ }
+ const embeddedAdapters = readingPlan.groups.filter(group => group.embedded.length).map(group => ({
+  ...group.embedded[0], text: design.packs.find(pack => pack.metadata.id === group.id).adapter
  }));
- const stageInstructions=audit
-  ? 'Read the frozen audit. Write the decision against decisionSchema for the current diagnosed and confirmed scope. Compare a lighter alternative or preservation. Record repairImpact only when you can identify the affected component and its consumers. A shared component or page-level change has broad impact.'
-  : 'Inspect originals and write the audit against auditSchema before formal diagnosis. Record user constraints separately from operator proposals.';
- return {readingPlan,embeddedAdapters,localMethods:local,policy,project:run.spec.project,surface,originals:bound.originals,designSources:bound.sources,designGuidance:design.metadata,ojo:ojo.metadata,auditSchema:scopedAuditSchema,decisionSchema:scopedDecisionSchema,instructions:'Follow readingPlan for this stage. Read all mustRead documents in full and use the supplied complete adapter text without reopening it. Read onDemand references in full when relevant. The pack readFirst fields are the available routes; readingPlan determines what to read now. Inspect the actual project sources. Contract-only methods are guidance, not executed analyzers. '+stageInstructions+' A quoted method is provenance, not proof of execution. Missing evidence stays unknown. No page edits.'};
+ const bound = await binding(run);
+ const scopedDecisionSchema = structuredClone(decisionSchema);
+ scopedDecisionSchema.properties.version = {const: policy};
+ return {readingPlan, embeddedAdapters, localMethods: local, policy, project: run.spec.project, surface,
+  originals: bound.originals, designSources: bound.sources, designGuidance: design.metadata, decisionSchema: scopedDecisionSchema,
+  instructions: 'Follow readingPlan for this stage. Read all mustRead documents in full and use the supplied complete adapter text without reopening it. Open onDemand references when relevant. Read the frozen audit. Write the decision against decisionSchema for the current diagnosed and confirmed scope. Compare a lighter alternative or preservation. Record repairImpact only when you can identify the affected component and its consumers. A shared component or page-level change has broad impact.'};
 }
 export async function saveExperienceRecord(directory,phase,input){
  if(!['audit','decision'].includes(phase))throw Error('Choose audit or decision.');

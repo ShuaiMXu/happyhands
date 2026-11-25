@@ -121,7 +121,6 @@ export const messages = {
 "原始专项记录与截图已保留；只有当前复核引用的记录才计入本轮结论。": ["原始专项记录与截图已保留；只有当前复核引用的记录才计入本轮结论。", "Original specialist records and screenshots are retained. Only records cited by the current review contribute to its verdict."],
 "打开专项原始记录": ["打开专项原始记录", "Open original verification record"],
 "设计方法与审美设置": ["设计方法与审美设置", "Design methods and preferences"],
-"完整 OJO、Taste、Impeccable 已接入。这里选择参考方法，源码修改仍需确认范围和计划。": ["完整 OJO、Taste、Impeccable 已接入。这里选择参考方法，源码修改仍需确认范围和计划。", "Complete OJO, Taste and Impeccable guidance is connected. These options choose the method; source edits still require scope and plan approval."],
 "Taste 使用方式": ["Taste 使用方式", "Taste mode"],
 "保留现有产品风格": ["保留现有产品风格", "Preserve existing product style"],
 "尚无本轮运行报告": ["尚无本轮运行报告", "No report for this run yet"],

@@ -4,14 +4,6 @@
 
 The optional evidence comparison command depends on [pngjs](https://github.com/pngjs/pngjs) 7.0.0, licensed under MIT. Its original copyright and license remain in the installed package. It decodes and encodes viewport PNGs; HappyHands copies their pixels without generative editing, resizing or cropping.
 
-## OJO Design Skills
-
-This repository redistributes `app-ui-ux-best-practices/SKILL.md` and its nine reference documents from [touchine-ojo/OJO-Design-Skills](https://github.com/touchine-ojo/OJO-Design-Skills), revision `fbd2c2d158e5ebda8930f4bc63ed635a8500d31f`.
-
-Copyright (c) 2026 touchine-ojo. Licensed under the MIT License. The full original license is preserved at [skills/vendor/ojo/upstream/LICENSE](skills/vendor/ojo/upstream/LICENSE).
-
-The upstream files are unmodified. Harness-specific integration instructions are maintained separately in [ADAPTER.md](skills/vendor/ojo/ADAPTER.md). File provenance is recorded in [source.json](skills/vendor/ojo/source.json).
-
 ## Taste design guidance
 
 Pinned source from [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) is preserved in two separate snapshots:

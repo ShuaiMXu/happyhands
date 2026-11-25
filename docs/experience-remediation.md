@@ -1,6 +1,6 @@
 # Strict experience remediation
 
-This flow turns the complete own experience-remediation Skill and the existing OJO, Taste and Impeccable packages into execution and acceptance contracts. It does not replace them with a blacklist, invent approval or migrate the target's framework.
+This flow turns the experience-remediation Skill and the selected web-taste and Impeccable methods into execution and acceptance contracts. It does not replace them with a blacklist, invent approval or migrate the target's framework.
 
 ## Activate for a project
 
@@ -27,9 +27,9 @@ This is explicitly enabled per project. Existing configurations and historical r
 
 | Node | Method / provider | Required output |
 |---|---|---|
-| Diagnosis | Existing rule handlers + independent baseline model; own Skill + OJO and Taste/Impeccable review methods | One `methodChecks` entry for every rule × supplied original state, alongside evidence-backed findings |
+| Diagnosis | Existing rule handlers + independent baseline model; own Skill and selected review methods | One `methodChecks` entry for every rule × supplied original state, alongside evidence-backed findings |
 | Plan | Existing `savePlan`, component reuse and design source context | `remediation-contract.json`, own Skill snapshot and plan hash binding |
-| Implementation | Existing isolated agent runner; own Skill, complete assigned OJO references, Impeccable Polish/Layout/Animate as configured, Taste | `.harness-remediation-result.json` in the target worktree, one row per rule and delegated issue |
+| Implementation | Existing isolated agent runner; own Skill, Impeccable Polish/Layout/Animate as configured, Taste | `.harness-remediation-result.json` in the target worktree, one row per rule and delegated issue |
 | Collection | Host runner | Archive report outside the target, remove the temporary file, validate exact IDs, decisions and changed-file claims; blocked or malformed results fail execution |
 | Recapture | Existing Capture Plan and specialist verification | Same-state after originals and actual interaction records |
 | Independent QA | Existing separate model sessions, regional and cross-region review | Per-rule/per-state verdicts bound to the contract; missing coverage or unresolved checks cannot pass |
@@ -43,7 +43,7 @@ Start with the current page, not responsive adaptation: recurring AI slop and UI
 
 ## Grids and composition
 
-The `UX-grid` check requires observing the adopted content width, columns, gutter, outer margins, alignment and responsive reflow. The executor records the actual source and its design decision. OJO's 12-column/8pt examples are reference defaults, not a universal project constraint. Existing DESIGN.md, approved Foundation, captured DOM and source evidence determine the target's grid. Unknown evidence stays unknown. Do not hide horizontal overflow to mask clipped content, force every section into equal cards, or break reading order to fit an arbitrary grid.
+The `UX-grid` check requires observing the adopted content width, columns, gutter, outer margins, alignment and responsive reflow. The executor records the actual source and its design decision. Existing DESIGN.md, approved Foundation, captured DOM and source evidence determine the target's grid. Unknown evidence stays unknown. Do not hide horizontal overflow to mask clipped content, force every section into equal cards, or break reading order to fit an arbitrary grid.
 
 Select the actual project design source files through the existing project configuration before capture. Their content and hashes now reach independent QA as well as diagnosis and the implementation brief; source drift during QA blocks publication. This is how existing grid rules remain available at acceptance, rather than relying on the executor to paraphrase them.
 

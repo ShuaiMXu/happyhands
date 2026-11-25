@@ -17,7 +17,7 @@
 
 不设置“AI 味分数”，不禁用通用字体、渐变、卡片或居中布局。每条意见要指出可见元素、任务或品牌冲突、证据和最小修改建议。品牌批准记录缺失时不能假定已经批准；静态截图也不能证明动画或隐藏状态的问题。
 
-研究来源、固定版本、许可链接和未采纳规则见 [sources.md](../skills/product-design/visual-hierarchy-reviewer/references/sources.md)。本地 rubric 保留；OJO 的核心 Skill、九份参考资料及 MIT 许可证已原样收录，经 Harness 适配层用于诊断、设计执行和复核，详见 [OJO 接入](ojo-integration.md)。没有安装第三方执行工具。
+研究来源、固定版本、许可链接和未采纳规则见 [sources.md](../skills/product-design/visual-hierarchy-reviewer/references/sources.md)。本地 rubric 保留了经项目采纳的判断依据。早期来源见 [OJO 历史接入记录](ojo-integration.md)。没有安装第三方执行工具。
 
 ## 验证边界
 

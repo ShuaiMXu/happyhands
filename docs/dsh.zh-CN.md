@@ -37,9 +37,8 @@ Harness 几乎每条命令都会拉起 `git`、`node` 和浏览器。阻止子�
 4. 在 Harness 隔离工作副本里用 `--agent self` 自己改（或指定其他执行器），预览该副本，复拍相同状态与尺寸，执行适用检查并独立复核，最后由用户明确接受或拒绝。
 
 ```text
-请用 HappyHands 审阅当前产品的一个用户任务。先读取 HappyHands 工程中的
-docs/dsh.zh-CN.md、docs/harness.md、skills/happyhands/SKILL.md，
-以及本次命中的完整 experience-remediation 方法与参考。
+请用 HappyHands 审阅当前产品的一个用户任务，从 skills/happyhands/SKILL.md 开始。
+预审先对照任务查看原始截图，遇到具体问题再选对应的方法，准备记录时再读取审计表。
 复用已提供的仓库、预览和目标，只询问缺失信息。
 先核对实际 CLI；复用一份 Harness run，用 next 驱动，不另建验收记录。
 先复现并采集原始截图，再提出修复决定，保留项目品牌、设计规范和共享组件。
@@ -54,8 +53,8 @@ docs/dsh.zh-CN.md、docs/harness.md、skills/happyhands/SKILL.md，
 
 | 环节 | 方法与程序 | 必须产出 |
 | --- | --- | --- |
-| 理解与复现 | `review-product`、项目规范、`harness onboard` 或 `init`/`capture` | 单一任务、源码版本与原始证据。 |
-| 诊断与决策 | `experience-remediation` 及命中的完整 OJO/Taste/Impeccable 参考 | 先查当前页面细节，再查共享交互、任务与布局，最后补设备回归；区分缺陷、推断与缺证。 |
+| 理解与复现 | `review-product`、项目规范、`quickstart` 或 `start` 后执行 `capture` | 单一任务、源码版本与原始证据。 |
+| 诊断与决策 | `experience-remediation` 及当前任务适用的 web-taste 和 Impeccable 参考 | 先查当前页面细节，再查共享交互、任务与布局，最后补设备回归；区分缺陷、推断与缺证。 |
 | 计划与修改 | 已有确认/计划门槛及 `harness execute` | 具体修改决定、真实组件复用与隔离工作副本；读过方法不等于完成整改。 |
 | 验证与判断 | 匹配复拍、适用检查、独立视觉复核和人工判断 | 前后证据、未解决项与显式人工决定；命令成功不等于视觉验收通过。 |
 

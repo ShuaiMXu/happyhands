@@ -16,8 +16,11 @@ export function findingAdmissionReason(item,{catalog=[],ownedUi=false}={}){
  for(const ref of basis.skillRefs){
   const source=catalog.find(file=>file.path===ref.path);
   if(!source||!Number.isInteger(ref.line)||ref.line<1||!text(ref.quote)||!text(ref.application)||!['requirement','principle'].includes(ref.authority))return 'Invalid skill reference or application.';
-  const preceding=source.content.split('\n').slice(0,ref.line).filter(line=>/^#{1,6}\s+/.test(line)).at(-1)?.replace(/^#{1,6}\s+/, '').trim();
-  if(preceding!==ref.section||!source.sections.includes(ref.section)||!source.content.split('\n').slice(ref.line-1,ref.line+5).join('\n').includes(ref.quote))return 'The cited section, line or quote does not match the actual skill.';
+  const lines=source.content.split(/\r?\n/);
+  const section=typeof ref.section==='string'?ref.section.trim():null;
+  const preceding=lines.slice(0,ref.line).filter(line=>/^#{1,6}\s+/.test(line)).at(-1)?.replace(/^#{1,6}\s+/, '').trim();
+  const quote=ref.quote.replaceAll('\r\n','\n');
+  if(preceding!==section||!source.sections.includes(section)||!lines.slice(ref.line-1,ref.line+5).join('\n').includes(quote))return 'The cited section, line or quote does not match the actual skill.';
   if(source.ownedOnly&&!ownedUi)return 'The target has not adopted the HappyHands-owned profile.';
  }
  return null;
@@ -33,7 +36,9 @@ export function isReportableFinding(finding){
  if((finding.sources||[]).some(source=>source.type==='model'||source.type==='skill'))return finding.findingBasis?.policyVersion===FINDING_POLICY_VERSION&&finding.findingBasis.kind==='defect';
  return finding.id!=='AUTOMATIC_REPAIR';
 }
-export function guidanceCatalog(design,ojo,remediation){
- const entry=(path,content,ownedOnly=false)=>({path,content,ownedOnly,sections:[...content.matchAll(/^#{1,6}\s+(.+)$/gm)].map(match=>match[1].trim())});
- return [...(remediation?.profile.surface===HERO_SURFACE?[entry('remediation-SKILL.md',remediation.skill,true)]:[]),entry(`${design.metadata.reference}/happyhands-ui/SKILL.md`,design.uiRules,true),...design.packs.flatMap(pack=>[entry(`${design.metadata.reference}/${pack.metadata.id}/ADAPTER.md`,pack.adapter),...pack.documents.filter(doc=>doc.path.endsWith('.md')).map(doc=>entry(`${design.metadata.reference}/${pack.metadata.id}/${doc.path}`,doc.content))]),entry(`${ojo.metadata.reference}/ADAPTER.md`,ojo.adapter),...ojo.documents.filter(doc=>doc.path.endsWith('.md')).map(doc=>entry(`${ojo.metadata.reference}/${doc.path}`,doc.content))];
+export function methodCitationSource(path,content,ownedOnly=false){
+ return {path,content,ownedOnly,sections:[...content.matchAll(/^#{1,6}\s+(.+)$/gm)].map(match=>match[1].trim())};
+}
+export function guidanceCatalog(design,remediation,{remediationPath='remediation-SKILL.md'}={}){
+ return [...(remediation?.profile.surface===HERO_SURFACE?[methodCitationSource(remediationPath,remediation.skill,true)]:[]),methodCitationSource(`${design.metadata.reference}/happyhands-ui/SKILL.md`,design.uiRules,true),...design.packs.flatMap(pack=>[methodCitationSource(`${design.metadata.reference}/${pack.metadata.id}/ADAPTER.md`,pack.adapter),...pack.documents.filter(doc=>doc.path.endsWith('.md')).map(doc=>methodCitationSource(`${design.metadata.reference}/${pack.metadata.id}/${doc.path}`,doc.content))])];
 }

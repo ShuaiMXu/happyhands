@@ -14,6 +14,7 @@ for(const flag of ['--help','-h'])test(`source CLI ${flag} works outside a proje
  const result=await exec(process.execPath,[entry,flag],{cwd:tmpdir()});
  assert.match(result.stdout,/HappyHands Harness/);
  assert.match(result.stdout,/pnpm harness capture/);
+ assert.match(result.stdout,/experience .*--phase context .*--step inspect\|method\|record.*--topic TOPIC/);
  assert.equal(ownStderr(result.stderr),'');
 });
 test('an unknown top-level option remains an error',async()=>{
