@@ -139,7 +139,7 @@ test('assigned local diagnosis methods support exact citations through export an
  const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate:async(_cmd,_args,{cwd})=>{
   const context=JSON.parse(await readFile(join(cwd,'context.json')));
   [method]=context.readingPlan.groups.flatMap(group=>group.mustRead);
-  const lines=(await readFile(join(cwd,method.path),'utf8')).split('\n');
+  const lines=(await readFile(join(cwd,method.path),'utf8')).split(/\r?\n/);
   const heading=lines.findIndex(line=>line.startsWith('# '));
   const quote=lines.findIndex((line,index)=>index>heading && line.length>30);
   const output=structuredClone(response);

@@ -16,8 +16,11 @@ export function findingAdmissionReason(item,{catalog=[],ownedUi=false}={}){
  for(const ref of basis.skillRefs){
   const source=catalog.find(file=>file.path===ref.path);
   if(!source||!Number.isInteger(ref.line)||ref.line<1||!text(ref.quote)||!text(ref.application)||!['requirement','principle'].includes(ref.authority))return 'Invalid skill reference or application.';
-  const preceding=source.content.split('\n').slice(0,ref.line).filter(line=>/^#{1,6}\s+/.test(line)).at(-1)?.replace(/^#{1,6}\s+/, '').trim();
-  if(preceding!==ref.section||!source.sections.includes(ref.section)||!source.content.split('\n').slice(ref.line-1,ref.line+5).join('\n').includes(ref.quote))return 'The cited section, line or quote does not match the actual skill.';
+  const lines=source.content.split(/\r?\n/);
+  const section=typeof ref.section==='string'?ref.section.trim():null;
+  const preceding=lines.slice(0,ref.line).filter(line=>/^#{1,6}\s+/.test(line)).at(-1)?.replace(/^#{1,6}\s+/, '').trim();
+  const quote=ref.quote.replaceAll('\r\n','\n');
+  if(preceding!==section||!source.sections.includes(section)||!lines.slice(ref.line-1,ref.line+5).join('\n').includes(quote))return 'The cited section, line or quote does not match the actual skill.';
   if(source.ownedOnly&&!ownedUi)return 'The target has not adopted the HappyHands-owned profile.';
  }
  return null;
