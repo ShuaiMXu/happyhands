@@ -19,7 +19,7 @@ import {diagnoseBaseline} from '../packages/workbench/baseline-diagnosis.js';
 import {runAiVisualReview} from '../packages/workbench/ai-review.js';
 import {selectResource} from '../packages/harness-core/reference-resources.js';
 import {workflowState} from '../packages/harness-core/workflow.js';
-import {EXPERIENCE_POLICY,AUDIT_DIMENSIONS,REVIEW_DIMENSIONS,confirmedRepairImpact,experienceContext,saveExperienceRecord,experienceFor,assertExperienceAssessments} from '../packages/harness-core/experience-orchestration.js';
+import {EXPERIENCE_INSTRUCTIONS,EXPERIENCE_POLICY,AUDIT_DIMENSIONS,REVIEW_DIMENSIONS,confirmedRepairImpact,experienceContext,saveExperienceRecord,experienceFor,assertExperienceAssessments} from '../packages/harness-core/experience-orchestration.js';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
 const original='before/desktop.png';
 // Synthetic protocol fixtures. These images do not establish real visual quality.
@@ -81,6 +81,11 @@ test('strict start cannot diagnose or plan without an audit; source adaptation a
  assert.equal(configuredContext.surface,'public-page');
  assert.equal(configuredContext.step,'inspect');
  assert.deepEqual(configuredContext.topics,AUDIT_DIMENSIONS);
+ const componentContext=await experienceContext(f.directory,undefined,{step:'method',topic:'components-states'});
+ const componentMethod=componentContext.readingPlan.groups.flatMap(group=>group.mustRead)
+  .find(method=>method.path.endsWith('/component-state-auditor/SKILL.md'));
+ assert.ok(componentMethod);
+ assert.match(await readFile(join(f.directory,componentMethod.path),'utf8'),/trace same-purpose instances to their implementation/);
  const recordContext=await experienceContext(f.directory,undefined,{step:'record'});
  assert.deepEqual(recordContext.auditSchema.properties.version,{const:EXPERIENCE_POLICY});
  assert.deepEqual(recordContext.readingPlan.groups,[]);
@@ -196,6 +201,7 @@ test('the actual model context separates operator form from task, and the bound 
   assert.equal(context.readingPlan.groups.find(group=>group.id==='web-taste').mustRead.length,1);
   assert.equal(context.experience.decision.chosen,f.decision.chosen);
   assert.match(input,/Challenge a compliant solution that worsens hierarchy/);
+  assert.match(input,/fail proven parallel implementations/);
   await writeFile(join(cwd,'review-result.json'),JSON.stringify({[context.reviewResponsibility.decisionField]:'needs-evidence',screenshotRefs:[original,'after/desktop.png'],findings:[],rationale:'Synthetic pixels cannot establish task or design quality',limitations:['No actual webpage was reviewed'],experienceAssessments:REVIEW_DIMENSIONS.map(dimension=>({dimension,verdict:'needs-evidence',reason:'Real rendered task evidence missing',screenshotRefs:[]}))}));
  }});
  assert.equal((await loadRun(f.directory)).manifest.judgment,null);
@@ -205,7 +211,7 @@ test('the actual model context separates operator form from task, and the bound 
 test('each baseline sees only its own issues and checks both copies of the complete audit',async t=>{
  const extraOriginals=Array.from({length:24},(_,i)=>'screen-'+(i+1));
  const f=await fixture(t,{extraOriginals}),last='before/screen-24.png';
- f.audit.issues.push({...f.audit.issues[0],id:'LAST-ONLY',topic:'hierarchy-content',screenshotRefs:[last]},
+ f.audit.issues.push({...f.audit.issues[0],id:'LAST-ONLY',topic:'components-states',screenshotRefs:[last]},
   {...f.audit.issues[0],id:'SHARED',screenshotRefs:[original,last]});
  const ref=await saveExperienceRecord(f.directory,'audit',f.audit);
  const diagnosis=diagnoseRun({run:await loadRun(f.directory)});
@@ -216,6 +222,7 @@ test('each baseline sees only its own issues and checks both copies of the compl
   const refs=context.originals.map(item=>item.reference);
   const projectedIssues=context.experience.audit.issues;
   batches.push(projectedIssues.map(issue=>issue.id));
+  assert.deepEqual(context.readingPlan.selectedTopics,refs.includes(last)?['components-states']:[]);
   assert.deepEqual(projectedIssues.find(issue=>issue.id==='SHARED').screenshotRefs,[refs.includes(last)?last:original]);
   assert.equal(JSON.parse(await readFile(join(session,ref.path))).data.issues.length,3);
   await writeFile(join(session,'result.json'),JSON.stringify({status:'complete',summary:'Fixture',screenshotRefs:refs,limitations:['Synthetic originals'],findings:[]}));
@@ -319,4 +326,21 @@ test('a new goal-bound decision requires independently cited criteria and the re
  await writeFile(inventory,(await readFile(inventory,'utf8'))+'\n');
  await buildRunReport({directory:f.directory});
  assert.match(await readFile(report.path,'utf8'),/review or source evidence is missing or changed/);
+});
+
+
+test('the independent design-system assessment gates parallel component implementations',()=>{
+ assert.match(EXPERIENCE_INSTRUCTIONS,/same-purpose instances across affected surfaces/);
+ assert.match(EXPERIENCE_INSTRUCTIONS,/fail proven parallel implementations/);
+ const available=new Set(['after/desktop.png']);
+ const assessments=REVIEW_DIMENSIONS.map(dimension=>({
+  dimension,verdict:'pass',reason:'Verified with the scoped before and after evidence',screenshotRefs:['after/desktop.png']
+ }));
+ const designSystem=assessments.find(row=>row.dimension==='design-system');
+ designSystem.verdict='fail';
+ designSystem.reason='The Design.md preview introduced a different button implementation for the same purpose.';
+ assert.throws(()=>assertExperienceAssessments(assessments,'pass',available),/unresolved experience assessment/);
+ designSystem.verdict='needs-evidence';
+ designSystem.reason='The actual source relationship is unavailable.';
+ assert.throws(()=>assertExperienceAssessments(assessments,'pass',available),/unresolved experience assessment/);
 });

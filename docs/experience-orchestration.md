@@ -97,3 +97,10 @@ Focused baseline diagnosis starts from the surface method and the issue topics a
 Decision, execution and independent review retain their own reading plans. Operators who need the full design guidance can set `HAPPYHANDS_GUIDANCE_DEPTH=full` for that run. The source snapshots stay available for citation and verification in either mode.
 
 The plan uses the surface and intent and, when available, the frozen repair/improvement goal. A scoped review can move references to on-demand while keeping original images, evidence coverage and the independent review and human-decision requirements. Execution records its reading plan alongside its prompt. The plan and byte counts describe available or required inputs. Actual model usage is measured separately.
+
+
+## Component lineage
+
+For cross-page or resource-rendering changes, use the existing `components-states` audit, component reuse plan, and `design-system` independent assessment. Record the shared implementation path, consumers, token or variant, and applicable states. An extension needs a distinct user-facing purpose and an explanation of why existing APIs are insufficient. Design.md theme values may vary through approved component inputs, and original third-party previews retain their implementation.
+
+Technical checks can confirm registered families and enforce composition boundaries. Reviewers still inspect source relationships and real default, selected, expanded, focus or disabled states where applicable. Record `fail` for verified, unjustified forks. Use `needs-evidence` when sources, variant rationale or real state evidence are unavailable. Keep the existing independent review and human acceptance flow.

@@ -14,6 +14,10 @@ For a shareable viewport comparison, use `pnpm harness compare --run DIRECTORY -
 Stop before an external deployment unless it has been authorized. A live site may differ from the supplied repository; verify their relationship before claiming that a repository change is live.
 
 
+## Component lineage
+
+Under the existing design-system assessment, check one same-purpose instance against other affected consumers. Cite the implementation and token or variant plus matched screenshot and replay evidence for applicable states. A proven unapproved parallel implementation fails this assessment. Missing lineage or state evidence requires `needs-evidence`. Source-defined themes and original third-party previews are valid exceptions when the evidence identifies them.
+
 ## Design guidance for the current task
 
 Start from the user’s task, the project’s adopted design rules and the evidence for the current step. Follow the stage’s reading plan. Use the adapter listed or supplied for the current method. Reuse it across topics and open other references when they inform a specific decision.
