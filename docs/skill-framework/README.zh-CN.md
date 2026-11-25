@@ -37,7 +37,7 @@ flowchart TD
 | 层 | 唯一职责 | 主持者/方法 | 现有承载物 | 失败或未知如何处理 |
 | --- | --- | --- | --- | --- |
 | L0 | 任务、表面类型、范围、授权与方法选择 | happyhands；review-product 作为既有产品模式 | Experience Spec.project、项目配置、Run | 未知事实标注，材料不足只补真正缺口 |
-| L1 | 记录已有品牌、token、组件、消费者、实际设计来源 | Foundation/brand/component inventory；OJO 及项目文档辅助 | Foundation、设计来源快照、组件图 | observed 不变 approved，静态可达不变已渲染 |
+| L1 | 记录已有品牌、token、组件、消费者、实际设计来源 | Foundation/brand/component inventory；项目设计文档 | Foundation、设计来源快照、组件图 | observed 不变 approved，静态可达不变已渲染 |
 | L2 | 识别任务障碍，区分缺陷、请求、假设、偏好 | 专业审阅 + Impeccable Audit/Critique | experienceAudit、diagnosis、findingBasis | 无实际缺陷证据不进入自动缺陷修复 |
 | L3 | 对问题选方案，比较保留/更轻方案，隔离实施 | fix/reuse planner、experience-remediation；按问题选择具体方法 | designDecision、plan、execution result | 错方案可退回决定；不为完成清单制造修改 |
 | L4 | 复拍、实际交互、受影响消费者、独立结论 | QA、component-state、a11y、responsive；浏览器及项目测试 | verification、evaluation、visualReviews | 脚本 complete、结构 pass、体验 pass 分别归因 |
@@ -50,7 +50,6 @@ Harness 是这六层的状态、权限、来源与交付管理者；Skill 是被
 | 方法 | 应负责 | 不应负责 |
 | --- | --- | --- |
 | Impeccable | 产品语境、技术审计、体验批评、专项整改、打磨 | 单独接管源码授权、最终接受、发布或项目品牌决定 |
-| OJO | 设计系统、组件状态、图标、间距、视觉尺度、动效的具体依据 | 强制通用网格/参数/三选一流程，覆盖项目实际规范 |
 | web-taste | 用户已指定的公开页面设计主方法；构图、内容与视觉方向 | 将官网节奏、图片数量、装饰规则普遍强加给工作台 |
 | 历史 Taste 与风格变体 | 精确历史回放或明确选择的方向 | 默认同时加载并执行多个互斥审美 |
 | 图像/品牌/Stitch 方法 | 明确的素材、概念或重建任务 | 用生成图代替产品基线、实际界面或批准的 Foundation |
@@ -134,10 +133,10 @@ Impeccable 当前 review 先读 Audit/Critique；implementation 先读 Polish，
 
 | 场景 | 主方法 | 按证据追加 | 必需的实际验证 |
 | --- | --- | --- | --- |
-| 下拉菜单遮挡 | 项目组件依据 + Harden | OJO component/icon、a11y | 长标签、打开/选择/禁用、键盘、Escape、焦点、消费者 |
+| 下拉菜单遮挡 | 项目组件依据 + Harden | a11y | 长标签、打开/选择/禁用、键盘、Escape、焦点、消费者 |
 | 工作台流程复杂 | 任务/IA/interaction + Critique；Shape/Distill/Layout 决定 | 项目组件、文案、错误恢复 | 从进入到任务完成；被合并/移除步骤的后果；原稿也可胜出 |
-| 官网 Hero | 已指定 web-taste + 项目品牌/内容 | OJO、必要的 Impeccable 表达方法；自有 Hero 规则条件适用 | 实际动态/静态、读写操作、两主题与受影响设备；不能用静止图证明动效 |
-| Dashboard | 业务任务、数据定义、IA + Critique/Layout | OJO tokens/components、state/contrast | 筛选、空/错/加载、密度与阅读任务；独立 Dashboard 合约待补 |
+| 官网 Hero | 已指定 web-taste + 项目品牌/内容 | 必要的 Impeccable 表达方法；自有 Hero 规则条件适用 | 实际动态/静态、读写操作、两主题与受影响设备；不能用静止图证明动效 |
+| Dashboard | 业务任务、数据定义、IA + Critique/Layout | state/contrast | 筛选、空/错/加载、密度与阅读任务；独立 Dashboard 合约待补 |
 | 文字排版 | 项目语言/字体/排版需求 + 适用 Typeset | 文案、a11y、语言和溢出 | 标题/段落断行、混排、变动数字、截断及完整内容访问；专项契约待补 |
 | 视频 | review-video + 原工程制作方法 | 实际需要的资产/动效方法 | 前后整片、全音轨、时间码与独立完整视听；页面 QA 不替代 |
 

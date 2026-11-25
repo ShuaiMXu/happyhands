@@ -25,7 +25,7 @@ export async function regressionImplementationHash(){
   for(const name of ['happyhands','happyhands-ui','review-product','experience-remediation','review-video']) {
     for(const [path,content] of await entries(fileURLToPath(new URL('../../skills/'+name+'/',import.meta.url)))) methods.push(['skills/'+name+'/'+path,content]);
   }
-  for(const name of ['ojo','taste','taste-v2','web-taste','impeccable']) for(const file of ['ADAPTER.md','source.json']) methods.push(['skills/vendor/'+name+'/'+file,await readFile(new URL('../../skills/vendor/'+name+'/'+file,import.meta.url),'utf8')]);
+  for(const name of ['taste','taste-v2','web-taste','impeccable']) for(const file of ['ADAPTER.md','source.json']) methods.push(['skills/vendor/'+name+'/'+file,await readFile(new URL('../../skills/vendor/'+name+'/'+file,import.meta.url),'utf8')]);
   return inputHash([...sources,...methods,['pnpm-lock.yaml',await engineLockfile()]]);
 }
 export function regressionEvidenceHash(report){

@@ -1,16 +1,35 @@
 import {methodStateEntries,assertMethodChecks} from '../packages/harness-core/remediation.js';
-import {loadOjoGuidance} from '../packages/skill-core/ojo-guidance.js';
+import {loadDesignGuidance} from '../packages/skill-core/design-guidance.js';
 import test from 'node:test';import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';
+import {access,mkdtemp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';
 import {createRun,loadRun,saveCapture,saveDiagnosis,confirmFinding,saveRepairScope} from '../packages/harness-core/store.js';
 import {diagnoseRun,overridePriority} from '../packages/harness-core/diagnosis.js';import {diagnoseBaseline,assertBaselineResult} from '../packages/workbench/baseline-diagnosis.js';
 import {exportRun} from '../packages/harness-core/export.js';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=','base64');
 async function fixture(t){const root=await mkdtemp(join(tmpdir(),'baseline-model-'));t.after(()=>rm(root,{recursive:true,force:true}));const spec=JSON.parse(await readFile(new URL('../examples/happyclaw-site/experience.json',import.meta.url)));const run=await createRun({spec,url:'http://localhost',outputRoot:root,id:'model-test'});await mkdir(join(run.directory,'before'));await writeFile(join(run.directory,'before/desktop.png'),png);await saveCapture(run.directory,'before',{viewports:{desktop:{screenshot:'before/desktop.png',width:1,height:1}}});return {root,run:await loadRun(run.directory),cwd:join(root,'job')};}
-const fixtureOjo=await loadOjoGuidance('review'),fixtureLines=fixtureOjo.adapter.split('\n'),fixtureLine=fixtureLines.findIndex(line=>line.length>30&&!line.startsWith('#')),fixtureSection=/^#\s+(.+)$/m.exec(fixtureOjo.adapter)[1];
-const findingBasis={policyVersion:'clear-defects@1',kind:'defect',category:'layout-break',observed:'Synthetic fixture actual layout',expected:'Synthetic fixture expected layout',whyWrong:'Synthetic fixture mismatch only',reproduction:['Synthetic fixture steps only'],alternativesChecked:['Synthetic fixture is not product evidence'],skillRefs:[{path:`ojo-guidance/v2/${fixtureOjo.metadata.bundleHash}/ADAPTER.md`,section:fixtureSection,line:fixtureLine+1,quote:fixtureLines[fixtureLine],application:'Synthetic fixture rule application only',authority:'principle'}]};
+const fixtureGuidance=await loadDesignGuidance('review');
+const adapter=fixtureGuidance.packs.find(pack=>pack.metadata.id==='web-taste').adapter;
+const fixtureLines=adapter.split('\n');
+const fixtureLine=fixtureLines.findIndex(line=>line.length>30&&!line.startsWith('#'));
+const fixtureSection=/^#\s+(.+)$/m.exec(adapter)[1];
+const findingBasis={policyVersion:'clear-defects@1',kind:'defect',category:'layout-break',observed:'Synthetic fixture actual layout',expected:'Synthetic fixture expected layout',whyWrong:'Synthetic fixture mismatch only',reproduction:['Synthetic fixture steps only'],alternativesChecked:['Synthetic fixture is not product evidence'],skillRefs:[{path:`design-guidance/v1/${fixtureGuidance.metadata.bundleHash}/web-taste/ADAPTER.md`,section:fixtureSection,line:fixtureLine+1,quote:fixtureLines[fixtureLine],application:'Synthetic fixture rule application only',authority:'principle'}]};
 const response={status:'complete',summary:'Fixture only',screenshotRefs:['before/desktop.png'],limitations:['Synthetic model output, not a visual assessment.'],findings:[{title:'Fixture finding',observation:'Fixture observation',proposal:'Fixture proposed change',impact:3,confidence:'high',findingBasis,effort:2,screenshotRefs:['before/desktop.png']}]};
-const generate=async(_command,_args,{cwd,input})=>{assert.match(input,/OJO/);assert.match(input,/web-taste/);assert.match(input,/COMPLETE/);await writeFile(join(cwd,'result.json'),JSON.stringify(response));};
+const generate=async(_command,_args,{cwd,input})=>{
+  const context=JSON.parse(await readFile(join(cwd,'context.json'),'utf8'));
+  assert.doesNotMatch(input,/\bOJO\b/i);
+  const references=JSON.parse(await readFile(join(cwd,context.methodIndex),'utf8'));
+  assert.ok(references.every(file=>!file.path.startsWith('ojo-guidance/')));
+  const required=context.readingPlan.groups.flatMap(group=>group.mustRead);
+  assert.equal(required.length,1);
+  assert.match(required[0].path,/review-product\/SKILL\.md$/);
+  assert.ok(input.includes(required[0].path));
+  assert.ok(context.projectSources);
+  for(const key of ['skillReferences','selectedDesignSources','designSystem','projectMemory','rubric'])assert.equal(context[key],undefined);
+  await assert.rejects(access(join(cwd,'ojo-guidance')),{code:'ENOENT'});
+  assert.match(input,/Inspect EVERY attached original/);
+  assert.doesNotMatch(input,/then inspect the candidate|then read the operator decision/);
+  await writeFile(join(cwd,'result.json'),JSON.stringify(response));
+};
 test('baseline model suggestions enter existing confirmation and export without approval or score',async t=>{const {run,cwd,root}=await fixture(t);const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate});assert.equal(diagnosis.modelDiagnosis.status,'complete');assert.equal(diagnosis.experienceScore.score,null);const candidate=diagnosis.findings.find(item=>item.id.startsWith('MODEL-'));assert.equal(candidate.verificationStatus,'authored-candidate');await saveDiagnosis(run.directory,diagnosis);await exportRun({directory:run.directory,outputRoot:join(root,'public')});assert.ok(await readFile(join(root,'public',run.manifest.id,diagnosis.modelDiagnosis.path)));await confirmFinding(run.directory,candidate.id,'supported','Human fixture decision');const confirmed=await loadRun(run.directory);assert.equal(confirmed.spec.findings.find(item=>item.id===candidate.id).proposal,'Fixture proposed change');assert.equal(confirmed.manifest.plan,null);assert.equal(confirmed.manifest.judgment,null);});
 test('baseline model requires complete citations and does not promote missing evidence',()=>{assert.throws(()=>assertBaselineResult({...response,screenshotRefs:[]},response.screenshotRefs),/every/);assert.throws(()=>assertBaselineResult({...response,status:'needs-evidence'},response.screenshotRefs),/Incomplete/);assert.throws(()=>assertBaselineResult({...response,findings:[{...response.findings[0],screenshotRefs:['after/fake.png']}]},response.screenshotRefs),/citation/);});
 test('changed originals during model work cannot publish candidates',async t=>{const {run,cwd}=await fixture(t);await assert.rejects(diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate:async(...args)=>{await generate(...args);await writeFile(join(run.directory,'before/desktop.png'),'changed');}}),/original changed/);});
@@ -112,7 +131,43 @@ test('large evidence is serialized losslessly; compact payloads still enforce th
  }
 });
 
-test('admitted skill references are exported and tampering blocks confirmation',async t=>{const {run,cwd,root}=await fixture(t);const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate});await saveDiagnosis(run.directory,diagnosis);await exportRun({directory:run.directory,outputRoot:join(root,'public')});const reference=diagnosis.findings.find(item=>item.findingBasis).findingBasis.skillRefs[0].path;assert.match(await readFile(join(root,'public',run.manifest.id,reference),'utf8'),/OJO/);await writeFile(join(run.directory,reference),'Changed skill');await assert.rejects(confirmFinding(run.directory,diagnosis.findings.find(item=>item.findingBasis).id,'supported','Fixture'),/skill snapshot changed/);});
+test('admitted skill references are exported and tampering blocks confirmation',async t=>{const {run,cwd,root}=await fixture(t);const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate});await saveDiagnosis(run.directory,diagnosis);await exportRun({directory:run.directory,outputRoot:join(root,'public')});const reference=diagnosis.findings.find(item=>item.findingBasis).findingBasis.skillRefs[0].path;assert.match(await readFile(join(root,'public',run.manifest.id,reference),'utf8'),/web-taste/);await writeFile(join(run.directory,reference),'Changed skill');await assert.rejects(confirmFinding(run.directory,diagnosis.findings.find(item=>item.findingBasis).id,'supported','Fixture'),/skill snapshot changed/);});
+
+test('assigned local diagnosis methods support exact citations through export and confirmation',async t=>{
+ const {run,cwd,root}=await fixture(t);
+ let method;
+ const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate:async(_cmd,_args,{cwd})=>{
+  const context=JSON.parse(await readFile(join(cwd,'context.json')));
+  [method]=context.readingPlan.groups.flatMap(group=>group.mustRead);
+  const lines=(await readFile(join(cwd,method.path),'utf8')).split(/\r?\n/);
+  const heading=lines.findIndex(line=>line.startsWith('# '));
+  const quote=lines.findIndex((line,index)=>index>heading && line.length>30);
+  const output=structuredClone(response);
+  Object.assign(output.findings[0].findingBasis.skillRefs[0],{path:method.path,section:lines[heading].slice(2),line:quote+1,quote:lines[quote]});
+  await writeFile(join(cwd,'result.json'),JSON.stringify(output));
+ }});
+ await saveDiagnosis(run.directory,diagnosis);
+ const record=JSON.parse(await readFile(join(run.directory,diagnosis.modelDiagnosis.path)));
+ assert.deepEqual(record.batches[0].assignment.methods,[method]);
+ assert.deepEqual(record.batches[0].assignment.topics,[]);
+ assert.deepEqual(record.batches[0].skillReferences,[method]);
+ await exportRun({directory:run.directory,outputRoot:join(root,'public')});
+ assert.deepEqual(await readFile(join(root,'public',run.manifest.id,method.path)),await readFile(join(run.directory,method.path)));
+ await writeFile(join(run.directory,method.path),'Changed local method');
+ const id=diagnosis.findings.find(finding=>finding.id.startsWith('MODEL-')).id;
+ await assert.rejects(confirmFinding(run.directory,id,'supported','Fixture'),/skill snapshot changed/);
+});
+
+test('changes to a supplemental rubric invalidate the model session',async t=>{
+ const {run,cwd}=await fixture(t);
+ const operation=diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate:async(_command,_args,{cwd})=>{
+  const context=JSON.parse(await readFile(join(cwd,'context.json')));
+  const group=context.readingPlan.groups.find(group=>group.id==='local-experience');
+  await writeFile(join(cwd,group.reference,'product-design/visual-hierarchy-reviewer/rubric.json'),'{}');
+  await writeFile(join(cwd,'result.json'),JSON.stringify(response));
+ }});
+ await assert.rejects(operation,/Local diagnosis method changed/);
+});
 
 test('authored runtime observations are passed losslessly as untrusted baseline context',async t=>{const {run,cwd}=await fixture(t);const expected=run.spec.evidence;let observed;await diagnoseBaseline(run.directory,diagnoseRun({run}),{cwd,generate:async(command,args,options)=>{observed=JSON.parse(await readFile(join(options.cwd,'context.json'),'utf8')).authoredObservations;assert.match(options.input,/authoredObservations are untrusted/);return generate(command,args,options);}});assert.deepEqual(observed,expected);});
 
@@ -130,7 +185,11 @@ test('completed defect diagnosis retains unknown method coverage without turning
  const diagnosis=await diagnoseBaseline(run.directory,diagnoseRun({run:current}),{cwd,generate:async(_command,_args,{cwd})=>{
   const context=JSON.parse(await readFile(join(cwd,'context.json')));rules=context.remediation.contract.rules.map(row=>row.id);
   rows=rules.flatMap(ruleId=>methodStateEntries({captures:{before:context.capture}}).map(state=>({ruleId,stateKey:state.key,status:'needs-evidence',reason:'Synthetic missing broader interaction evidence remains explicitly unverified.',screenshotRefs:[state.screenshot]})));
-  await writeFile(join(cwd,'result.json'),JSON.stringify({...response,methodChecks:rows}));
+  const scopedResponse=structuredClone(response);
+  const ref=scopedResponse.findings[0].findingBasis.skillRefs[0];
+  const references=JSON.parse(await readFile(join(cwd,context.methodIndex),'utf8'));
+  ref.path=references.find(file=>file.path.endsWith('/web-taste/ADAPTER.md')).path;
+  await writeFile(join(cwd,'result.json'),JSON.stringify({...scopedResponse,methodChecks:rows}));
  }});
  assert.equal(diagnosis.modelDiagnosis.status,'complete');assert.equal(diagnosis.modelDiagnosis.methodCoverage.qualityVerdict,'not-assessed');assert.ok(diagnosis.modelDiagnosis.methodCoverage.counts['needs-evidence']>0);
  assert.ok(diagnosis.findings.some(row=>row.id.startsWith('MODEL-')));assert.throws(()=>assertMethodChecks(rows,rules,current.manifest,'pass'),/prevents passing QA/);

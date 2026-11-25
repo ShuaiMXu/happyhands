@@ -248,7 +248,7 @@ QA 将同一状态的 before/after 原图保留成对，先排列默认整页与
 
 当前原生 Capture Plan 记录 viewport 和操作，不具备缩放配置。200%观察需另存真实证据，不能声称流水线自动完成了辅助检查。明确确认的无障碍修复仍须按范围验收；辅助通过不能抵消正常页面的回归。品牌、单词与短标签不应插入任意断词，长命令可在组件内部滚动并保留完整选择/复制能力。不得为压力用例给产品添加缩放控制或改坏默认布局。
 
-OJO、Taste、Impeccable 完整上游包、适配层与引用仍保留；这里约束执行顺序，不替换完整方法，也不记录人工 Accept。
+官网和落地页以 web-taste 为主，按当前任务的阅读计划使用参考。
 
 ## 专项验证自动进入独立复核
 
@@ -343,7 +343,7 @@ The before phase must reproduce the declared failure. The candidate must pass ev
 
 ## Goal-bound review and measured cost (isolated candidate)
 
-New lightweight start/continue runs adopt task-design-review@2. The runtime experience context supplies the mandatory goal schema. Repair, design comparison, regression, independent QA and actual human judgment remain separate; old @1 records are not retrospectively upgraded.
+New lightweight start/continue runs adopt task-design-review@2. The visual pre-audit starts with the task and original captures. Use `experience --run RUN --phase context --step record` for the audit schema and its required goal. Repair, design comparison, regression, independent QA and actual human judgment remain separate; old @1 records are not retrospectively upgraded.
 
 Passing independent QA for a newly recorded @2 decision requires a `criterionAssessments` row for each entry of `audit.task.goal.criteria`, including with an external `attest`. Use the criterion's one-based position and cite inspected originals from the same reached route, state and viewport. Cite a specialist check by record ID only when its scope covers one of those states. Cite changed paths from the captured source difference when they support that requirement. A preservation check can leave `changedFiles` empty. Narrow source-bound captures retain this file inventory without running design-system extraction. The complete file inventory supports up to 50,000 input files within an 8 MiB artifact. Above those limits, the source-bound capture retains the complete repository digest and reports file-level comparison as unavailable. `report` shows each criterion's evidence and result alongside the separate execution and human judgment records. Old decisions and reviews remain readable, and absent criterion evidence is shown explicitly.
 

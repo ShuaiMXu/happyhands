@@ -265,20 +265,19 @@ test('an agent that ran and failed keeps its worktree and records the execution'
   assert.ok(actualRoots.includes(await realpath(join(run.directory, 'worktree'))), 'the worktree is retained for inspection');
   const manifest = JSON.parse(await readFile(join(run.directory, 'run.json'), 'utf8'));
   assert.equal(manifest.execution.exitCode, 1);
-  assert.equal(manifest.execution.designGuidance.mode,'implementation');
+  assert.equal(manifest.execution.designGuidance,undefined);
   assert.equal(manifest.execution.designGuidancePacks.mode,'implementation');
   assert.deepEqual(manifest.execution.designGuidancePacks.packs.map(pack=>pack.id),['impeccable','web-taste']);
   assert.equal(manifest.execution.designGuidanceIntegrity.status,'verified');
-  const guidance=manifest.execution.designGuidance;
-  const original=(await readFile(new URL('../skills/vendor/ojo/upstream/SKILL.md',import.meta.url),'utf8')).replaceAll('\r\n','\n');
-  assert.equal(await readFile(join(run.directory,guidance.reference,'upstream/SKILL.md'),'utf8'),original);
   const prompt=await readFile(join(run.directory,'execution-prompt.txt'),'utf8');
-  assert.ok(prompt.includes(guidance.bundleHash));
+  const readingPlan=JSON.parse(await readFile(join(run.directory,'execution-reading-plan.json'),'utf8'));
+  assert.ok(readingPlan.groups.every(group=>group.id!=='ojo-app-ui-ux'));
+  assert.doesNotMatch(prompt,/\bOJO\b/i);
+  await assert.rejects(readFile(join(run.directory,'ojo-guidance')), {code:'ENOENT'});
   assert.ok(prompt.includes(manifest.execution.designGuidancePacks.bundleHash));
   assert.ok(manifest.execution.changedFiles.every(file=>!file.startsWith('design-guidance/')));
   const {createHash}=await import('node:crypto');
   assert.equal(manifest.execution.promptHash,createHash('sha256').update(prompt).digest('hex'));
-  assert.ok(manifest.execution.changedFiles.every(file=>!file.startsWith('ojo-guidance/')),'guidance must not pollute the target project diff');
   assert.deepEqual(manifest.execution.boundaryBreaches, [], 'the fake agent never left its worktree');
   // A second execution of the same run is refused, immutable as designed.
   await assert.rejects(
@@ -359,7 +358,10 @@ test('the operating agent can execute itself: prepare, edit the worktree, finish
   const prepared = await executeWithAgent({ directory: run.directory, repo: root, agent: 'self' });
   assert.equal(prepared.status, 'awaiting-operator-edit');
   assert.equal(prepared.worktree, join(run.directory, 'worktree'));
-  assert.match(await readFile(prepared.brief, 'utf8'), /Confirmed Harness brief/);
+  const brief = await readFile(prepared.brief, 'utf8');
+  assert.match(brief, /Confirmed Harness brief/);
+  assert.match(brief, /Finish the edits in the confirmed scope before final verification/);
+  assert.match(brief, /wait on the existing job/);
   assert.equal((await import('../packages/harness-core/store.js').then(m => m.loadRun(run.directory))).manifest.execution ?? null, null, 'nothing is recorded until finish');
   await writeFile(join(prepared.worktree, 'operator-change.txt'), 'edited by the operating agent\n');
   const execution = await finishSelfExecution({ directory: run.directory });

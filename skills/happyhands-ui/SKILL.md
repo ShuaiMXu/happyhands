@@ -5,7 +5,7 @@ description: Apply HappyHands UI copy, Radix color, typography and interaction r
 
 # HappyHands UI rules
 
-User-approved profile, 2026-10-23. Read the foundational rules and all additional user-approved review rules below during implementation and independent review. These rules supplement the complete OJO, Taste and Impeccable packages; never truncate or replace their original files. They govern HappyHands-owned UI. A reviewed project's approved design system and third-party component demonstration are separate scopes: do not recolor source screenshots or overwrite an external brand without its adoption of this profile. Record conflicts explicitly. No rule implies approval, automatic installation or permission to merge.
+User-approved profile, 2026-10-23. Read the foundational rules and all additional user-approved review rules below during implementation and independent review. They govern HappyHands-owned UI. A reviewed project's approved design system and third-party component demonstration are separate scopes: do not recolor source screenshots or overwrite an external brand without its adoption of this profile. Record conflicts explicitly. No rule implies approval, automatic installation or permission to merge.
 
 1. **No middle-dot separators.** Do not use “·” to separate UI copy. Prefer distinct layout items, normal sentences or a meaningful label. Preserve verbatim external source text, code syntax and evidence.
 2. **No redundant explanation.** Remove descriptions that repeat a title, button or obvious interaction. Keep decision-changing limits and errors beside their control. Put optional implementation details in existing disclosure or documentation, never hide essential instructions.

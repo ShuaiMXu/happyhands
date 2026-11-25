@@ -9,7 +9,7 @@
 历史章节中的旧默认路由以本节为准。这次只替换方法接入，不宣称 Issue #26 的完整编排方案已经实现。
 
 
-两套设计方法和 OJO 共用现有证据、范围、计划、隔离修改、重新采集、独立 QA 和人工判断。它们没有新增平行工作台或执行流程。现有项目默认保持原品牌与组件体系，通过 Taste 新版主入口 / App Screen、Impeccable Audit/Critique/Polish 改善实际任务；布局、动效和艺术方向按明确偏好选择。
+两套设计方法共用现有证据、范围、计划、隔离修改、重新采集、独立 QA 和人工判断。它们没有新增平行工作台或执行流程。现有项目默认保持原品牌与组件体系，通过 Taste 新版主入口 / App Screen、Impeccable Audit/Critique/Polish 改善实际任务；布局、动效和艺术方向按明确偏好选择。
 
 ## 完整内容与版本
 
@@ -18,14 +18,13 @@
 | Taste legacy / MIT | `a60a36dc2bb3bb77ccf17f2f62041f5ca8a458b9` | 全部 14 个 Skills，44 个技能/参考/脚本/库/资源文件，加原始 LICENSE、README，共46文件 |
 | Taste v2.1.4 / MIT | `6010f91a9935f1c167dfc500fb1a475681892e6b` | 完整主 Skill 38文件，加 LICENSE、README、CHANGELOG，共41文件；旧包完整保留 |
 | Impeccable / Apache-2.0 | `2f98774f86bc05563876643db37e6c37c322850f` | 官方完整 `.agents/skills/impeccable` 包62文件，加原始 LICENSE、README、NOTICE.md，共65文件 |
-| OJO / MIT | 已固定的 `fbd2c2d158e5ebda8930f4bc63ed635a8500d31f` | 原完整包与适配器保持不变 |
 
 使用官方 skill-installer 收录到项目 vendor 目录，未安装到全局 Codex。每个文件核对上游 Git blob 并记录 SHA-256；原始内容未改写或删减。新的运行将完整包原子发布到不可变 snapshot，按阶段给模型完整原 Skill 和参考文件路径。修改、缺文件、外部符号链接或不匹配清单会拒绝；审阅/执行结束再次复核快照，变更不能形成成功结果。版本和适配规则/偏好进入 provenance，历史运行不重写。
 
 ## 在哪里生效
 
 - 规则诊断：保留确定性 handler，仅记录完整指导已提供，明确 `available-only`；不伪称已执行模型审美评估、上游 CLI 或浏览器 lint。
-- 模型整改：在范围/计划批准之后，隔离 worktree 内收到 OJO、Taste 和 Impeccable 的完整原文阅读路径及适配约束。
+- 模型整改：在范围/计划批准之后，隔离 worktree 内收到按任务选定的设计参考与适配约束。
 - 独立 QA：全新只读会话收到同一上游版本，默认使用 Audit/Critique；区域和最后跨区域会话继续接收真实原图与交互记录，不能执行整改命令或写人的决定。
 - 上游脚本、模板、方向和字体库完整保留。没有自动运行 launcher、下载原生二进制、安装浏览器扩展或引入新的后台服务；工具、采集和审批继续由 Harness 管理。目标源码扫描排除 Taste 两个版本及 Impeccable vendor 包，避免其模板配色变成项目 Foundation 的假证据。
 

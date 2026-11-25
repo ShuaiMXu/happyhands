@@ -37,9 +37,9 @@ The Harness spawns `git`, `node` and a browser on almost every command. A file s
 4. Use `--agent self` in the Harness worktree, or name another adapter, preview that worktree, recapture matching states and dimensions, run applicable checks, and obtain independent review. Keep the final human accept/reject decision explicit.
 
 ```text
-Use HappyHands to review one user task in this product. Read docs/dsh.md,
-docs/harness.md, skills/happyhands/SKILL.md and the relevant complete
-experience-remediation methods in the HappyHands checkout.
+Use HappyHands to review one user task in this product. Start from
+skills/happyhands/SKILL.md. At pre-audit, inspect the task and original captures,
+look up a method for the specific question, then request the audit form.
 Reuse the repository, preview and goal already supplied; ask only for missing inputs.
 Inspect the actual CLI first. Reuse one Harness run and drive it with `next`;
 do not create a second acceptance store.
@@ -59,8 +59,8 @@ Do not push, merge, deploy or publish anything as part of this review.
 
 | Stage | Method / program | Required result |
 | --- | --- | --- |
-| Understand and reproduce | `review-product`, project rules, `harness onboard` or `init`/`capture` | One task, source version and original evidence. |
-| Diagnose and decide | `experience-remediation` and its assigned complete OJO/Taste/Impeccable references | Current-page details, shared interactions, task flow and layout, then device regression. Distinguish defects, inferences and missing evidence. |
+| Understand and reproduce | `review-product`, project rules, `quickstart` or `start` followed by `capture` | One task, source version and original evidence. |
+| Diagnose and decide | `experience-remediation` and its assigned web-taste and Impeccable references | Current-page details, shared interactions, task flow and layout, then device regression. Distinguish defects, inferences and missing evidence. |
 | Plan and edit | Existing confirmation/plan gates and `harness execute` | Scoped decisions, actual shared components and an isolated worktree. Reading a method is not implementation. |
 | Check and decide | Matched captures, applicable verification, independent review and human judgment | Before/after evidence, unresolved items and an explicit human decision. A clean command exit is not visual acceptance. |
 

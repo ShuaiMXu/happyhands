@@ -29,9 +29,6 @@ Return structured evidence, findings, proposed updates and limitations. Use `nee
 
 Read [the shared design-language rubric](../visual-hierarchy-reviewer/rubric.json). Apply it to the confirmed change and introduced regressions, preserving supplied brand choices. Put the visible element, task/brand conflict and minimal remedy in each finding's observation. Existing out-of-scope opportunities belong in limitations, not automatic failure of a narrow fix. The Workbench's independent AI review receives this same versioned rubric and foundation context.
 
-## Bundled OJO methodology
-
-Use the [Harness OJO adapter](../../vendor/ojo/ADAPTER.md), then its linked original Skill and relevant references. The runtime records a verified guidance snapshot in this result; design execution and independent QA receive the same pinned source with mode-specific reading routes. Preserve the existing evidence and approval boundaries.
 
 ## Execution contract
 

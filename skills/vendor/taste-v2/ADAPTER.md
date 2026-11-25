@@ -10,7 +10,7 @@ Read this adapter before the COMPLETE selected upstream files. `existing` remain
 
 ## Existing Harness authority and evidence
 
-- The project's approved Foundation, DESIGN.md, confirmed scope and existing stack take precedence. Keep OJO and Impeccable in the same diagnosis, implementation and independent-review flow. A new style proposal uses existing Foundation/scope confirmation; an approved fix needs no duplicate approval workflow.
+- The project's approved Foundation, DESIGN.md, confirmed scope and existing stack take precedence. A new style proposal uses existing Foundation/scope confirmation; an approved fix needs no duplicate approval workflow.
 - Review is read-only: use the full method to identify evidence, impact and remedies in the existing Harness schema. Implementation stays inside the confirmed scope and isolated worktree. Neither a direction draw nor an aesthetic score grants approval.
 - For app screens, inventory real objects, data, jobs and current states. Do not invent a dataset, totals, branding, KPIs or successful review to fill a composition. Distinguish zero, unknown, missing evidence and failures. Show the result, next action and blockers first; put contextual help beside the relevant control and optional provenance/logs in labeled disclosures. Preserve full source evidence.
 - Review whole pages and internal scroll regions at normal desktop and phone sizes before auxiliary 200% checks. Check density, grouping, spacing, readable labels, navigation, overlays, keyboard/focus and available loading/empty/error states. Never force arbitrary line breaks or hide relevant content to satisfy a meter. Screenshots alone do not prove interaction, unseen routes, physical-device behavior or model application.

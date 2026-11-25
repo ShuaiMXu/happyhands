@@ -36,9 +36,13 @@ export function nextCliCommand(state, manifest, directory, {pendingSelf = false,
     case 'needs-experience-audit': {
       const surface = configuredExperienceSurface(manifest);
       const surfaceNeed = surface ? {} : {SURFACE: 'public-page for websites and landing pages, app-screen for working interfaces'};
-      return {actor: 'agent', steps: [
-        step(['experience', ...run(directory), '--phase', 'context', '--surface', surface || 'SURFACE'], surfaceNeed),
-        step(['experience', ...run(directory), '--phase', 'audit', '--input', 'AUDIT_JSON'], {AUDIT_JSON: 'audit written against the schema the context step returns'})
+      const context = ['experience', ...run(directory), '--phase', 'context'];
+      const contextStep = name => step([...context, '--step', name, '--surface', surface || 'SURFACE'], surfaceNeed);
+      return {actor: 'agent', before: 'Inspect the originals first. For targeted guidance, add --topic TOPIC to the method step using one topic from inspect that fits the evidence. If you already have the relevant method citation, go directly to record.', steps: [
+        contextStep('inspect'),
+        contextStep('method'),
+        contextStep('record'),
+        step(['experience', ...run(directory), '--phase', 'audit', '--input', 'AUDIT_JSON'], {AUDIT_JSON: 'audit written against the schema returned by the record step'})
       ]};
     }
     case 'needs-diagnosis':

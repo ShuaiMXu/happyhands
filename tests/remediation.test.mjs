@@ -1,5 +1,3 @@
-import {stageOjoGuidance, ojoGuidancePrompt} from '../packages/skill-core/ojo-guidance.js';
-import {buildGuidanceReadingPlan} from '../packages/skill-core/guidance-reading-plan.js';
 import test from 'node:test';
 import {canSymlink} from './helpers/symlink.mjs';
 import assert from 'node:assert/strict';
@@ -27,14 +25,12 @@ test('project profile retains task/grid/state methods without imposing owned UI 
  const project=await remediationDefinition({...profile,profile:'project'}),owned=await remediationDefinition(profile);
  assert.equal(project.rules.length,7);assert.equal(owned.rules.length,31);assert.ok(project.rules.some(r=>r.id==='UX-grid'));assert.ok(owned.rules.some(r=>r.id==='AS-19'));
 });
-test('execution receives the own Skill and specific complete OJO references',async t=>{
+test('execution receives the bound project rules and current issue IDs',async t=>{
  const {run,method}=await fixture(t);
- const ojo=await stageOjoGuidance(run.directory,'implementation');
- const readingPlan=buildGuidanceReadingPlan({ojo,implementationRefs:method.contract.rules.map(rule=>rule.reference)});
- const prompt=ojoGuidancePrompt(ojo,run.directory,readingPlan)+executionMethodPrompt(method,run.directory);
- const required=readingPlan.groups[0].mustRead.map(file=>file.path);
- for(const rule of method.contract.rules)assert.ok(required.includes(ojo.metadata.reference+'/'+rule.reference));
- for(const text of ['remediation-SKILL.md','component-recipe.md','visual-tokens.md','motion-system.md','icon-guidelines.md',RESULT_FILE,'gutters'])assert.ok(prompt.includes(text));
+ const prompt=executionMethodPrompt(method,run.directory);
+ assert.ok(method.contract.rules.every(rule=>!Object.hasOwn(rule,'reference')));
+ assert.doesNotMatch(method.contract.skill+'\n'+prompt,/\bOJO\b/i);
+ for(const required of ['remediation-SKILL.md','remediation-contract.json','UX-grid','AS-19','F1',RESULT_FILE])assert.ok(prompt.includes(required));
 });
 test('missing, duplicate and unknown rules and issue IDs are rejected',async t=>{
  const {method,result}=await fixture(t);
@@ -95,9 +91,8 @@ test('homepage Hero rules are scoped and cannot be planned without captured brow
  assert.deepEqual(definition.rules.slice(-2).map(rule=>rule.id),['HH-HERO-MOTION','HH-HERO-MARK']);
  assert.equal(definition.rules.length,33);
  const design={metadata:{reference:'design'},uiRules:'# Owned rules',packs:[]};
- const ojo={metadata:{reference:'ojo'},adapter:'# OJO',documents:[]};
- assert.ok(!guidanceCatalog(design,ojo,await remediationDefinition(profile)).some(file=>file.path==='remediation-SKILL.md'));
- const citation=guidanceCatalog(design,ojo,definition).find(file=>file.path==='remediation-SKILL.md');
+ assert.ok(!guidanceCatalog(design,await remediationDefinition(profile)).some(file=>file.path==='remediation-SKILL.md'));
+ const citation=guidanceCatalog(design,definition).find(file=>file.path==='remediation-SKILL.md');
  assert.ok(citation.sections.includes('HappyHands homepage Hero'));
  assert.equal(citation.ownedOnly,true);
  const config=run.manifest.onboarding.config;
